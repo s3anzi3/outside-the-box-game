@@ -15,6 +15,8 @@ export interface GameState {
   playerName: string;
   nameInput: string;
   nameFocused: boolean;
+  pauseCheatInput: string;
+  pauseCheatFocused: boolean;
   playMode: "play" | "levelselect";
   gameOver: boolean;
   levelTimerEnd: number;   // ms timestamp; 0 = no active timer
@@ -97,6 +99,7 @@ export interface GameContext {
   resetPlayerName: () => void;
   resetMovementLevel: () => void;
   submitMovementAnswer: () => void;
+  submitPauseCheat: () => void;
   getCurrentAnswer: () => string;
   getAnswerPreview: () => string;
   displayFont: string;

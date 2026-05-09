@@ -56,6 +56,8 @@ window.onload = () => {
     playerName: "Box",
     nameInput: "",
     nameFocused: false,
+    pauseCheatInput: "",
+    pauseCheatFocused: false,
     playMode: "play",
     gameOver: false,
     levelTimerEnd: 0,
@@ -98,6 +100,7 @@ window.onload = () => {
     resetPlayerName: () => {},
     resetMovementLevel: () => {},
     submitMovementAnswer: () => {},
+    submitPauseCheat: () => {},
     getCurrentAnswer: () => "",
     getAnswerPreview: () => "",
     displayFont: `"Trebuchet MS", "Verdana", sans-serif`,
@@ -309,6 +312,8 @@ window.onload = () => {
     gc.state.playerName = "Box";
     gc.state.nameInput = "";
     gc.state.nameFocused = false;
+    gc.state.pauseCheatInput = "";
+    gc.state.pauseCheatFocused = false;
     gc.state.levelTimerEnd = 0;
     gc.state.skips = 0;
     gc.state.levelSubPhase = "";
@@ -371,6 +376,21 @@ window.onload = () => {
     needsMovementReset = false;
     gc.blocks = [];
     gc.answerSlots = [];
+    gc.render();
+  };
+
+  gc.submitPauseCheat = () => {
+    if (gc.state.pauseCheatInput !== "SBUOTB") {
+      gc.render();
+      return;
+    }
+
+    gc.state.pauseCheatInput = "";
+    gc.state.pauseCheatFocused = false;
+    gc.state.paused = false;
+    gc.state.controlsOpen = false;
+    gc.state.currentScreen = "levelselect";
+    gc.state.playMode = "levelselect";
     gc.render();
   };
 
@@ -645,11 +665,39 @@ window.onload = () => {
       return;
     }
 
+    if (gc.state.pauseCheatFocused && gc.state.paused && !gc.state.controlsOpen) {
+      if (e.key === "Escape") {
+        gc.state.pauseCheatFocused = false;
+        gc.render();
+        return;
+      }
+
+      if (e.key === "Enter") {
+        gc.submitPauseCheat();
+        return;
+      }
+
+      if (e.key === "Backspace") {
+        gc.state.pauseCheatInput = gc.state.pauseCheatInput.slice(0, -1);
+        gc.render();
+        return;
+      }
+
+      if (e.key.length === 1 && gc.state.pauseCheatInput.length < 16) {
+        gc.state.pauseCheatInput += e.key;
+        gc.render();
+        return;
+      }
+
+      return;
+    }
+
     if (e.key === "Escape") {
       if (gc.state.controlsOpen) {
         gc.state.controlsOpen = false;
         gc.render();
       } else if (gc.state.paused) {
+        gc.state.pauseCheatFocused = false;
         gc.state.paused = false;
         gc.render();
       }

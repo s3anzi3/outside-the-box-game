@@ -45,6 +45,15 @@ export const drawPauseOverlay = (gc: GameContext) => {
   const sliderHitH = 28;
   const sliderLabelY = sliderY - 18;
   const leftPanelCenterX = sliderX + sliderW / 2;
+  const cheatBoxW = sliderW;
+  const cheatBoxH = 38;
+  const cheatBoxX = sliderX;
+  const cheatBoxY = sliderY + 38;
+  const cheatButtonW = 34;
+  const cheatButtonH = cheatBoxH;
+  const cheatButtonGap = 12;
+  const cheatButtonX = cheatBoxX + cheatBoxW + cheatButtonGap;
+  const cheatButtonY = cheatBoxY;
   const volumePercent = Math.round(gc.sounds.getMasterVolume() * 100);
   const isOverSlider = (
     gc.mouseX >= sliderX &&
@@ -109,6 +118,54 @@ export const drawPauseOverlay = (gc: GameContext) => {
     action: () => {
       applyVolumeFromPointer();
       gc.render();
+    },
+  });
+
+  ctx.fillStyle = t.fg;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.font = `bold 13px ${displayFont}`;
+  ctx.fillText("LEVEL SELECT CHEAT", leftPanelCenterX, cheatBoxY - 8);
+
+  ctx.fillStyle = state.darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  ctx.fillRect(cheatBoxX, cheatBoxY, cheatBoxW, cheatBoxH);
+  ctx.strokeStyle = state.pauseCheatFocused ? "#a7adb7" : t.stroke;
+  ctx.lineWidth = state.pauseCheatFocused ? 3 : 2;
+  ctx.strokeRect(cheatBoxX, cheatBoxY, cheatBoxW, cheatBoxH);
+
+  ctx.fillStyle = state.pauseCheatInput.length > 0 ? t.fg : t.fgDim;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold 16px ${displayFont}`;
+  const cheatText = state.pauseCheatInput.length > 0
+    ? state.pauseCheatInput + (state.pauseCheatFocused ? "|" : "")
+    : (state.pauseCheatFocused ? "|" : "Cheat Key");
+  ctx.fillText(cheatText, cheatBoxX + 12, cheatBoxY + cheatBoxH / 2, cheatBoxW - 24);
+
+  ctx.fillStyle = "#9ea4ad";
+  ctx.fillRect(cheatButtonX, cheatButtonY, cheatButtonW, cheatButtonH);
+  ctx.strokeStyle = "#595f69";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(cheatButtonX, cheatButtonY, cheatButtonW, cheatButtonH);
+
+  gc.hitAreas.push({
+    x: cheatBoxX,
+    y: cheatBoxY,
+    w: cheatBoxW,
+    h: cheatBoxH,
+    action: () => {
+      state.pauseCheatFocused = true;
+      gc.render();
+    },
+  });
+
+  gc.hitAreas.push({
+    x: cheatButtonX,
+    y: cheatButtonY,
+    w: cheatButtonW,
+    h: cheatButtonH,
+    action: () => {
+      gc.submitPauseCheat();
     },
   });
 
