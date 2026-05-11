@@ -29,7 +29,20 @@ export class SoundManager {
   private readonly loopedAudio = new Map<SoundKey, HTMLAudioElement>();
   // Tracks the pending play() promise so stop() can chain after it
   private readonly pendingPlays = new Map<SoundKey, Promise<void>>();
+  // Pre-warmed Audio elements for one-shot sounds.  Holding references prevents
+  // GC and keeps the data in the browser cache so the first play has no delay.
+  private readonly preloaded: HTMLAudioElement[] = [];
   private masterVolume = 1;
+
+  constructor() {
+    const PREWARM: SoundKey[] = ["correctAnswer", "dash", "boom"];
+    for (const key of PREWARM) {
+      const a = new Audio(SOUND_PATHS[key]);
+      a.preload = "auto";
+      a.load();
+      this.preloaded.push(a);
+    }
+  }
 
   public play(key: SoundKey, options: SoundPlayOptions = {}) {
     const { loop = false, volume = 1, restart = true, startTime } = options;

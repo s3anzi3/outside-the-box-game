@@ -1,7 +1,7 @@
 import { SoundManager } from './audio';
 export { SoundManager };
 
-export type GameScreen = "mainmenu" | "levelselect" | "level";
+export type GameScreen = "intro" | "mainmenu" | "levelselect" | "level";
 
 export interface GameState {
   currentScreen: GameScreen;

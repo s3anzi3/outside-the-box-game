@@ -21,7 +21,6 @@ import { drawLevel26 } from "../levels/Level26";
 import { drawLevel27 } from "../levels/Level27";
 import { drawLevel28 } from "../levels/Level28";
 import { drawLevel29 } from "../levels/Level29";
-import { drawLevel30 } from "../levels/Level30";
 import { LEVEL_COUNT } from "../levelData";
 
 const drawMovementLevelNavigation = (gc: GameContext) => {
@@ -348,9 +347,8 @@ export const drawLevel = (gc: GameContext) => {
   if (lvl === 26) { drawLevel26(gc); drawLevelHUD(gc); return; }
   if (lvl === 27) { drawLevel27(gc); drawLevelHUD(gc); return; }
   if (lvl === 28) { drawLevel28(gc); drawLevelHUD(gc); return; }
-  if (lvl === 29) { drawLevel29(gc); drawLevelHUD(gc); return; }
-  if (lvl === 30) {
-    drawLevel30(gc);
+  if (lvl === 29) {
+    drawLevel29(gc);
     // No HUD on the win/certificate screens — clean slate
     if (state.levelSubPhase !== 'certificate' && state.levelSubPhase !== 'win') {
       drawLevelHUD(gc);

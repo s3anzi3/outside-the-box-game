@@ -1,4 +1,4 @@
-export const LEVEL_COUNT = 30;
+export const LEVEL_COUNT = 29;
 
 export interface LevelEntry {
   title: string;
@@ -32,9 +32,8 @@ export const LEVEL_DATA: LevelEntry[] = [
   { title: "Q23", lines: ["Corporate wanted a question that tested your logic in math form.", "I hope you remember how to fill out a truth table..."] },
   { title: "Q24", lines: ["This should be an easy one..."] },
   { title: "Q25", lines: ["Some walls are only visible under the right conditions.", "Toggle your perspective to navigate."] },
-  { title: "Q26", lines: ["Development in progress."] },
-  { title: "Q27", lines: ["Development in progress."] },
-  { title: "Q28", lines: ["Development in progress."] },
-  { title: "Q29", lines: ["Development in progress."] },
-  { title: "Q30", lines: ["One final question before I hand you your results.", "Think carefully — you have answered this before."] },
+  { title: "Q26", lines: ["A simple endurance test.", "Click the cookie. One hundred times. Earn it."] },
+  { title: "Q27", lines: ["A riddle to test your wits.", "The answer is the means by which you give it."] },
+  { title: "Q28", lines: ["WARNING: exam guide integrity check failed.", "FRODRICK.EXE has gone hostile. Defend yourself."] },
+  { title: "Q29", lines: ["One final question before I hand you your results.", "Think carefully — you have answered this before."] },
 ];

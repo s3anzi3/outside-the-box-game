@@ -37,7 +37,7 @@ export const drawGameplayFrame = (gc: GameContext) => {
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t = getTheme(state);
 
-  ctx.strokeStyle = "#ffffff";
+  ctx.strokeStyle = t.stroke;
   ctx.lineWidth = 2;
   ctx.strokeRect(topBoxX, topBoxY, topBoxWidth, topBoxHeight);
 
@@ -428,11 +428,11 @@ export const drawExamTimer = (gc: GameContext) => {
   const seconds = totalSeconds % 60;
   const label = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
-  // Color tiers: gold < 12 min, silver 12–15 min, bronze 15+ min
+  // Color tiers: gold < 13 min, silver 13–16 min, bronze 16+ min
   let timerColor: string;
-  if (minutes < 12) {
+  if (minutes < 13) {
     timerColor = "#d4b820"; // gold
-  } else if (minutes < 15) {
+  } else if (minutes < 16) {
     timerColor = "#a8b8c0"; // silver
   } else {
     timerColor = "#cd7f32"; // bronze

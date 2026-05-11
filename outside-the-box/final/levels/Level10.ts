@@ -78,9 +78,9 @@ function generateMaze(): number[][] {
     }
   }
 
-  // Entry and exit doors
-  grid[GRID_ROWS - 1][START_GCOL] = 0;
-  grid[0][EXIT_GCOL]              = 0;
+  // Exit door at top. Bottom is intentionally sealed — player spawns inside
+  // the start room, so leaving an opening there lets them walk around the maze.
+  grid[0][EXIT_GCOL] = 0;
 
   return grid;
 }

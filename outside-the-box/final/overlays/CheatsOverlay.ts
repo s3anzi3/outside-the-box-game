@@ -8,7 +8,7 @@ const HINTS: Record<number, string[]> = {
     "Once you reach the bottom, the ACCEPT button will become clickable.",
     "Click ACCEPT to proceed.",
   ],
-  3: ["Click the dot within the i of the exam guide;s sentence"],
+  3: ["Click the dot on top of the 'i' in the exam guide's sentence at the bottom of the screen."],
   4: [
     "Wait for the button to flash GREEN, then click it immediately.",
     "Clicking while it is red will cost you a life.",
@@ -106,11 +106,27 @@ const HINTS: Record<number, string[]> = {
     "Every other button on the screen is a decoy that costs a life.",
   ],
   25: [
-    "There are 2 versions of the maze visually speaking",
-    "You must toggle between light and dark mode from the pause menu to find the overlap",
-    "Without it, you can still get through it, but you will run into what will feel like 'invisible walls'",
+    "Three mode-toggle gates block the unique solution path — toggling is REQUIRED, not optional.",
+    "Open the pause menu and toggle dark/light at least once to reveal the in-maze ◐ TOGGLE button.",
+    "Player starts in dark.  Sequence: dark → switch to light at gate 1 → switch back to dark at gate 2 → switch to light at gate 3.",
+    "Bottom of the maze is a sealed wall — there is no walking around the outside.",
   ],
-  30: [
+  26: [
+    "There is no trick here — just click the cookie 100 times to advance.",
+    "Each click is real.  Hold up your mouse and pace yourself.",
+  ],
+  27: [
+    "Every answer button (including KEYBOARD) is a decoy that costs a life.",
+    "The riddle's answer is KEYBOARD — give it using the answer.",
+    "Type the letters K-E-Y-B-O-A-R-D on your physical keyboard.",
+  ],
+  28: [
+    "Boss battle vs FRODRICK.EXE.  A/D or arrows to move, SPACE to fire.",
+    "Boss has 110 HP (22 hits).  Three phases: green (calm), yellow (triple shot), red (5-way fan).",
+    "Player has standard 3 lives — ~0.4s i-frames after each hit, so back-to-back hits hurt.",
+    "Strategy: stay mobile under the boss, fire continuously, stop when bullets cluster overhead.",
+  ],
+  29: [
     "The question is: What is your name?",
     "Type exactly the name you entered at the start of the exam.",
     "Even 'Box' works if that is what you entered.",

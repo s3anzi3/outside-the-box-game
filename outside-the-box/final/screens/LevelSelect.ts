@@ -16,7 +16,7 @@ export const drawLevelSelect = (gc: GameContext) => {
   ctx.font         = `bold 36px ${displayFont}`;
   ctx.fillText("LEVEL SELECT", cx, topBoxY + topBoxHeight * 0.1);
 
-  // 6-column × 5-row grid (30 levels)
+  // 6-column × 5-row grid (29 levels — last bottom-right slot is intentionally empty)
   const cols  = 6;
   const tileW = topBoxWidth  * 0.118;
   const tileH = topBoxHeight * 0.116;
@@ -33,7 +33,7 @@ export const drawLevelSelect = (gc: GameContext) => {
     const ty  = gridY + row * (tileH + vGap);
     const lvl = i + 1;
 
-    const locked = lvl > 25 && lvl !== 30;
+    const locked = false;
 
     if (gc.levelBGLoaded) {
       ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, tx, ty, tileW, tileH);

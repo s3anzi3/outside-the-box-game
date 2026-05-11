@@ -77,42 +77,89 @@ function generateStaticMaze(): number[][] {
     }
   }
 
-  // Entry and exit doors
-  grid[GRID_ROWS - 1][START_GCOL] = 0;
-  grid[0][EXIT_GCOL]              = 0;
+  // Exit door at top. Bottom is intentionally sealed — player spawns inside
+  // the start room, so leaving an opening there lets them walk around the maze.
+  grid[0][EXIT_GCOL] = 0;
 
-  // Assign wall types: passage walls get type 2 or 3 based on seeded RNG
-  for (let r = 1; r < GRID_ROWS - 1; r++) {
-    for (let c = 1; c < GRID_COLS - 1; c++) {
-      if (grid[r][c] !== 1) continue;
-      const isPassage = (r % 2 === 0 && c % 2 === 1) || (r % 2 === 1 && c % 2 === 0);
-      if (isPassage) {
-        // ~40% type 2 (dark-only), ~40% type 3 (light-only), ~20% type 1 (always)
-        const roll = rng();
-        if (roll < 0.40) grid[r][c] = 2;
-        else if (roll < 0.80) grid[r][c] = 3;
-        // else stays 1
-      }
-      // Border/corner walls always stay type 1
+  // Place 3 mode-toggle gates along the unique solution path. Alternating
+  // types force the player to switch dark/light three times to reach the exit.
+  // (Player starts in dark, so first gate is dark-blocking.)
+  const path = findSolutionPath(grid);
+  const passages = path.filter(([r, c]) =>
+    (r % 2 === 0 && c % 2 === 1) || (r % 2 === 1 && c % 2 === 0)
+  );
+  if (passages.length >= 3) {
+    const gateTypes = [2, 3, 2];
+    const gateFracs = [0.25, 0.50, 0.75];
+    for (let i = 0; i < 3; i++) {
+      const [r, c] = passages[Math.floor(passages.length * gateFracs[i])];
+      grid[r][c] = gateTypes[i];
     }
   }
 
   return grid;
 }
 
+// BFS the unique solution path through grid==0 cells from the start room to
+// the topmost room on the exit column.
+function findSolutionPath(grid: number[][]): Array<[number, number]> {
+  const visited: boolean[][] = Array.from({ length: GRID_ROWS }, () =>
+    new Array(GRID_COLS).fill(false)
+  );
+  const parent: Array<Array<[number, number] | null>> =
+    Array.from({ length: GRID_ROWS }, () =>
+      new Array<[number, number] | null>(GRID_COLS).fill(null)
+    );
+  const queue: Array<[number, number]> = [[START_GROW, START_GCOL]];
+  visited[START_GROW][START_GCOL] = true;
+  const TARGET_R = 1;
+  const TARGET_C = EXIT_GCOL;
+  let reached = false;
+
+  while (queue.length > 0) {
+    const [r, c] = queue.shift()!;
+    if (r === TARGET_R && c === TARGET_C) { reached = true; break; }
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
+      const nr = r + dr, nc = c + dc;
+      if (nr < 0 || nr >= GRID_ROWS || nc < 0 || nc >= GRID_COLS) continue;
+      if (grid[nr][nc] !== 0 || visited[nr][nc]) continue;
+      visited[nr][nc] = true;
+      parent[nr][nc] = [r, c];
+      queue.push([nr, nc]);
+    }
+  }
+
+  const path: Array<[number, number]> = [];
+  let cur: [number, number] | null = reached ? [TARGET_R, TARGET_C] : null;
+  while (cur) {
+    path.unshift(cur);
+    cur = parent[cur[0]][cur[1]];
+  }
+  return path;
+}
+
 // Pre-compute once at module load — always the same maze
 const STATIC_MAZE: number[][] = generateStaticMaze();
 
-function buildStaticWalls(): AABB[] {
+// Walls are mode-dependent: type 1 is always solid, type 2 is solid only in
+// dark mode, type 3 is solid only in light mode. We pre-build one wall list
+// per mode and swap which one the player collides against each frame.
+function buildStaticWallsForMode(darkMode: boolean): AABB[] {
   const walls: AABB[] = [];
-  for (let r = 0; r < GRID_ROWS; r++)
-    for (let c = 0; c < GRID_COLS; c++)
-      if (STATIC_MAZE[r][c] >= 1)   // all wall types are physically solid
-        walls.push(new AABB(new Vec2(c + 0.5, r + 0.5), new Vec2(0.5, 0.5)));
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const cell = STATIC_MAZE[r][c];
+      const solid = cell === 1 ||
+                    (cell === 2 && darkMode) ||
+                    (cell === 3 && !darkMode);
+      if (solid) walls.push(new AABB(new Vec2(c + 0.5, r + 0.5), new Vec2(0.5, 0.5)));
+    }
+  }
   return walls;
 }
 
-const STATIC_WALLS: AABB[] = buildStaticWalls();
+const STATIC_WALLS_DARK:  AABB[] = buildStaticWallsForMode(true);
+const STATIC_WALLS_LIGHT: AABB[] = buildStaticWallsForMode(false);
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const PLAYER_SPEED25 = 7.5;
@@ -220,25 +267,6 @@ export const drawLevel25 = (gc: GameContext) => {
   const t  = getTheme(state);
   const cx = w / 2;
 
-  // ── Win screen ─────────────────────────────────────────────────────────────
-  if (state.levelSubPhase === 'win') {
-    cancelAnimationFrame(animId25);
-    ctx.fillStyle    = t.fg;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 44px ${displayFont}`;
-    ctx.fillText('EXIT FOUND!', cx, topBoxY + topBoxHeight * 0.34);
-    ctx.font      = `20px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    ctx.fillText('You saw through the illusion.', cx, topBoxY + topBoxHeight * 0.50);
-    drawButton(gc, 'CONTINUE  →', cx - 100, topBoxY + topBoxHeight * 0.65, 200, 48, () => {
-      state.currentLevel  = 30;
-      state.levelSubPhase = '';
-      gc.render();
-    });
-    return;
-  }
-
   // ── Initialise on fresh entry ──────────────────────────────────────────────
   if (state.levelSubPhase !== 'active') {
     const sx = START_GCOL + 0.5;
@@ -247,11 +275,16 @@ export const drawLevel25 = (gc: GameContext) => {
     const histY = new Float32Array(HIST_LEN25).fill(sy);
     player25 = new Player25SM({
       pos:      new Vec2(sx, sy),
-      walls:    STATIC_WALLS,
+      walls:    state.darkMode ? STATIC_WALLS_DARK : STATIC_WALLS_LIGHT,
       keysDown: gc.keysDown,
       half:     PLAYER_HALF25,
       won:      false,
-      onWin:    () => { state.levelSubPhase = 'win'; },
+      onWin:    () => {
+        gc.sounds.play("correctAnswer", { volume: 0.55 });
+        cancelAnimationFrame(animId25);
+        state.currentLevel  = 26;
+        state.levelSubPhase = '';
+      },
       onHitWall: () => { gc.sounds.play("mazeOof", { volume: 0.65 }); },
       histX,
       histY,
@@ -415,7 +448,10 @@ export const drawLevel25 = (gc: GameContext) => {
 
       const dt = lastTime25 ? Math.min((ts - lastTime25) / 1000, 0.05) : 0.016;
       lastTime25 = ts;
-      if (player25) player25.update(dt);
+      if (player25) {
+        player25.data.walls = state.darkMode ? STATIC_WALLS_DARK : STATIC_WALLS_LIGHT;
+        player25.update(dt);
+      }
       gc.render();
     });
   }

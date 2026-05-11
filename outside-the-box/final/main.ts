@@ -4,6 +4,7 @@ import { GameContext, GameState, MovementArea } from "./types";
 import { drawBackground, drawLogo, drawGameplayFrame, drawBottomPanel, drawCheatsButton, drawExamTimer } from "./renderer";
 import { drawCheatsOverlay } from "./overlays/CheatsOverlay";
 import { LEVEL_DATA } from "./levelData";
+import { drawIntro, INTRO_LINES } from "./screens/Intro";
 import { drawMainMenu } from "./screens/MainMenu";
 import { drawLevelSelect, drawLevelSelectBackButton } from "./screens/LevelSelect";
 import { drawLevel } from "./screens/Level";
@@ -41,7 +42,7 @@ window.onload = () => {
   }
 
   const state: GameState = {
-    currentScreen: "mainmenu",
+    currentScreen: "intro",
     currentLevel: 1,
     lives: 3,
     paused: false,
@@ -176,6 +177,9 @@ window.onload = () => {
   const isMovementLevel = (level: number) => level >= 11 && level <= 20;
 
   const resolveGuideLines = (): string[] => {
+    if (gc.state.currentScreen === "intro") {
+      return INTRO_LINES;
+    }
     if (gc.state.currentScreen === "level") {
       return LEVEL_DATA[gc.state.currentLevel - 1]?.lines ?? [];
     }
@@ -416,6 +420,13 @@ window.onload = () => {
       gc.sounds.stop("typing");
     }
 
+    // Intro: full-screen takeover, skip everything else (no logo, frame, BGM, bottom panel)
+    if (gc.state.currentScreen === "intro") {
+      drawBackground(gc);
+      drawIntro(gc);
+      return;
+    }
+
     const movementLevelActive = gc.state.currentScreen === "level" && isMovementLevel(gc.state.currentLevel);
     const enteringMovementLevel =
       movementLevelActive && (previousScreen !== "level" || previousLevel !== gc.state.currentLevel);
@@ -508,19 +519,19 @@ window.onload = () => {
       drawLevelSelectBackButton(gc);
     }
 
-    const onCertificate = gc.state.currentLevel === 30 &&
+    const onCertificate = gc.state.currentLevel === 29 &&
       (gc.state.levelSubPhase === 'certificate' || gc.state.levelSubPhase === 'win');
 
-    // Cheats button (above play area, only when cheats active on levels 2-30)
+    // Cheats button (above play area, only when cheats active on levels 2-29)
     if (!onCertificate && gc.state.cheatsEnabled && gc.state.currentScreen === "level" &&
-        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 30) {
+        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 29) {
       drawCheatsButton(gc);
     }
 
-    // Exam timer (top-right above play area, play-mode only, levels 2-30)
+    // Exam timer (top-right above play area, play-mode only, levels 2-29)
     if (!onCertificate && gc.state.playMode === "play" && gc.state.examStartTime > 0 &&
         gc.state.currentScreen === "level" &&
-        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 30) {
+        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 29) {
       drawExamTimer(gc);
     }
 
@@ -623,8 +634,8 @@ window.onload = () => {
       }
 
       if (e.key === "Enter") {
-        if (gc.state.currentLevel === 30) {
-          // Level 30: check name answer
+        if (gc.state.currentLevel === 29) {
+          // Level 29 (certificate): check name answer
           const typed   = gc.state.nameInput.trim().toLowerCase();
           const correct = gc.state.playerName.toLowerCase();
           gc.state.nameFocused = false;
@@ -736,7 +747,7 @@ window.onload = () => {
   setInterval(() => {
     if (gc.state.playMode === "play" && gc.state.examStartTime > 0 &&
         gc.state.currentScreen === "level" &&
-        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 30 &&
+        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 29 &&
         !gc.state.paused && !gc.state.gameOver) {
       gc.render();
     }
