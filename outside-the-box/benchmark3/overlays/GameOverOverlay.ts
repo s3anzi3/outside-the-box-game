@@ -1,15 +1,17 @@
 import { GameContext } from "../types";
 import { getLayout } from "../layout";
+import { getTheme } from "../theme";
 import { drawButton } from "../renderer";
 
 export const drawGameOverOverlay = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
   const { w, h } = getLayout(ctx);
+  const t = getTheme(state);
   const cx = w / 2;
   const cy = h / 2;
 
-  // Full-canvas dim
-  ctx.fillStyle = "rgba(0,0,0,0.82)";
+  // Full-canvas dim — lighter veil in light mode so the panel stays readable
+  ctx.fillStyle = state.darkMode ? "rgba(0,0,0,0.82)" : "rgba(60,60,60,0.55)";
   ctx.fillRect(0, 0, w, h);
 
   // Panel
@@ -18,7 +20,7 @@ export const drawGameOverOverlay = (gc: GameContext) => {
   const panelX = cx - panelW / 2;
   const panelY = cy - panelH / 2;
 
-  ctx.fillStyle = "#0a0a0a";
+  ctx.fillStyle = state.darkMode ? "#0a0a0a" : "#f5f5f5";
   ctx.strokeStyle = "#cc2222";
   ctx.lineWidth = 3;
   ctx.fillRect(panelX, panelY, panelW, panelH);
@@ -30,7 +32,7 @@ export const drawGameOverOverlay = (gc: GameContext) => {
   ctx.font = `bold 52px ${displayFont}`;
   ctx.fillText("GAME OVER", cx, panelY + panelH * 0.22);
 
-  ctx.fillStyle = "#888888";
+  ctx.fillStyle = t.fgMid;
   ctx.font = `20px ${bodyFont}`;
   ctx.fillText(
     `Better luck next time, ${state.playerName}.`,
@@ -39,7 +41,7 @@ export const drawGameOverOverlay = (gc: GameContext) => {
     panelW * 0.82,
   );
 
-  ctx.strokeStyle = "#333333";
+  ctx.strokeStyle = t.divider;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(panelX + panelW * 0.1, panelY + panelH * 0.54);

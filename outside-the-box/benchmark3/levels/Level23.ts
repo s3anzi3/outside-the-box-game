@@ -230,10 +230,8 @@ export const drawLevel23 = (gc: GameContext) => {
     gc.hitAreas.push({
       x: bx, y: by, w: optBtnW, h: optBtnH,
       action: () => {
-        if (opt.right) {
-          if (tableOK) {
-            state.levelSubPhase = 'win';
-          }
+        if (opt.right && tableOK) {
+          state.levelSubPhase = 'win';
         } else {
           gc.loseLife();
         }

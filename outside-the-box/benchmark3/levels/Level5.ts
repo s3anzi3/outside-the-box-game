@@ -40,6 +40,9 @@ export const drawLevel5 = (gc: GameContext) => {
   }
 
   // ── Velocity-based flee from cursor ──────────────────────────────────────
+  // Skip entirely when not actively playing — pause/controls/game-over overlays
+  // still trigger re-renders on mouse move, and we don't want the scream then.
+  const interactive = !state.paused && !state.controlsOpen && !state.gameOver;
   const btnCX = btnX + BTN_W / 2;
   const btnCY = btnY + BTN_H / 2;
   const dx    = gc.mouseX - btnCX;
@@ -47,7 +50,7 @@ export const drawLevel5 = (gc: GameContext) => {
   const dist  = Math.sqrt(dx * dx + dy * dy);
   const dt    = 1 / 60;   // assume ~60fps for the physics step
 
-  const isFleeing = dist < FLEE_R && dist > 1;
+  const isFleeing = interactive && dist < FLEE_R && dist > 1;
   if (isFleeing) {
     // Repulsion force gets stronger the closer the cursor is
     const mag = FORCE * Math.pow((FLEE_R - dist) / FLEE_R, 1.5) * dt;
@@ -60,23 +63,25 @@ export const drawLevel5 = (gc: GameContext) => {
   }
   wasFleeing = isFleeing;
 
-  // Apply damping and integrate
-  btnVX *= DAMP;
-  btnVY *= DAMP;
-  btnX  += btnVX * dt;
-  btnY  += btnVY * dt;
+  if (interactive) {
+    // Apply damping and integrate
+    btnVX *= DAMP;
+    btnVY *= DAMP;
+    btnX  += btnVX * dt;
+    btnY  += btnVY * dt;
 
-  // Clamp inside box with a bounce
-  const pad = 16;
-  const minX = topBoxX + pad;
-  const maxX = topBoxX + topBoxWidth  - pad - BTN_W;
-  const minY = topBoxY + pad;
-  const maxY = topBoxY + topBoxHeight - pad - BTN_H;
+    // Clamp inside box with a bounce
+    const pad = 16;
+    const minX = topBoxX + pad;
+    const maxX = topBoxX + topBoxWidth  - pad - BTN_W;
+    const minY = topBoxY + pad;
+    const maxY = topBoxY + topBoxHeight - pad - BTN_H;
 
-  if (btnX < minX) { btnX = minX; btnVX = Math.abs(btnVX) * 0.4; }
-  if (btnX > maxX) { btnX = maxX; btnVX = -Math.abs(btnVX) * 0.4; }
-  if (btnY < minY) { btnY = minY; btnVY = Math.abs(btnVY) * 0.4; }
-  if (btnY > maxY) { btnY = maxY; btnVY = -Math.abs(btnVY) * 0.4; }
+    if (btnX < minX) { btnX = minX; btnVX = Math.abs(btnVX) * 0.4; }
+    if (btnX > maxX) { btnX = maxX; btnVX = -Math.abs(btnVX) * 0.4; }
+    if (btnY < minY) { btnY = minY; btnVY = Math.abs(btnVY) * 0.4; }
+    if (btnY > maxY) { btnY = maxY; btnVY = -Math.abs(btnVY) * 0.4; }
+  }
 
   // ── Draw button ───────────────────────────────────────────────────────────
   const hovered = gc.mouseX >= btnX && gc.mouseX <= btnX + BTN_W &&

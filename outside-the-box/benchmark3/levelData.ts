@@ -29,7 +29,7 @@ export const LEVEL_DATA: LevelEntry[] = [
   { title: "Q20", lines: ["Use W, A, S, and D to move the player.", "The sprite changes direction with each move."] },
   { title: "Q21", lines: ["He is back.", "Frodrick seems to have trained a lot...", "maybe this time you need to cheat on the exam for once???"] },
   { title: "Q22", lines: ["did you catch that??"] },
-  { title: "Q23", lines: ["Corporate wanted a question that tested your logic in math form.", "I hope you remember how to fill out a truth table..."] },
+  { title: "Q23", lines: ["Corporate wanted a question that assessed your logic in math form.", "I hope you remember how to fill out a truth table..."] },
   { title: "Q24", lines: ["This should be an easy one..."] },
   { title: "Q25", lines: ["Some walls are only visible under the right conditions.", "Toggle your perspective to navigate."] },
   { title: "Q26", lines: ["Development in progress."] },

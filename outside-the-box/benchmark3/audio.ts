@@ -29,8 +29,17 @@ export class SoundManager {
   private readonly loopedAudio = new Map<SoundKey, HTMLAudioElement>();
   // Tracks the pending play() promise so stop() can chain after it
   private readonly pendingPlays = new Map<SoundKey, Promise<void>>();
+  // Browser autoplay policy: no audio may attempt to play before the first
+  // user gesture, otherwise the tab gets flagged and the user has to click
+  // the tab's audio indicator to re-enable sound.
+  private unlocked = false;
+
+  public unlock() {
+    this.unlocked = true;
+  }
 
   public play(key: SoundKey, options: SoundPlayOptions = {}) {
+    if (!this.unlocked) return;
     const { loop = false, volume = 1, restart = true, startTime } = options;
     const source = SOUND_PATHS[key];
 

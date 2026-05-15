@@ -187,7 +187,7 @@ export const drawLevel = (gc: GameContext) => {
     const guideLines = [
       "It is now time to check your problem solving skills",
       "when you know its someones life at stake....  so im going in!!!",
-      "Im coming out of my robotic shell for this — dont mind the new look.",
+      "These next ones work a bit differently — get ready to move.",
     ];
     ctx.fillStyle = t.fg;
     ctx.font = `16px ${bodyFont}`;

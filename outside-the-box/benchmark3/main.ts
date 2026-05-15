@@ -168,6 +168,20 @@ window.onload = () => {
 
   player.setSoundManager(gc.sounds);
 
+  // Unlock audio on the very first user gesture anywhere on the page.
+  // Without this, sounds triggered from setInterval/RAF before any click
+  // (e.g. the typing sound on the main menu) get blocked by the browser
+  // and silently flag the tab as muted.
+  const unlockAudio = () => {
+    gc.sounds.unlock();
+    window.removeEventListener("pointerdown", unlockAudio);
+    window.removeEventListener("keydown", unlockAudio);
+    window.removeEventListener("touchstart", unlockAudio);
+  };
+  window.addEventListener("pointerdown", unlockAudio);
+  window.addEventListener("keydown", unlockAudio);
+  window.addEventListener("touchstart", unlockAudio);
+
   const isMovementLevel = (level: number) => level >= 11 && level <= 20;
 
   const resolveGuideLines = (): string[] => {
