@@ -42,6 +42,11 @@ import { drawLevel37 } from "../levels/Level37";
 import { drawLevel38 } from "../levels/Level38";
 import { drawLevel39 } from "../levels/Level39";
 import { drawLevel40 } from "../levels/Level40";
+import { drawLevel41 } from "../levels/Level41";
+import { drawLevel42 } from "../levels/Level42";
+import { drawLevel43 } from "../levels/Level43";
+import { drawLevel44 } from "../levels/Level44";
+import { drawLevel45 } from "../levels/Level45";
 import { drawLevel50 } from "../levels/Level50";
 import { LEVEL_COUNT } from "../levelData";
 
@@ -207,6 +212,11 @@ export const drawLevel = (gc: GameContext) => {
   if (lvl === 38) { drawLevel38(gc); drawLevelHUD(gc); return; }
   if (lvl === 39) { drawLevel39(gc); drawLevelHUD(gc); return; }
   if (lvl === 40) { drawLevel40(gc); drawLevelHUD(gc); return; }
+  if (lvl === 41) { drawLevel41(gc); drawLevelHUD(gc); return; }
+  if (lvl === 42) { drawLevel42(gc); drawLevelHUD(gc); return; }
+  if (lvl === 43) { drawLevel43(gc); drawLevelHUD(gc); return; }
+  if (lvl === 44) { drawLevel44(gc); drawLevelHUD(gc); return; }
+  if (lvl === 45) { drawLevel45(gc); drawLevelHUD(gc); return; }
   if (lvl === 50) {
     drawLevel50(gc);
     // No HUD on the win/certificate screens — clean slate
