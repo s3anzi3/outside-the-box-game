@@ -182,7 +182,10 @@ window.onload = () => {
   window.addEventListener("keydown", unlockAudio);
   window.addEventListener("touchstart", unlockAudio);
 
-  const isMovementLevel = (level: number) => level >= 11 && level <= 20;
+  // Levels 11–20 were the old block-pushing "movement" levels; they are now
+  // bespoke lateral-thinking puzzles handled like any other level. No level uses
+  // the movement engine anymore, so this is always false.
+  const isMovementLevel = (_level: number) => false;
 
   const resolveGuideLines = (): string[] => {
     if (gc.state.currentScreen === "level") {

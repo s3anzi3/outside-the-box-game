@@ -1,6 +1,6 @@
 import { GameContext } from "../types";
 import { getTheme } from "../theme";
-import { getLayout, getMovementLayout } from "../layout";
+import { getLayout } from "../layout";
 import { drawButton, drawImgButton, drawLevelHUD } from "../renderer";
 import { drawNameEntry } from "../levels/Level1";
 import { drawLevel2 } from "../levels/Level2";
@@ -12,6 +12,16 @@ import { drawLevel7 } from "../levels/Level7";
 import { drawLevel8 } from "../levels/Level8";
 import { drawLevel9 } from "../levels/Level9";
 import { drawLevel10 } from "../levels/Level10";
+import { drawLevel11 } from "../levels/Level11";
+import { drawLevel12 } from "../levels/Level12";
+import { drawLevel13 } from "../levels/Level13";
+import { drawLevel14 } from "../levels/Level14";
+import { drawLevel15 } from "../levels/Level15";
+import { drawLevel16 } from "../levels/Level16";
+import { drawLevel17 } from "../levels/Level17";
+import { drawLevel18 } from "../levels/Level18";
+import { drawLevel19 } from "../levels/Level19";
+import { drawLevel20 } from "../levels/Level20";
 import { drawLevel21 } from "../levels/Level21";
 import { drawLevel22 } from "../levels/Level22";
 import { drawLevel23 } from "../levels/Level23";
@@ -23,55 +33,6 @@ import { drawLevel28 } from "../levels/Level28";
 import { drawLevel29 } from "../levels/Level29";
 import { drawLevel30 } from "../levels/Level30";
 import { LEVEL_COUNT } from "../levelData";
-
-const drawMovementLevelNavigation = (gc: GameContext) => {
-  const { state } = gc;
-  const movementLayout = getMovementLayout(gc.ctx);
-  const navBtnH = 42;
-  const navBtnW = 150;
-  const navY = movementLayout.bottomFrameY + movementLayout.bottomFrameHeight - navBtnH - 22;
-  const centerX = movementLayout.bottomFrameWidth / 2;
-
-  if (state.playMode !== "levelselect") {
-    return;
-  }
-
-  if (state.currentLevel > 1) {
-    drawButton(gc, "<- PREV", 26, navY, navBtnW, navBtnH, () => {
-      state.currentLevel--;
-      gc.render();
-    }, 18);
-  }
-
-  drawImgButton(gc, gc.levelSelectImg, gc.levelSelectLoaded,
-    247, 337, 1044, 217, centerX - navBtnW / 2, navY, navBtnW,
-    () => { gc.resetPlayerName(); state.currentScreen = "levelselect"; gc.render(); },
-    "LEVEL SELECT",
-  );
-
-  if (state.currentLevel < LEVEL_COUNT) {
-    drawButton(gc, "NEXT ->", movementLayout.bottomFrameWidth - navBtnW - 26, navY, navBtnW, navBtnH, () => {
-      state.currentLevel++;
-      gc.render();
-    }, 18);
-  }
-};
-
-const drawAnswerZone = (gc: GameContext) => {
-  const { ctx, state } = gc;
-  const slotStroke = state.darkMode ? "rgba(255,255,255,0.92)" : "rgba(40,40,40,0.82)";
-  const slotFill = state.darkMode ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.72)";
-
-  for (const slot of gc.answerSlots) {
-    ctx.fillStyle = slotFill;
-    ctx.fillRect(slot.x, slot.y, slot.size, slot.size);
-    ctx.strokeStyle = slotStroke;
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.strokeRect(slot.x, slot.y, slot.size, slot.size);
-    ctx.setLineDash([]);
-  }
-};
 
 export const drawLevel = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
@@ -139,129 +100,17 @@ export const drawLevel = (gc: GameContext) => {
     return;
   }
 
-  if (lvl >= 11 && lvl <= 20 && !state.movementIntroSeen) {
-    // ── Movement intro popup ────────────────────────────────────────────────
-    const px = topBoxX + topBoxWidth * 0.04;
-    const py = topBoxY + topBoxHeight * 0.05;
-    const pw = topBoxWidth * 0.92;
-    const ph = topBoxHeight * 0.90;
-
-    // Backdrop
-    ctx.fillStyle = state.darkMode ? "rgba(10,20,10,0.96)" : "rgba(240,240,230,0.97)";
-    ctx.fillRect(px, py, pw, ph);
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth = 3;
-    ctx.strokeRect(px, py, pw, ph);
-
-    // ── Player sprite avatar ─────────────────────────────────────────────────
-    const robotCX = px + pw * 0.12;
-    const spriteSize = 56;
-    const spriteX = robotCX - spriteSize / 2;
-    const spriteY = py + ph * 0.12;
-    const dirSpritesIntro = {
-      down:  { img: gc.playerDownImg,  loaded: gc.playerDownLoaded },
-      up:    { img: gc.playerUpImg,    loaded: gc.playerUpLoaded },
-      left:  { img: gc.playerLeftImg,  loaded: gc.playerLeftLoaded },
-      right: { img: gc.playerRightImg, loaded: gc.playerRightLoaded },
-    };
-    const { img: introSpriteImg, loaded: introSpriteLoaded } = dirSpritesIntro[gc.guideCharDir] ?? dirSpritesIntro.down;
-    if (introSpriteLoaded) {
-      ctx.drawImage(introSpriteImg, spriteX, spriteY, spriteSize, spriteSize);
-    }
-    ctx.fillStyle = t.fgDim;
-    ctx.font = `bold 8px ${displayFont}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText("EXAM  GUIDE", robotCX, spriteY + spriteSize + 4);
-
-    // ── Guide speech ────────────────────────────────────────────────────────
-    const speechX = px + pw * 0.22;
-    const speechW = pw * 0.74;
-    ctx.fillStyle = t.fg;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.font = `bold 13px ${displayFont}`;
-    ctx.fillStyle = t.fgDim;
-    ctx.fillText("EXAM GUIDE  »", speechX, py + ph * 0.08);
-
-    const guideLines = [
-      "It is now time to check your problem solving skills",
-      "when you know its someones life at stake....  so im going in!!!",
-      "These next ones work a bit differently — get ready to move.",
-    ];
-    ctx.fillStyle = t.fg;
-    ctx.font = `16px ${bodyFont}`;
-    guideLines.forEach((line, i) => {
-      ctx.fillText(line, speechX, py + ph * 0.14 + i * 24, speechW);
-    });
-
-    // ── Divider ─────────────────────────────────────────────────────────────
-    const divY = py + ph * 0.36;
-    ctx.strokeStyle = t.divider;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(px + pw * 0.05, divY);
-    ctx.lineTo(px + pw * 0.95, divY);
-    ctx.stroke();
-
-    // ── Controls blurb ──────────────────────────────────────────────────────
-    ctx.fillStyle = t.fg;
-    ctx.font = `bold 15px ${displayFont}`;
-    ctx.textAlign = "left";
-    ctx.fillText("LEVELS 11–20 — MOVEMENT CHALLENGE", px + pw * 0.05, divY + 14);
-
-    const controlLines = [
-      "WASD — move your character, SPACE - dash , H - pick up/release blocks (must be facing it)",
-      "Carry blocks into the answer zone at the top and spell the correct answer, then hit SUBMIT. Watch out for special block types:",
-      "These levels are incomplete. The quiz is very simple now, but the movement and block mechanics are all there. The final version will have more complex layouts and puzzles.",
-      "",
-      "  Heavy — slows you to 25% speed while held",
-      "  Glass — breaks if you drop and try to pick it up again",
-      "  Invisible — hidden until you pick it up",
-      "  Countdown — counts down while held, explodes at 0",
-    ];
-
-    ctx.font = `13px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    controlLines.forEach((line, i) => {
-      ctx.fillText(line, px + pw * 0.05, divY + 38 + i * 20, pw * 0.9);
-    });
-
-    // ── Let's go button ─────────────────────────────────────────────────────
-    const btnW = 180; const btnH = 44;
-    const btnX = px + (pw - btnW) / 2;
-    const btnY = py + ph - btnH - 18;
-    drawButton(gc, "LET'S GO!", btnX, btnY, btnW, btnH, () => {
-      state.movementIntroSeen = true;
-      gc.render();
-    }, 18);
-
-    return;
-  }
-
-  if (lvl >= 11 && lvl <= 20) {
-    const movementLayout = getMovementLayout(ctx);
-
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth = 4;
-    ctx.strokeRect(
-      movementLayout.gameFrameX,
-      movementLayout.gameFrameY,
-      movementLayout.gameFrameWidth,
-      movementLayout.gameFrameHeight,
-    );
-
-    drawAnswerZone(gc);
-
-    for (const block of gc.blocks) {
-      block.draw(ctx);
-    }
-
-    gc.player.draw(ctx);
-    drawMovementLevelNavigation(gc);
-    drawLevelHUD(gc);
-    return;
-  }
+  // ── Levels 11–20 — bespoke lateral-thinking puzzles ───────────────────────
+  if (lvl === 11) { drawLevel11(gc); drawLevelHUD(gc); return; }
+  if (lvl === 12) { drawLevel12(gc); drawLevelHUD(gc); return; }
+  if (lvl === 13) { drawLevel13(gc); drawLevelHUD(gc); return; }
+  if (lvl === 14) { drawLevel14(gc); drawLevelHUD(gc); return; }
+  if (lvl === 15) { drawLevel15(gc); drawLevelHUD(gc); return; }
+  if (lvl === 16) { drawLevel16(gc); drawLevelHUD(gc); return; }
+  if (lvl === 17) { drawLevel17(gc); drawLevelHUD(gc); return; }
+  if (lvl === 18) { drawLevel18(gc); drawLevelHUD(gc); return; }
+  if (lvl === 19) { drawLevel19(gc); drawLevelHUD(gc); return; }
+  if (lvl === 20) { drawLevel20(gc); drawLevelHUD(gc); return; }
 
   if (lvl === 21 && !state.level21IntroSeen) {
     // ── Level 21 return popup ───────────────────────────────────────────────

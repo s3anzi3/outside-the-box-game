@@ -1,6 +1,6 @@
 import { GameContext } from "./types";
 import { getTheme } from "./theme";
-import { getLayout, getMovementLayout } from "./layout";
+import { getLayout } from "./layout";
 import { LEVEL_DATA } from "./levelData";
 
 export const isSkippable = (currentLevel: number): boolean => {
@@ -88,58 +88,6 @@ export const drawImgButton = (
 
 export const drawBottomPanel = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
-  const isMovementLevel = state.currentScreen === "level" && state.currentLevel >= 11 && state.currentLevel <= 20;
-
-  if (isMovementLevel) {
-    const movementLayout = getMovementLayout(ctx);
-    const t = getTheme(state);
-    const currentAnswer = gc.getAnswerPreview();
-    const timerText = `${String(gc.timeLeftSeconds).padStart(2, "0")}s`;
-    const timerColor = gc.timeLeftSeconds < 10 ? "#ff5252" : t.fgMid;
-    const submitW = 160;
-    const submitH = 48;
-    const submitX = movementLayout.bottomFrameWidth - submitW - 32;
-    const submitY = movementLayout.bottomFrameY + movementLayout.bottomFrameHeight / 2 - submitH / 2;
-    const resetW = 100;
-    const resetH = 34;
-    const resetX = movementLayout.bottomFrameWidth - resetW - 46;
-    const resetY = movementLayout.bottomFrameY + 28;
-
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth = 4;
-    ctx.strokeRect(
-      movementLayout.bottomFrameX,
-      movementLayout.bottomFrameY,
-      movementLayout.bottomFrameWidth,
-      movementLayout.bottomFrameHeight,
-    );
-
-    ctx.fillStyle = t.fg;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.font = `bold 28px ${displayFont}`;
-    ctx.fillText("Arrange The Blocks", 28, movementLayout.bottomFrameY + 22, movementLayout.bottomFrameWidth * 0.5);
-
-    ctx.font = `17px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    ctx.fillText(`Quiz: ${gc.quizPrompt}`, 28, movementLayout.bottomFrameY + 62, movementLayout.bottomFrameWidth * 0.56);
-
-    ctx.font = `15px ${bodyFont}`;
-    ctx.fillStyle = timerColor;
-    ctx.fillText(`Time Left: ${timerText}`, 28, movementLayout.bottomFrameY + 102, 180);
-
-    ctx.fillStyle = t.fg;
-    ctx.fillText(`Your Answer: ${currentAnswer}`, 28, movementLayout.bottomFrameY + 130, movementLayout.bottomFrameWidth * 0.52);
-
-    drawButton(gc, "RESET", resetX, resetY, resetW, resetH, () => {
-      gc.resetMovementLevel();
-    }, 14);
-
-    drawButton(gc, "SUBMIT", submitX, submitY, submitW, submitH, () => {
-      gc.submitMovementAnswer();
-    }, 18);
-    return;
-  }
 
   const { frameX, frameW, bottomBoxY, bottomBoxHeight } = getLayout(ctx);
   const t = getTheme(state);
@@ -228,75 +176,6 @@ export const drawBottomPanel = (gc: GameContext) => {
 
 export const drawLevelHUD = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
-  const isMovementLevel = state.currentScreen === "level" && state.currentLevel >= 11 && state.currentLevel <= 20;
-  if (isMovementLevel) {
-    const movementLayout = getMovementLayout(ctx);
-    const t = getTheme(state);
-    const padX = 28;
-    const padY = 28;
-
-    ctx.fillStyle = t.fg;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.font = `bold 24px ${displayFont}`;
-    ctx.fillText(`Q.${state.currentLevel}`, movementLayout.gameFrameX + padX, movementLayout.gameFrameY + padY);
-
-    const pauseSize = padY * 1.6;
-    const pauseX = movementLayout.gameFrameX + movementLayout.gameFrameWidth - padX - pauseSize;
-    const pauseY = movementLayout.gameFrameY + padY - pauseSize / 2;
-    if (gc.pauseButtonLoaded) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(pauseX + pauseSize / 2, pauseY + pauseSize / 2, pauseSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(gc.pauseButton, 406, 118, 735, 760, pauseX, pauseY, pauseSize, pauseSize);
-      ctx.restore();
-    } else {
-      ctx.strokeStyle = t.stroke;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(pauseX, pauseY, pauseSize, pauseSize);
-      ctx.fillStyle = t.fg;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = `bold 16px ${displayFont}`;
-      ctx.fillText("II", pauseX + pauseSize / 2, pauseY + pauseSize / 2);
-    }
-    gc.hitAreas.push({
-      x: pauseX,
-      y: pauseY,
-      w: pauseSize,
-      h: pauseSize,
-      action: () => {
-        state.paused = true;
-        gc.render();
-      },
-    });
-
-    const heartSize = 36;
-    const heartGap = 8;
-    const totalW = 3 * heartSize + 2 * heartGap;
-    const livesX = movementLayout.gameFrameX + movementLayout.gameFrameWidth - padX - totalW;
-    const livesY = movementLayout.gameFrameY + movementLayout.gameFrameHeight - padY - heartSize / 2;
-    for (let i = 0; i < 3; i++) {
-      const img = i < state.lives ? gc.heartImg : gc.lostHeartImg;
-      const loaded = i < state.lives ? gc.heartLoaded : gc.lostHeartLoaded;
-      const sx = i < state.lives ? 274 : 343;
-      const sy = i < state.lives ? 0   : 55;
-      const sw = i < state.lives ? 1011 : 856;
-      const sh = i < state.lives ? 864  : 821;
-      const hx = livesX + i * (heartSize + heartGap);
-      if (loaded) {
-        ctx.drawImage(img, sx, sy, sw, sh, hx, livesY, heartSize, heartSize);
-      } else {
-        ctx.fillStyle = i < state.lives ? "#e03030" : state.darkMode ? "#444444" : "#bbbbbb";
-        ctx.font = `${heartSize}px sans-serif`;
-        ctx.textBaseline = "top";
-        ctx.textAlign = "left";
-        ctx.fillText("\u2665", hx, livesY);
-      }
-    }
-    return;
-  }
 
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const padX = topBoxWidth * 0.05;
@@ -368,19 +247,10 @@ export const drawLevelHUD = (gc: GameContext) => {
 
 export const drawCheatsButton = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
-  const lvl = state.currentLevel;
-  const isMovement = lvl >= 11 && lvl <= 20;
 
-  let btnX: number, btnY: number;
-  if (isMovement) {
-    const ml = getMovementLayout(ctx);
-    btnX = ml.gameFrameX;
-    btnY = ml.gameFrameY - 30;
-  } else {
-    const { topBoxX, topBoxY } = getLayout(ctx);
-    btnX = topBoxX;
-    btnY = topBoxY - 30;
-  }
+  const { topBoxX, topBoxY } = getLayout(ctx);
+  const btnX = topBoxX;
+  const btnY = topBoxY - 30;
 
   const btnW = 84;
   const btnH = 24;
@@ -411,20 +281,11 @@ export const drawCheatsButton = (gc: GameContext) => {
 
 export const drawExamTimer = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
-  const lvl = state.currentLevel;
-  const isMovement = lvl >= 11 && lvl <= 20;
 
   // Position top-right above the play area (mirrored from cheats button on the left)
-  let rightEdge: number, btnY: number;
-  if (isMovement) {
-    const ml = getMovementLayout(ctx);
-    rightEdge = ml.gameFrameX + ml.gameFrameWidth;
-    btnY = ml.gameFrameY - 30;
-  } else {
-    const { topBoxX, topBoxY, topBoxWidth } = getLayout(ctx);
-    rightEdge = topBoxX + topBoxWidth;
-    btnY = topBoxY - 30;
-  }
+  const { topBoxX, topBoxY, topBoxWidth } = getLayout(ctx);
+  const rightEdge = topBoxX + topBoxWidth;
+  const btnY = topBoxY - 30;
 
   const elapsedMs = performance.now() - state.examStartTime;
   const totalSeconds = Math.floor(elapsedMs / 1000);
