@@ -495,19 +495,19 @@ window.onload = () => {
       drawLevelSelectBackButton(gc);
     }
 
-    const onCertificate = gc.state.currentLevel === 30 &&
+    const onCertificate = gc.state.currentLevel === 50 &&
       (gc.state.levelSubPhase === 'certificate' || gc.state.levelSubPhase === 'win');
 
     // Cheats button (above play area, only when cheats active on levels 2-30)
     if (!onCertificate && gc.state.cheatsEnabled && gc.state.currentScreen === "level" &&
-        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 30) {
+        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 50) {
       drawCheatsButton(gc);
     }
 
     // Exam timer (top-right above play area, play-mode only, levels 2-30)
     if (!onCertificate && gc.state.playMode === "play" && gc.state.examStartTime > 0 &&
         gc.state.currentScreen === "level" &&
-        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 30) {
+        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 50) {
       drawExamTimer(gc);
     }
 
@@ -610,8 +610,8 @@ window.onload = () => {
       }
 
       if (e.key === "Enter") {
-        if (gc.state.currentLevel === 30) {
-          // Level 30: check name answer
+        if (gc.state.currentLevel === 50) {
+          // Level 50 (finale): check name answer
           const typed   = gc.state.nameInput.trim().toLowerCase();
           const correct = gc.state.playerName.toLowerCase();
           gc.state.nameFocused = false;
@@ -695,7 +695,7 @@ window.onload = () => {
   setInterval(() => {
     if (gc.state.playMode === "play" && gc.state.examStartTime > 0 &&
         gc.state.currentScreen === "level" &&
-        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 30 &&
+        gc.state.currentLevel >= 2 && gc.state.currentLevel <= 50 &&
         !gc.state.paused && !gc.state.gameOver) {
       gc.render();
     }

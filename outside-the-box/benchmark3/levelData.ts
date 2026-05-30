@@ -1,4 +1,4 @@
-export const LEVEL_COUNT = 30;
+export const LEVEL_COUNT = 50;
 
 export interface LevelEntry {
   title: string;
@@ -32,9 +32,29 @@ export const LEVEL_DATA: LevelEntry[] = [
   { title: "Q23", lines: ["Corporate wanted a question that assessed your logic in math form.", "I hope you remember how to fill out a truth table..."] },
   { title: "Q24", lines: ["This should be an easy one..."] },
   { title: "Q25", lines: ["Some walls are only visible under the right conditions.", "Toggle your perspective to navigate."] },
-  { title: "Q26", lines: ["Development in progress."] },
-  { title: "Q27", lines: ["Development in progress."] },
-  { title: "Q28", lines: ["Development in progress."] },
-  { title: "Q29", lines: ["Development in progress."] },
-  { title: "Q30", lines: ["One final question before I hand you your results.", "Think carefully — you have answered this before."] },
+  { title: "Q26", lines: ["A simple test of focus. Watch the panels, then repeat the pattern.", "Corporate insists on measuring 'attention to detail.'"] },
+  { title: "Q27", lines: ["Reflexes count too. Stop the marker in the green.", "Don't overthink this one, candidate."] },
+  { title: "Q28", lines: ["Just press submit and we can move on.", "...it seems the button has other ideas. Back it into a corner."] },
+  { title: "Q29", lines: ["Order of operations. Multiplication does not wait its turn.", "No calculators, no shortcuts."] },
+  { title: "Q30", lines: ["Checkpoint — halfway through your certification.", "Quick: were you actually listening to me earlier?"] },
+  { title: "Q31", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q32", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q33", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q34", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q35", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q36", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q37", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q38", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q39", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q40", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q41", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q42", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q43", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q44", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q45", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q46", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q47", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q48", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q49", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q50", lines: ["One final question, candidate. You have earned it.", "Think back to the very beginning."] },
 ];

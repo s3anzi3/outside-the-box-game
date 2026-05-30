@@ -295,9 +295,9 @@ export const drawExamTimer = (gc: GameContext) => {
 
   // Color tiers: gold < 12 min, silver 12–15 min, bronze 15+ min
   let timerColor: string;
-  if (minutes < 12) {
+  if (minutes < 20) {
     timerColor = "#d4b820"; // gold
-  } else if (minutes < 15) {
+  } else if (minutes < 28) {
     timerColor = "#a8b8c0"; // silver
   } else {
     timerColor = "#cd7f32"; // bronze
