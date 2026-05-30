@@ -52,9 +52,9 @@ export const LEVEL_DATA: LevelEntry[] = [
   { title: "Q43", lines: ["Two grids. One tile is off. Find it.", "Let your eye drift — it'll catch the odd one."] },
   { title: "Q44", lines: ["A workplace mystery. Read the clues, name the culprit.", "Rule out who couldn't have done it."] },
   { title: "Q45", lines: ["Reflexes. Tag the target before the clock dies.", "Don't aim — just react."] },
-  { title: "Q46", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
-  { title: "Q47", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
-  { title: "Q48", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
-  { title: "Q49", lines: ["The exam is still compiling this question.", "Hold tight, candidate."] },
+  { title: "Q46", lines: ["A memory check. Cast your mind way back to Question 11.", "There was a word hidden in all that fine print."] },
+  { title: "Q47", lines: ["Which line is longer? Don't trust your eyes.", "Measure, candidate. Appearances lie."] },
+  { title: "Q48", lines: ["There is no fair answer to this one. None.", "You know what to do. Do the thing they told you never to do."] },
+  { title: "Q49", lines: ["One lock before the end. Every digit is an answer you already gave.", "You have everything you need. Set the code."] },
   { title: "Q50", lines: ["One final question, candidate. You have earned it.", "Think back to the very beginning."] },
 ];
