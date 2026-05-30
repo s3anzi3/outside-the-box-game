@@ -34,18 +34,21 @@ export const drawLevel17 = (gc: GameContext) => {
   }
 
   // Pause-freeze the clock
-  if (state.paused || state.controlsOpen) {
+  const frozen = state.paused || state.controlsOpen;
+  if (frozen) {
     if (pausedAt17 === 0) pausedAt17 = Date.now();
   } else if (pausedAt17 > 0) {
     endTime17 += Date.now() - pausedAt17;
     pausedAt17 = 0;
   }
 
-  const remaining = Math.max(0, endTime17 - Date.now());
+  // While paused, measure against the freeze instant so the clock can't tick down.
+  const ref = pausedAt17 > 0 ? pausedAt17 : Date.now();
+  const remaining = Math.max(0, endTime17 - ref);
   const secs = Math.ceil(remaining / 1000);
 
-  // Win when the clock runs out without a wrong click
-  if (remaining <= 0 && state.levelSubPhase === 'active') {
+  // Win when the clock runs out without a wrong click (never while paused)
+  if (remaining <= 0 && state.levelSubPhase === 'active' && !frozen) {
     state.levelSubPhase = 'win';
     gc.sounds.play('correctAnswer', { volume: 0.5 });
     gc.render();
