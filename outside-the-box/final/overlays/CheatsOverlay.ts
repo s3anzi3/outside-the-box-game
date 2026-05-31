@@ -41,52 +41,51 @@ const HINTS: Record<number, string[]> = {
     "Use WASD or arrow keys.  Hitting a wall sends you back.",
   ],
   11: [
-    "Quiz: Spell CAT.",
-    "Use WASD to move, H to pick up / drop a block.",
-    "Place C, A, T in the answer zone at the top, then click SUBMIT.",
+    "The buttons (I AGREE / ACCEPT / CONTINUE) are all decoys that cost a life.",
+    "The real answer is a single word buried in the paragraph of fine print.",
+    "Click the word PINEAPPLE inside the text.",
   ],
   12: [
-    "Quiz: Spell MAPA.",
-    "Two of the four blocks are invisible — walk around to find them.",
-    "Pick them up with H and place them in order.",
+    "Ignore what each word SAYS — look at the ink colour.",
+    "Exactly one word is printed in green ink: it's the word 'PURPLE'.",
+    "Click the word that is coloured green.",
   ],
   13: [
-    "Quiz: Spell BOX.",
-    "The B and O blocks are heavy — you move at 25% speed while holding one.",
-    "The X block is normal weight.",
+    "The answer is 6.",
+    "Three of the F's hide inside the word 'OF' — easy to miss.",
+    "Click 6.",
   ],
   14: [
-    "Quiz: Spell SKY.",
-    "All blocks are glass — pick each one up once and place it carefully.",
-    "Dropping a glass block and picking it up again destroys it.",
+    "The instruction is mirror-flipped. Read backwards it says 'CLICK THE THIRD BOX'.",
+    "Click box number 3.",
   ],
   15: [
-    "Quiz: Spell 123.",
-    "There is a hidden invisible '1' block — walk the area to bump into it.",
-    "Pick up a countdown block only when it is displaying the digit you need.",
+    "Every EXIT / SUBMIT / DOOR inside the frame is a decoy.",
+    "The real EXIT button is OUTSIDE the box, in the right-hand margin.",
+    "Click the EXIT in the margin (the arrow points to it).",
   ],
   16: [
-    "Quiz: Spell lIlIlI  (lowercase-L, uppercase-I, alternating).",
-    "Two blocks are invisible — explore the whole area to find them.",
+    "The question gives no information — but the Exam Guide's speech does.",
+    "It quietly tells you to pick BLUE.",
+    "Click the blue button.",
   ],
   17: [
-    "Quiz: Spell RUN.",
-    "The R, U, N blocks are normal weight.  Ignore the countdown block.",
+    "Do NOT press START — clicking anything costs a life and resets the clock.",
+    "Just wait. Let the countdown reach zero and you pass.",
   ],
   18: [
-    "Quiz: Spell FOG.",
-    "All three letter blocks (F, O, G) are invisible.",
-    "Walk every corner of the play area to find them.",
+    "Read the fine print: all values are in base 2.",
+    "In binary, 1 + 1 = 10.",
+    "Click 10.",
   ],
   19: [
-    "Quiz: Spell 908.",
-    "Hold the countdown '11' block until it ticks down to show '9'.",
-    "Hold the countdown '2' block until it shows '0'.  The '8' block is heavy.",
+    "O T T F F S S are the first letters of One, Two, Three, Four, Five, Six, Seven.",
+    "Next is Eight → E.",
+    "Click E.",
   ],
   20: [
-    "Quiz: Spell MIX.",
-    "One block is invisible, one is glass, one is countdown — and there is a heavy decoy.",
-    "Use H to pick up blocks; handle the glass block in one trip.",
+    "YES and NO both cost a life.",
+    "Click the flickering red ⛔ OVERRIDE button in the bottom-right corner.",
   ],
   21: [
     "Hold your left mouse button DOWN on Frodrick's giant right paddle to freeze it.",
@@ -127,6 +126,91 @@ const HINTS: Record<number, string[]> = {
     "Strategy: stay mobile under the boss, fire continuously, stop when bullets cluster overhead.",
   ],
   29: [
+    "Order of operations: multiplication before addition.",
+    "2 + (2 × 2) = 6.  Click 6.",
+  ],
+  30: [
+    "Callback to Question 16, where the Guide told you to pick BLUE.",
+    "The answer is BLUE.  Click the blue button.",
+  ],
+  31: [
+    "The instruction is hidden — invisible in dark mode.",
+    "Click 'SWITCH TO LIGHT' to reveal it: it says PICK THE THIRD BUTTON.",
+    "Click button 3.",
+  ],
+  32: [
+    "The dial is labelled MAX 10, but the track secretly goes one notch further.",
+    "Click and drag the knob all the way to the right end — to 11.",
+  ],
+  33: [
+    "One word in the paragraph is misspelled.",
+    "Click the word 'recieve' (it should be receive).",
+  ],
+  34: [
+    "Among the grid of letter O's, exactly one is a zero (0).",
+    "Click the 0.  Its position is random each attempt.",
+  ],
+  35: [
+    "Watch the four panels flash a sequence, then click them back in that order.",
+    "A wrong click costs a life and restarts the sequence.",
+  ],
+  36: [
+    "The exam pre-selects 54 and labels it RECOMMENDED — it is wrong.",
+    "7 × 8 = 56.  Click 56, then click CONFIRM SELECTION.",
+  ],
+  37: [
+    "Count every square, not just the small ones.",
+    "9 small + 4 (2×2 blocks) + 1 (whole 3×3) = 14.  Click 14.",
+  ],
+  38: [
+    "The arrow turns 90° clockwise each step: → ↓ ← ?",
+    "Next is ↑.  Click the up arrow.",
+  ],
+  39: [
+    "Each click flips that panel AND its neighbours.",
+    "Clicking all four panels (in any order) turns them all on.",
+  ],
+  40: [
+    "A single click does nothing here.",
+    "Press and HOLD the mouse button on HOLD TO REBOOT until the bar fills (~2s).",
+  ],
+  41: [
+    "Unscramble D L R O W.",
+    "The only real word is WORLD.  Click WORLD.",
+  ],
+  42: [
+    "You can only subtract 5 from 25 ONCE — after that you're subtracting from 20.",
+    "The answer is 1.  Click 1.",
+  ],
+  43: [
+    "Compare the two grids. One tile on the RIGHT grid is a different colour.",
+    "Click that tile.  Its position is random each attempt.",
+  ],
+  44: [
+    "Ada was in a meeting; Ben was abroad. Only Cleo had the opportunity.",
+    "Click CLEO.",
+  ],
+  45: [
+    "The SUBMIT button flees your cursor.",
+    "Herd it into a corner where it can't escape, then click it.",
+  ],
+  46: [
+    "Callback to Question 11, where a word was hidden in the fine print.",
+    "The answer is PINEAPPLE.",
+  ],
+  47: [
+    "Müller-Lyer illusion: the arrow-fins fool your eye.",
+    "Both lines are exactly the same length.  Click SAME.",
+  ],
+  48: [
+    "There is no fair answer — YES / NO / MAYBE / 42 all cost a life.",
+    "Click the red ⛔ CHEAT button.",
+  ],
+  49: [
+    "Set the three dials to the code 6 - 1 - 2, then click SUBMIT.",
+    "(F's on Q13 = 6, subtract 5 from 25 = 1, digits in binary '10' = 2.)",
+  ],
+  50: [
     "The question is: What is your name?",
     "Type exactly the name you entered at the start of the exam.",
     "Even 'Box' works if that is what you entered.",
@@ -137,7 +221,7 @@ export const drawCheatsOverlay = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
   const lvl = state.currentLevel;
   const t = getTheme(state);
-  const isMovement = lvl >= 11 && lvl <= 20;
+  const isMovement = false;   // 11–20 are now normal bespoke levels
 
   // ── Bounding box for the popup ─────────────────────────────────────────────
   let ox: number, oy: number, ow: number, oh: number;
