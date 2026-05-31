@@ -16,12 +16,12 @@ export const drawLevelSelect = (gc: GameContext) => {
   ctx.font         = `bold 36px ${displayFont}`;
   ctx.fillText("LEVEL SELECT", cx, topBoxY + topBoxHeight * 0.1);
 
-  // 6-column × 5-row grid (29 levels — last bottom-right slot is intentionally empty)
-  const cols  = 6;
-  const tileW = topBoxWidth  * 0.118;
+  // 10-column × 5-row grid (50 levels)
+  const cols  = 10;
+  const tileW = topBoxWidth  * 0.072;
   const tileH = topBoxHeight * 0.116;
-  const hGap  = (topBoxWidth * 0.82 - tileW * cols) / (cols - 1);
-  const vGap  = topBoxHeight * 0.028;
+  const hGap  = (topBoxWidth * 0.86 - tileW * cols) / (cols - 1);
+  const vGap  = topBoxHeight * 0.030;
   const gridW = tileW * cols + hGap * (cols - 1);
   const gridX = cx - gridW / 2;
   const gridY = topBoxY + topBoxHeight * 0.17;

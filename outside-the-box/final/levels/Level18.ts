@@ -3,35 +3,38 @@ import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { drawChoice, wrong, ensureActive, drawWinScreen } from './lateralHelpers';
 
-// ── Q29 — Order of Operations ─────────────────────────────────────────────────
-// 2 + 2 × 2. Read left to right and you get 8. Remember multiplication binds first
-// and it is 6. The "obvious" sequential answer is the trap.
+// ── Q18 — Binary Logic ────────────────────────────────────────────────────────
+// "1 + 1 = ?" — trivially 2, unless you read the fine print: all values are in
+// base 2, where 1 + 1 = 10.
 
-const CHOICES = ['4', '6', '8', '16'];
-const CORRECT = '6';
+const CHOICES = ['0', '2', '10', '11'];
+const CORRECT = '10';
 
-export const drawLevel29 = (gc: GameContext) => {
+export const drawLevel18 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
   const { w, topBoxY, topBoxHeight, topBoxWidth } = getLayout(ctx);
   const t  = getTheme(state);
   const cx = w / 2;
 
   if (state.levelSubPhase === 'win') {
-    drawWinScreen(gc, 'CORRECT.', 'Multiplication before addition. 2 + (2 × 2) = 6.', 30);
+    drawWinScreen(gc, 'CORRECT.', 'In base 2, one plus one is 10. You checked the fine print.', 19);
     return;
   }
   ensureActive(gc);
 
+  // The "easy" question
   ctx.fillStyle    = t.fg;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font         = `bold 66px ${displayFont}`;
-  ctx.fillText('2  +  2  ×  2  =  ?', cx, topBoxY + topBoxHeight * 0.30);
+  ctx.font         = `bold 72px ${displayFont}`;
+  ctx.fillText('1  +  1  =  ?', cx, topBoxY + topBoxHeight * 0.28);
 
-  ctx.fillStyle = t.fgDim;
-  ctx.font      = `15px ${bodyFont}`;
-  ctx.fillText('No calculator. No left-to-right shortcuts.', cx, topBoxY + topBoxHeight * 0.47, topBoxWidth * 0.9);
+  // The easy-to-miss fine print
+  ctx.fillStyle    = t.fgDim;
+  ctx.font         = `15px ${bodyFont}`;
+  ctx.fillText('( all values in this question are expressed in base 2 )', cx, topBoxY + topBoxHeight * 0.46, topBoxWidth * 0.9);
 
+  // Answer buttons
   const n = CHOICES.length;
   const btnW = topBoxWidth * 0.15;
   const btnH = 56;

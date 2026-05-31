@@ -88,7 +88,7 @@ export const drawImgButton = (
 
 export const drawBottomPanel = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
-  const isMovementLevel = state.currentScreen === "level" && state.currentLevel >= 11 && state.currentLevel <= 20;
+  const isMovementLevel = false;   // 11–20 are now normal bespoke levels
 
   if (isMovementLevel) {
     const movementLayout = getMovementLayout(ctx);
@@ -224,7 +224,7 @@ export const drawBottomPanel = (gc: GameContext) => {
 
 export const drawLevelHUD = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
-  const isMovementLevel = state.currentScreen === "level" && state.currentLevel >= 11 && state.currentLevel <= 20;
+  const isMovementLevel = false;   // 11–20 are now normal bespoke levels
   if (isMovementLevel) {
     const movementLayout = getMovementLayout(ctx);
     const t = getTheme(state);
@@ -365,7 +365,7 @@ export const drawLevelHUD = (gc: GameContext) => {
 export const drawCheatsButton = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
   const lvl = state.currentLevel;
-  const isMovement = lvl >= 11 && lvl <= 20;
+  const isMovement = false;   // 11–20 are now normal bespoke levels
 
   let btnX: number, btnY: number;
   if (isMovement) {
@@ -408,7 +408,7 @@ export const drawCheatsButton = (gc: GameContext) => {
 export const drawExamTimer = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
   const lvl = state.currentLevel;
-  const isMovement = lvl >= 11 && lvl <= 20;
+  const isMovement = false;   // 11–20 are now normal bespoke levels
 
   // Position top-right above the play area (mirrored from cheats button on the left)
   let rightEdge: number, btnY: number;
@@ -430,9 +430,9 @@ export const drawExamTimer = (gc: GameContext) => {
 
   // Color tiers: gold < 13 min, silver 13–16 min, bronze 16+ min
   let timerColor: string;
-  if (minutes < 13) {
+  if (minutes < 20) {
     timerColor = "#d4b820"; // gold
-  } else if (minutes < 16) {
+  } else if (minutes < 28) {
     timerColor = "#a8b8c0"; // silver
   } else {
     timerColor = "#cd7f32"; // bronze
