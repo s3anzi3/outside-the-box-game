@@ -155,6 +155,26 @@ class MazeWalkState extends State {
       const ri = ((d.histIdx - setback) % HIST_LEN + HIST_LEN) % HIST_LEN;
       d.pos.x = d.histX[ri];
       d.pos.y = d.histY[ri];
+      // Safety net: if the rewind target is ALSO inside a wall, walk further back
+      // through history for a clear spot; failing that, snap to the start cell.
+      // Without this the player can land in a wall and be stuck in an endless
+      // "oof" loop with no way out.
+      if (hitsWall(d.pos, d.half, d.walls)) {
+        let recovered = false;
+        for (let back = setback + 1; back <= Math.min(HIST_LEN, d.histIdx); back++) {
+          const k = ((d.histIdx - back) % HIST_LEN + HIST_LEN) % HIST_LEN;
+          if (!hitsWall(new Vec2(d.histX[k], d.histY[k]), d.half, d.walls)) {
+            d.pos.x = d.histX[k];
+            d.pos.y = d.histY[k];
+            recovered = true;
+            break;
+          }
+        }
+        if (!recovered) {
+          d.pos.x = d.startX;
+          d.pos.y = d.startY;
+        }
+      }
       d.onHitWall();
     }
 
