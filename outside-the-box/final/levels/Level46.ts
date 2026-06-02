@@ -4,13 +4,13 @@ import { getLayout }   from '../layout';
 import { drawChoice, wrong, ensureActive, drawWinScreen } from './lateralHelpers';
 
 // ── Q46 — Recall ──────────────────────────────────────────────────────────────
-// Long ago, on Q11, a single word was buried in the fine print. Did it stick?
+// Way back on Q11, the "results" loading bar froze at 99%. How did you get past it?
 
 const OPTIONS: { label: string; correct: boolean }[] = [
-  { label: 'PROTOCOL',  correct: false },
-  { label: 'PINEAPPLE', correct: true  },
-  { label: 'PAPERWORK', correct: false },
-  { label: 'PASSWORD',  correct: false },
+  { label: 'WAITED IT OUT',   correct: false },
+  { label: 'CLICKED RETRY',   correct: false },
+  { label: 'DRAGGED IT',      correct: true  },
+  { label: 'REBOOTED',        correct: false },
 ];
 
 export const drawLevel46 = (gc: GameContext) => {
@@ -20,7 +20,7 @@ export const drawLevel46 = (gc: GameContext) => {
   const cx = w / 2;
 
   if (state.levelSubPhase === 'win') {
-    drawWinScreen(gc, 'PINEAPPLE.', 'Buried in the fine print on Q11. You were paying attention all along.', 47);
+    drawWinScreen(gc, 'YOU DRAGGED IT.', 'The loading bar was never going to finish on its own. You did.', 47);
     return;
   }
   ensureActive(gc);
@@ -29,13 +29,13 @@ export const drawLevel46 = (gc: GameContext) => {
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'top';
   ctx.font         = `bold 23px ${displayFont}`;
-  ctx.fillText('Back on Question 11, one word was hidden in the fine print.', cx, topBoxY + topBoxHeight * 0.16, topBoxWidth * 0.92);
+  ctx.fillText('Back on Question 11, the results bar froze at 99%.', cx, topBoxY + topBoxHeight * 0.16, topBoxWidth * 0.92);
   ctx.fillStyle = t.fgMid;
   ctx.font      = `bold 22px ${displayFont}`;
-  ctx.fillText('What was it?', cx, topBoxY + topBoxHeight * 0.30);
+  ctx.fillText('How did you finish it?', cx, topBoxY + topBoxHeight * 0.30);
 
   const n = OPTIONS.length;
-  const btnW = topBoxWidth * 0.20;
+  const btnW = topBoxWidth * 0.21;
   const btnH = 54;
   const gap  = topBoxWidth * 0.025;
   const totW = n * btnW + (n - 1) * gap;

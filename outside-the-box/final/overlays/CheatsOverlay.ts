@@ -41,9 +41,9 @@ const HINTS: Record<number, string[]> = {
     "Use WASD or arrow keys.  Hitting a wall sends you back.",
   ],
   11: [
-    "The buttons (I AGREE / ACCEPT / CONTINUE) are all decoys that cost a life.",
-    "The real answer is a single word buried in the paragraph of fine print.",
-    "Click the word PINEAPPLE inside the text.",
+    "The bar loads, then freezes at 99% forever — waiting will never finish it.",
+    "RETRY just resets it to 0% and costs a life.",
+    "Grab the bar's handle and DRAG the final 1% all the way to 100% yourself.",
   ],
   12: [
     "Ignore what each word SAYS — look at the ink colour.",
@@ -195,8 +195,8 @@ const HINTS: Record<number, string[]> = {
     "Herd it into a corner where it can't escape, then click it.",
   ],
   46: [
-    "Callback to Question 11, where a word was hidden in the fine print.",
-    "The answer is PINEAPPLE.",
+    "Callback to Question 11's loading bar that froze at 99%.",
+    "You beat it by dragging it to the end — click DRAGGED IT.",
   ],
   47: [
     "Müller-Lyer illusion: the arrow-fins fool your eye.",
