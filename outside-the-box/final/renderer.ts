@@ -8,6 +8,23 @@ export const isSkippable = (currentLevel: number): boolean => {
   return entry ? entry.skippable !== false : true;
 };
 
+// Responsive metrics for the Exam Guide speech text in the bottom panel.
+// Font size and line spacing scale with the panel height so dialogue fits on
+// smaller screens. Exported so levels that hit-test against the rendered text
+// (e.g. Level 3's dot on the 'i' in "Click") stay aligned with what's drawn.
+export const getGuideTextMetrics = (ctx: CanvasRenderingContext2D) => {
+  const { frameX, frameW, bottomBoxY, bottomBoxHeight } = getLayout(ctx);
+  const contentX = frameX;
+  const contentWidth = frameW;
+  const divX = contentX + contentWidth * 0.155;
+  const speechX = divX + contentWidth * 0.025;
+  const speechW = contentX + contentWidth - speechX - contentWidth * 0.02;
+  const panelCY = bottomBoxY + bottomBoxHeight / 2;
+  const fontPx = Math.max(13, Math.min(18, Math.round(bottomBoxHeight * 0.11)));
+  const lineGap = Math.round(fontPx * 1.5);
+  return { speechX, speechW, panelCY, fontPx, lineGap, bottomBoxY, bottomBoxHeight };
+};
+
 export const drawBackground = (gc: GameContext) => {
   const { ctx, state } = gc;
   const t = getTheme(state);
@@ -210,13 +227,14 @@ export const drawBottomPanel = (gc: GameContext) => {
     displayLines[displayLines.length - 1] += " |";
   }
 
-  const lineGap = 27;
+  const guideM = getGuideTextMetrics(ctx);
+  const lineGap = guideM.lineGap;
   const totalH = fullLines.length * lineGap;
   const startY = panelCY - totalH / 2 + lineGap * 0.1;
 
   ctx.fillStyle = t.fg;
   ctx.textBaseline = "middle";
-  ctx.font = `18px ${bodyFont}`;
+  ctx.font = `${guideM.fontPx}px ${bodyFont}`;
   for (let i = 0; i < displayLines.length; i++) {
     ctx.fillText(displayLines[i], speechX, startY + i * lineGap, speechW);
   }

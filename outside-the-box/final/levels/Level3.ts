@@ -1,11 +1,11 @@
 import { GameContext } from "../types";
 import { getTheme } from "../theme";
 import { getLayout } from "../layout";
+import { getGuideTextMetrics } from "../renderer";
 
 export const drawLevel3 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
-  const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight, bottomBoxY, bottomBoxHeight, frameX, frameW } =
-    getLayout(ctx);
+  const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const cx = w / 2;
   const t = getTheme(state);
 
@@ -66,20 +66,19 @@ export const drawLevel3 = (gc: GameContext) => {
   }
 
   // Hidden hit area: the tittle (dot) on the 'i' in "Click" in the bottom panel.
-  const contentX    = frameX;
-  const contentWidth = frameW;
-  const divX    = contentX + contentWidth * 0.155;
-  const speechX = divX + contentWidth * 0.025;
-  const panelCY = bottomBoxY + bottomBoxHeight / 2;
-  const lineGap = 27;
-  const startY  = panelCY - lineGap / 2 + lineGap * 0.1;
+  // Use the SAME responsive metrics the panel renders with, so the dot stays
+  // aligned and clickable at any screen size.
+  const gm = getGuideTextMetrics(ctx);
+  const speechX = gm.speechX;
+  const lineGap = gm.lineGap;
+  const startY  = gm.panelCY - lineGap / 2 + lineGap * 0.1;
 
-  ctx.font = `18px ${bodyFont}`;
+  ctx.font = `${gm.fontPx}px ${bodyFont}`;
   const prefixW = ctx.measureText("Cl").width;
   const iCharW  = ctx.measureText("i").width;
   const iDotCX  = speechX + prefixW + iCharW / 2;
-  const iDotCY  = startY - 6;
-  const hitR    = 8;
+  const iDotCY  = startY - gm.fontPx * 0.33;
+  const hitR    = Math.max(8, gm.fontPx * 0.55);
 
   gc.hitAreas.push({
     x: iDotCX - hitR,
