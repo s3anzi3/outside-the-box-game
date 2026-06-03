@@ -39,21 +39,28 @@ export const drawLevel3 = (gc: GameContext) => {
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
 
+    // Font sizes scale with BOTH tile height and width so labels can't spill out
+    // of a narrow tile; maxW is a hard cap as the final safety net.
+    const big   = Math.round(Math.min(tileH * 0.42, tileW * 0.22));
+    const med   = Math.round(Math.min(tileH * 0.30, tileW * 0.10));
+    const small = Math.round(Math.min(tileH * 0.26, tileW * 0.12));
+    const maxW  = tileW * 0.86;
+
     if (i === 0) {
-      ctx.font = `bold ${Math.round(tileH * 0.44)}px ${displayFont}`;
-      ctx.fillText("dot", tx + tileW / 2, ty + tileH / 2);
+      ctx.font = `bold ${big}px ${displayFont}`;
+      ctx.fillText("dot", tx + tileW / 2, ty + tileH / 2, maxW);
     } else if (i === 1) {
-      ctx.font = `bold ${Math.round(tileH * 0.30)}px ${displayFont}`;
-      ctx.fillText("Kendrick 'K-dot' Lamar", tx + tileW / 2, ty + tileH / 2, tileW - 16);
+      ctx.font = `bold ${med}px ${displayFont}`;
+      ctx.fillText("Kendrick 'K-dot' Lamar", tx + tileW / 2, ty + tileH / 2, maxW);
     } else if (i === 2) {
-      ctx.font = `bold ${Math.round(tileH * 0.44)}px ${displayFont}`;
-      ctx.fillText("\u2022 \u2022 \u2022", tx + tileW / 2, ty + tileH / 2);
+      ctx.font = `bold ${big}px ${displayFont}`;
+      ctx.fillText("\u2022 \u2022 \u2022", tx + tileW / 2, ty + tileH / 2, maxW);
     } else {
-      ctx.font = `bold ${Math.round(tileH * 0.30)}px ${displayFont}`;
-      ctx.fillText("Dept. of Technology", tx + tileW / 2, ty + tileH * 0.38, tileW - 16);
-      ctx.font = `${Math.round(tileH * 0.26)}px ${bodyFont}`;
+      ctx.font = `bold ${med}px ${displayFont}`;
+      ctx.fillText("Dept. of Technology", tx + tileW / 2, ty + tileH * 0.38, maxW);
+      ctx.font = `${small}px ${bodyFont}`;
       ctx.fillStyle = "#444";
-      ctx.fillText("(D.O.T)", tx + tileW / 2, ty + tileH * 0.72);
+      ctx.fillText("(D.O.T)", tx + tileW / 2, ty + tileH * 0.72, maxW);
     }
 
     gc.hitAreas.push({
