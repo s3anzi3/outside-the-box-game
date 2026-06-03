@@ -41,10 +41,10 @@ export const drawLevel3 = (gc: GameContext) => {
 
     // Font sizes scale with BOTH tile height and width so labels can't spill out
     // of a narrow tile; maxW is a hard cap as the final safety net.
-    const big   = Math.round(Math.min(tileH * 0.42, tileW * 0.22));
-    const med   = Math.round(Math.min(tileH * 0.30, tileW * 0.10));
-    const small = Math.round(Math.min(tileH * 0.26, tileW * 0.12));
-    const maxW  = tileW * 0.86;
+    const big   = Math.round(Math.min(tileH * 0.38, tileW * 0.17));
+    const med   = Math.round(Math.min(tileH * 0.28, tileW * 0.075));
+    const small = Math.round(Math.min(tileH * 0.24, tileW * 0.085));
+    const maxW  = tileW * 0.74;
 
     if (i === 0) {
       ctx.font = `bold ${big}px ${displayFont}`;
