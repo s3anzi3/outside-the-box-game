@@ -1,7 +1,7 @@
 console.log("FINAL MAIN LOADED");
 
 import { GameContext, GameState, MovementArea } from "./types";
-import { drawBackground, drawLogo, drawGameplayFrame, drawBottomPanel, drawCheatsButton, drawExamTimer } from "./renderer";
+import { drawBackground, drawLogo, drawGameplayFrame, drawBottomPanel, drawCheatsButton, drawExamTimer, drawLoadingScreen } from "./renderer";
 import { drawCheatsOverlay } from "./overlays/CheatsOverlay";
 import { LEVEL_DATA } from "./levelData";
 import { drawIntro, INTRO_LINES } from "./screens/Intro";
@@ -162,6 +162,8 @@ window.onload = () => {
     mouseDown: false,
     keysDown: new Set<string>(),
     wheelDeltaY: 0,
+    assetsReady: false,
+    assetProgress: 0,
     sounds: new SoundManager(),
     player,
     blocks: [],
@@ -410,6 +412,14 @@ window.onload = () => {
 
   gc.render = () => {
     gc.hitAreas = [];
+
+    // Hold a loading screen until image assets have been fetched, so the player
+    // never sees half-loaded buttons / bare borders on the menu or early levels.
+    if (!gc.assetsReady) {
+      drawBackground(gc);
+      drawLoadingScreen(gc);
+      return;
+    }
 
     // Activate cheats only while the player's name is the cheat code
     gc.state.cheatsEnabled = gc.state.playerName === "380TA";
@@ -860,10 +870,40 @@ window.onload = () => {
   gc.playerLeftImg.src = "./assets/Player/Player_Left.png";
   gc.playerRightImg.src = "./assets/Player/Player_Right.png";
 
+  // ── Asset gate ──────────────────────────────────────────────────────────────
+  // Track every image we just kicked off, and keep the loading screen up until
+  // they have all finished (loaded OR errored), so nothing pops in mid-menu.
+  const assetImgs: HTMLImageElement[] = [
+    gc.logo, gc.pauseButton, gc.levelSelectImg, gc.startExamImg, gc.controlsImg,
+    gc.resumeImg, gc.quitExamImg, gc.lightModeImg, gc.darkModeImg, gc.levelBGImg,
+    gc.bannerImg, gc.longBlankButtonImg, gc.acceptImg, gc.declineImg, gc.heartImg,
+    gc.lostHeartImg, gc.backImg, gc.beggarImg, gc.tutorialBackgroundImg,
+    gc.playerDownImg, gc.playerUpImg, gc.playerLeftImg, gc.playerRightImg,
+  ];
+  const refreshAssetProgress = () => {
+    const done = assetImgs.filter((im) => im.complete).length;
+    gc.assetProgress = done / assetImgs.length;
+    if (done >= assetImgs.length) gc.assetsReady = true;
+  };
+  assetImgs.forEach((im) => {
+    im.addEventListener("load",  () => { refreshAssetProgress(); gc.render(); });
+    im.addEventListener("error", () => { refreshAssetProgress(); gc.render(); });
+  });
+  refreshAssetProgress();   // count any already-cached images
+  // Safety net: never let a stuck/missing asset trap the player on the loader.
+  setTimeout(() => { if (!gc.assetsReady) { gc.assetsReady = true; gc.render(); } }, 6000);
+
   resizeCanvases();
   gc.render();
 
   const gameLoop = () => {
+    // While assets are still loading, just keep the spinner animating.
+    if (!gc.assetsReady) {
+      gc.render();
+      requestAnimationFrame(gameLoop);
+      return;
+    }
+
     const movementLevelActive = gc.state.currentScreen === "level" && isMovementLevel(gc.state.currentLevel);
 
     if (

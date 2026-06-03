@@ -25,6 +25,62 @@ export const getGuideTextMetrics = (ctx: CanvasRenderingContext2D) => {
   return { speechX, speechW, panelCY, fontPx, lineGap, bottomBoxY, bottomBoxHeight };
 };
 
+// Full-screen loading screen shown until image assets have been fetched, so the
+// player never sees half-drawn buttons. Animated spinner + asset progress bar.
+export const drawLoadingScreen = (gc: GameContext) => {
+  const { ctx, state, displayFont } = gc;
+  const t = getTheme(state);
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const now = Date.now();
+
+  // Logo once it's available, otherwise the wordmark
+  if (gc.logoLoaded && gc.logo.naturalWidth > 0) {
+    const lw = Math.min(w * 0.16, 230);
+    const lh = lw * (gc.logo.naturalHeight / gc.logo.naturalWidth);
+    ctx.drawImage(gc.logo, cx - lw / 2, cy - h * 0.20 - lh / 2, lw, lh);
+  } else {
+    ctx.fillStyle    = t.fg;
+    ctx.textAlign    = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `bold ${Math.round(Math.min(w * 0.045, 46))}px ${displayFont}`;
+    ctx.fillText("Outside-the-Box", cx, cy - h * 0.16, w * 0.9);
+  }
+
+  // Spinner
+  const r = Math.max(14, Math.min(w, h) * 0.045);
+  ctx.lineCap   = "round";
+  ctx.lineWidth = Math.max(3, r * 0.16);
+  ctx.strokeStyle = t.divider;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.stroke();
+  const a0 = (now / 550) % (Math.PI * 2);
+  ctx.strokeStyle = "#d4b820";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, a0, a0 + Math.PI * 0.6);
+  ctx.stroke();
+
+  // "LOADING…" with animated dots
+  ctx.fillStyle    = t.fgMid;
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${Math.round(Math.max(12, Math.min(w * 0.016, 16)))}px ${displayFont}`;
+  ctx.fillText("LOADING" + ".".repeat(1 + (Math.floor(now / 350) % 3)), cx, cy + h * 0.105);
+
+  // Asset progress bar
+  const barW = Math.min(w * 0.26, 320);
+  const barH = 6;
+  const barX = cx - barW / 2;
+  const barY = cy + h * 0.15;
+  ctx.fillStyle = t.divider;
+  ctx.fillRect(barX, barY, barW, barH);
+  ctx.fillStyle = "#d4b820";
+  ctx.fillRect(barX, barY, barW * Math.max(0.04, Math.min(1, gc.assetProgress)), barH);
+};
+
 export const drawBackground = (gc: GameContext) => {
   const { ctx, state } = gc;
   const t = getTheme(state);

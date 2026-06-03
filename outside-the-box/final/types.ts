@@ -168,4 +168,6 @@ export interface GameContext {
   quizPrompt:      string;
   quizAnswer:      string;
   timeLeftSeconds: number;
+  assetsReady:     boolean;   // false until image assets have finished fetching
+  assetProgress:   number;    // 0..1 fraction of image assets loaded
 }
