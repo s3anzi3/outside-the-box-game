@@ -1,7 +1,7 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawChoice, ensureActive, drawWinScreen } from './lateralHelpers';
+import { ensureActive, drawWinScreen } from './lateralHelpers';
 
 // ── Q11 — Loading… 99% ────────────────────────────────────────────────────────
 // The exam "compiles your results": a realistic, stuttering progress bar that
@@ -132,21 +132,6 @@ export const drawLevel11 = (gc: GameContext) => {
   ctx.textBaseline = 'top';
   ctx.font         = `bold 30px ${displayFont}`;
   ctx.fillText(`${pct}%`, cx, barY + barH + 18);
-
-  // ── Once it's clearly stuck, nudge the player + offer the RETRY trap ─────────
-  if (stuck) {
-    ctx.fillStyle = t.fgDim;
-    ctx.font      = `13px ${bodyFont}`;
-    ctx.fillText('(it is not going to finish on its own.)', cx, topBoxY + topBoxHeight * 0.74, topBoxWidth * 0.9);
-
-    const rW = topBoxWidth * 0.18, rH = 38;
-    drawChoice(gc, 'RETRY', cx - rW / 2, topBoxY + topBoxHeight * 0.82, rW, rH, () => {
-      // The "turn it off and on again" reflex — resets the load and costs a life.
-      gc.loseLife();
-      fill11 = 0; grabbed11 = false; start11 = Date.now();
-      gc.render();
-    }, { fontSize: 15 });
-  }
 
   // ── Animation loop ──────────────────────────────────────────────────────────
   cancelAnimationFrame(raf11);

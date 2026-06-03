@@ -17,7 +17,7 @@ export const LEVEL_DATA: LevelEntry[] = [
   { title: "Q8",  lines: ["An unregistered individual has approached you during the examination.", "This interaction is not part of the official assessment."], skippable: false },
   { title: "Q9",  lines: ["Focus, candidate. Show all work.", "Select the correct answer from the options above."] },
   { title: "Q10", lines: ["Navigate to the exit.", "The path is yours to find."] },
-  { title: "Q11", lines: ["Compiling your results — this may take a moment.", "...it has been stuck at 99% for a while now, hasn't it? Perhaps it just needs a hand, candidate."] },
+  { title: "Q11", lines: ["Give it a minute, maybe."] },
   { title: "Q12", lines: ["Don't read what it says. See what it is.", "Trust your eyes over the words, candidate."] },
   { title: "Q13", lines: ["Count carefully. The obvious answer is rarely the whole answer.", "Look again — you always miss the small ones."] },
   { title: "Q14", lines: ["The display is faulting again. ...gnimoc s'tahw daer t'nac uoY", "Try seeing it the other way around."] },
