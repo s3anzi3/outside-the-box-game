@@ -1,6 +1,7 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
+import { drawChoice, wrong } from './lateralHelpers';
 
 const SECRET = 'KEYBOARD';
 
@@ -76,25 +77,7 @@ export const drawLevel27 = (gc: GameContext) => {
 
   for (let i = 0; i < options.length; i++) {
     const bx = btnSX + i * (btnW + btnGap);
-
-    if (gc.levelBGLoaded) {
-      ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, bx, btnY, btnW, btnH);
-    } else {
-      ctx.strokeStyle = t.stroke;
-      ctx.lineWidth   = 2;
-      ctx.strokeRect(bx, btnY, btnW, btnH);
-    }
-
-    ctx.fillStyle    = '#1a1a1a';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 18px ${displayFont}`;
-    ctx.fillText(options[i], bx + btnW / 2, btnY + btnH / 2);
-
-    gc.hitAreas.push({
-      x: bx, y: btnY, w: btnW, h: btnH,
-      action: () => gc.loseLife(),
-    });
+    drawChoice(gc, options[i], bx, btnY, btnW, btnH, () => wrong(gc), { fontSize: 18 });
   }
 
   // ── Subtle in-progress preview of typed letters ───────────────────────────

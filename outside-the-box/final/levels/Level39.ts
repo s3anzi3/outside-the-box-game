@@ -48,7 +48,7 @@ export const drawLevel39 = (gc: GameContext) => {
     const col = i % 2, row = Math.floor(i / 2);
     const bx = gx + col * (cell + gap);
     const by = gy + row * (cell + gap);
-    ctx.fillStyle = lights39[i] ? '#f0d050' : (state.darkMode ? '#1c1c1c' : '#cfcfcf');
+    ctx.fillStyle = lights39[i] ? t.seal : t.panel;
     ctx.fillRect(bx, by, cell, cell);
     ctx.strokeStyle = t.stroke;
     ctx.lineWidth = 3;

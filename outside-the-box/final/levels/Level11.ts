@@ -102,10 +102,10 @@ export const drawLevel11 = (gc: GameContext) => {
   ctx.fillText(grabbed11 ? 'Finishing up…' : statusFor(fill11), cx, topBoxY + topBoxHeight * 0.32, topBoxWidth * 0.9);
 
   // ── Track ───────────────────────────────────────────────────────────────────
-  ctx.fillStyle = state.darkMode ? '#1c1c1c' : '#d6d6d6';
+  ctx.fillStyle = t.hairline;
   ctx.fillRect(barX, barY, barW, barH);
   // Fill
-  ctx.fillStyle = '#39a05a';
+  ctx.fillStyle = t.pass;
   ctx.fillRect(barX, barY, barW * fill11, barH);
   // Border
   ctx.strokeStyle = t.stroke;
@@ -114,12 +114,12 @@ export const drawLevel11 = (gc: GameContext) => {
 
   // ── Handle (grip) at the fill edge ──────────────────────────────────────────
   const hx = barX + barW * fill11;
-  ctx.fillStyle = stuck || grabbed11 ? '#e2c25b' : (state.darkMode ? '#eee' : '#222');
+  ctx.fillStyle = stuck || grabbed11 ? t.seal : t.ink;
   ctx.fillRect(hx - 7, barY - 8, 14, barH + 16);
   ctx.strokeStyle = t.stroke;
   ctx.lineWidth = 2;
   ctx.strokeRect(hx - 7, barY - 8, 14, barH + 16);
-  ctx.strokeStyle = state.darkMode ? '#333' : '#fff';
+  ctx.strokeStyle = t.hairline;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(hx - 2, barY - 3); ctx.lineTo(hx - 2, barY + barH + 3);

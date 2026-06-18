@@ -163,6 +163,7 @@ export const drawLevel6 = (gc: GameContext) => {
   // ── Initialise on fresh entry ─────────────────────────────────────────────
   if (state.levelSubPhase !== "active" && state.levelSubPhase !== "win") {
     resetPong();
+    state.winChimeFor = -1;
     state.levelSubPhase = "active";
   }
 
@@ -174,7 +175,8 @@ export const drawLevel6 = (gc: GameContext) => {
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === "win") {
     cancelAnimationFrame(animId6);
-    ctx.fillStyle    = t.fg;
+    if (state.winChimeFor !== 6) { state.winChimeFor = 6; gc.sounds.ui("chime"); }
+    ctx.fillStyle    = t.pass;
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
     ctx.font         = `bold 44px ${displayFont}`;

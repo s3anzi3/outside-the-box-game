@@ -1,6 +1,8 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
+import { roundRect, uiScale } from '../renderer';
+import { wrong }       from './lateralHelpers';
 
 const WINDOW_DURATION = 500;  // ms the click window stays open
 
@@ -29,6 +31,7 @@ export const drawLevel4 = (gc: GameContext) => {
   const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const cx = w / 2;
   const t  = getTheme(state);
+  const s  = uiScale(ctx);
 
   // Initialise on fresh entry
   if (state.levelSubPhase !== "active") {
@@ -63,10 +66,10 @@ export const drawLevel4 = (gc: GameContext) => {
   });
 
   // ── Big countdown ────────────────────────────────────────────────────────
-  ctx.fillStyle    = t.fg;
+  ctx.fillStyle    = t.ink;
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
-  ctx.font         = `bold 110px ${displayFont}`;
+  ctx.font         = `bold ${Math.round(topBoxHeight * 0.32)}px ${displayFont}`;
   ctx.fillText(`${seconds}`, cx, topBoxY + topBoxHeight * 0.32);
 
   // ── Progress bar ─────────────────────────────────────────────────────────
@@ -75,7 +78,7 @@ export const drawLevel4 = (gc: GameContext) => {
   const barX = cx - barW / 2;
   const barY = topBoxY + topBoxHeight * 0.56;
 
-  ctx.strokeStyle = t.divider;
+  ctx.strokeStyle = t.hairline;
   ctx.lineWidth   = 1;
   ctx.strokeRect(barX, barY, barW, barH);
 
@@ -94,23 +97,30 @@ export const drawLevel4 = (gc: GameContext) => {
   const btnX = cx - btnW / 2;
   const btnY = topBoxY + topBoxHeight * 0.68;
 
-  if (inWindow) {
-    // Window open — green background, click to advance
-    ctx.fillStyle = "#22aa44";
-    ctx.fillRect(btnX, btnY, btnW, btnH);
-    ctx.strokeStyle = "#00ff88";
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(btnX, btnY, btnW, btnH);
-    ctx.fillStyle    = "#ffffff";
-    ctx.font         = `bold 22px ${displayFont}`;
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("CLICK ME QUICKLY", cx, btnY + btnH / 2);
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.4)" : "rgba(60,45,20,0.22)";
+  ctx.shadowBlur = inWindow ? 18 : 8;
+  ctx.shadowOffsetY = 3;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 6);
+  ctx.fillStyle = inWindow ? t.pass : t.danger;
+  ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = inWindow ? "#2f7d52" : "#7a2420";
+  ctx.lineWidth   = 2.5;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 6);
+  ctx.stroke();
+  ctx.fillStyle    = "#F7F1E3";
+  ctx.font         = `bold ${Math.round(22 * s)}px ${gc.bodyFont}`;
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(inWindow ? "CLICK NOW!" : "CLICK ME QUICKLY", cx, btnY + btnH / 2);
 
+  if (inWindow) {
     gc.hitAreas.push({
       x: btnX, y: btnY, w: btnW, h: btnH,
       action: () => {
         cancelAnimationFrame(animFrameId4);
+        gc.sounds.ui("chime");
         state.levelTimerEnd  = 0;
         state.levelSubPhase  = "";
         state.currentLevel   = 5;
@@ -118,25 +128,13 @@ export const drawLevel4 = (gc: GameContext) => {
       },
     });
   } else {
-    // Window closed — red background, clicking = strike
-    ctx.fillStyle = "#aa2222";
-    ctx.fillRect(btnX, btnY, btnW, btnH);
-    ctx.strokeStyle = "#ff4444";
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(btnX, btnY, btnW, btnH);
-    ctx.fillStyle    = "#ffffff";
-    ctx.font         = `bold 22px ${displayFont}`;
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("CLICK ME QUICKLY", cx, btnY + btnH / 2);
-
     gc.hitAreas.push({
       x: btnX, y: btnY, w: btnW, h: btnH,
       action: () => {
         timerDuration        = newAttempt();
         state.levelTimerEnd  = Date.now() + timerDuration;
         scheduleAttempt(state.levelTimerEnd, timerDuration);
-        gc.loseLife();
+        wrong(gc);
       },
     });
   }

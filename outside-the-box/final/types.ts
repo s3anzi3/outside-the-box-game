@@ -31,6 +31,10 @@ export interface GameState {
   cheatsPopupOpen:   boolean;  // true when the cheats popup is visible
   examStartTime:     number;   // performance.now() timestamp when exam began; 0 = not running
   examFinalMs:       number;   // elapsed ms at the moment level 30 was completed; 0 = not yet
+  fxStampText?:      string;   // transient stamp-slam feedback text (CORRECT / INCORRECT)
+  fxStampColor?:     string;
+  fxStampAt?:        number;   // performance.now() when the stamp fired; undefined = none
+  winChimeFor?:      number;   // currentLevel the win chime has already played for
 }
 
 export interface HitArea {
@@ -104,6 +108,7 @@ export interface GameContext {
   getAnswerPreview: () => string;
   displayFont: string;
   bodyFont: string;
+  monoFont: string;
   logo: HTMLImageElement;
   gameplayFrame: HTMLImageElement;
   pauseButton: HTMLImageElement;

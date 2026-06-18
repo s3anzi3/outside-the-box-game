@@ -1,18 +1,20 @@
-// Shared helpers for the lateral-thinking levels (11–20).
+// Shared helpers for the lateral-thinking levels.
 // Kept tiny on purpose — each level still owns its own puzzle logic.
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawButton }  from '../renderer';
+import { drawButton, roundRect, uiScale, triggerStamp } from '../renderer';
 
 export interface ChoiceOpts {
   fontSize?: number;
   textColor?: string;
   fill?: string;
-  body?: boolean;      // use the body font instead of the display font
+  body?: boolean;      // accepted for back-compat; choices always use the UI font now
 }
 
-// A filled, bordered clickable button. Registers its own hit area.
+// A filled, bordered clickable answer card. Registers its own hit area.
+// A caller-supplied `fill` (e.g. a coloured Stroop option) is always honoured;
+// otherwise the card uses the paper palette and lights oxblood on hover.
 export const drawChoice = (
   gc: GameContext,
   label: string,
@@ -20,31 +22,49 @@ export const drawChoice = (
   onClick: () => void,
   opts: ChoiceOpts = {},
 ) => {
-  const { ctx, state } = gc;
+  const { ctx, state, bodyFont } = gc;
   const t = getTheme(state);
+  const s = uiScale(ctx);
+  const hover = gc.mouseX >= x && gc.mouseX <= x + w && gc.mouseY >= y && gc.mouseY <= y + h;
+  const tinted = opts.fill !== undefined;
 
-  ctx.fillStyle = opts.fill ?? (state.darkMode ? '#1e1e1e' : '#e8e8e8');
-  ctx.fillRect(x, y, w, h);
-  ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 2.5;
-  ctx.strokeRect(x, y, w, h);
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? 'rgba(0,0,0,0.40)' : 'rgba(60,45,20,0.18)';
+  ctx.shadowBlur = hover ? 12 : 7;
+  ctx.shadowOffsetY = hover ? 3 : 2;
+  roundRect(ctx, x, y, w, h, 6);
+  ctx.fillStyle = opts.fill ?? (hover ? t.accent : t.panel);
+  ctx.fill();
+  ctx.restore();
 
-  ctx.fillStyle    = opts.textColor ?? t.fg;
-  ctx.textAlign    = 'center';
+  ctx.strokeStyle = tinted ? t.stroke : (hover ? t.accentDeep : t.stroke);
+  ctx.lineWidth = 2;
+  roundRect(ctx, x, y, w, h, 6);
+  ctx.stroke();
+
+  ctx.fillStyle = opts.textColor ?? (tinted ? t.ink : (hover ? '#F7F1E3' : t.ink));
+  ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = `bold ${opts.fontSize ?? 24}px ${opts.body ? gc.bodyFont : gc.displayFont}`;
-  ctx.fillText(label, x + w / 2, y + h / 2, w - 14);
+  const fontPx = Math.min(Math.round((opts.fontSize ?? 24) * s), h * 0.6);
+  ctx.font = `bold ${fontPx}px ${bodyFont}`;
+  ctx.fillText(label, x + w / 2, y + h / 2, w - 16);
 
   gc.hitAreas.push({ x, y, w, h, action: onClick });
 };
 
-// Standard "you picked the conventional/wrong thing" handler.
-export const wrong = (gc: GameContext) => { gc.loseLife(); gc.render(); };
+// Standard "you picked the conventional/wrong thing" handler: stamp + buzz + life.
+export const wrong = (gc: GameContext) => {
+  triggerStamp(gc, 'INCORRECT', getTheme(gc.state).danger);
+  gc.sounds.ui('deny');
+  gc.loseLife();
+  gc.render();
+};
 
 // Reset levelSubPhase to 'active' on fresh entry (LevelSelect/advancing clears it to '').
 export const ensureActive = (gc: GameContext) => {
   if (gc.state.levelSubPhase !== 'active' && gc.state.levelSubPhase !== 'win') {
     gc.state.levelSubPhase = 'active';
+    gc.state.winChimeFor = -1;   // allow the win chime to fire again on the next solve
   }
 };
 
@@ -58,19 +78,27 @@ export const drawWinScreen = (
   const { ctx, state, displayFont, bodyFont } = gc;
   const { w, topBoxY, topBoxHeight } = getLayout(ctx);
   const t  = getTheme(state);
+  const s  = uiScale(ctx);
   const cx = w / 2;
 
-  ctx.fillStyle    = t.fg;
+  // One-shot reward feedback the first frame this win is shown.
+  if (state.winChimeFor !== state.currentLevel) {
+    state.winChimeFor = state.currentLevel;
+    gc.sounds.ui('chime');
+    triggerStamp(gc, 'CORRECT', t.pass);
+  }
+
+  ctx.fillStyle    = t.pass;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font         = `bold 44px ${displayFont}`;
-  ctx.fillText(title, cx, topBoxY + topBoxHeight * 0.32, w * 0.7);
+  ctx.font         = `bold ${Math.round(42 * s)}px ${displayFont}`;
+  ctx.fillText(title, cx, topBoxY + topBoxHeight * 0.30, w * 0.7);
 
-  ctx.font      = `20px ${bodyFont}`;
+  ctx.font      = `${Math.round(18 * s)}px ${bodyFont}`;
   ctx.fillStyle = t.fgMid;
-  ctx.fillText(subtitle, cx, topBoxY + topBoxHeight * 0.50, w * 0.62);
+  ctx.fillText(subtitle, cx, topBoxY + topBoxHeight * 0.48, w * 0.62);
 
-  drawButton(gc, 'CONTINUE  →', cx - 100, topBoxY + topBoxHeight * 0.66, 200, 48, () => {
+  drawButton(gc, 'CONTINUE  →', cx - 110, topBoxY + topBoxHeight * 0.64, 220, Math.max(44, topBoxHeight * 0.13), () => {
     state.currentLevel  = nextLevel;
     state.levelSubPhase = '';
     gc.render();

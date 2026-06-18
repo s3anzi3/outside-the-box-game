@@ -223,7 +223,8 @@ export const drawLevel10 = (gc: GameContext) => {
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === 'win') {
     cancelAnimationFrame(animId10);
-    ctx.fillStyle    = t.fg;
+    if (state.winChimeFor !== 10) { state.winChimeFor = 10; gc.sounds.ui('chime'); }
+    ctx.fillStyle    = t.pass;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.font         = `bold 44px ${displayFont}`;
@@ -263,6 +264,7 @@ export const drawLevel10 = (gc: GameContext) => {
       histIdx:  0,
     });
     state.levelSubPhase = 'active';
+    state.winChimeFor = -1;
     lastTime10 = 0;
     timerEnd10 = Date.now() + TIMER_SECS * 1000;
   }
@@ -313,7 +315,7 @@ export const drawLevel10 = (gc: GameContext) => {
   const barX      = cx - barW / 2;
   const barY      = oy + topBoxHeight - 14;
 
-  ctx.strokeStyle = t.divider;
+  ctx.strokeStyle = t.hairline;
   ctx.lineWidth   = 1;
   ctx.strokeRect(barX, barY, barW, barH);
 

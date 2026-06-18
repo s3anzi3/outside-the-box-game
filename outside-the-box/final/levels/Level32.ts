@@ -48,7 +48,7 @@ export const drawLevel32 = (gc: GameContext) => {
   ctx.fillText('Turn the dial ALL the way up.', cx, topBoxY + topBoxHeight * 0.14, topBoxWidth * 0.9);
 
   // Track
-  ctx.fillStyle = state.darkMode ? '#222' : '#ccc';
+  ctx.fillStyle = t.hairline;
   ctx.fillRect(trackX, trackY, trackW, trackH);
   ctx.strokeStyle = t.stroke;
   ctx.lineWidth = 2;
@@ -71,7 +71,7 @@ export const drawLevel32 = (gc: GameContext) => {
 
   // Knob
   const knobX = trackX + (value / MAXVAL) * trackW;
-  ctx.fillStyle = value >= WIN_AT ? '#39c46b' : (state.darkMode ? '#eee' : '#222');
+  ctx.fillStyle = value >= WIN_AT ? t.pass : t.ink;
   ctx.beginPath();
   ctx.arc(knobX, trackY + trackH / 2, 16, 0, Math.PI * 2);
   ctx.fill();

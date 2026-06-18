@@ -1,7 +1,8 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawButton }  from '../renderer';
+import { drawButton, triggerStamp } from '../renderer';
+import { wrong } from './lateralHelpers';
 
 // ── TOS text ──────────────────────────────────────────────────────────────────
 const TOS_LINES: string[] = [
@@ -584,11 +585,17 @@ export const drawLevel2 = (gc: GameContext) => {
   if (state.levelSubPhase !== "active" && state.levelSubPhase !== "won") {
     scrollOffset     = 0;
     hasReachedBottom = false;
+    state.winChimeFor = -1;
     state.levelSubPhase = "active";
   }
 
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === "won") {
+    if (state.winChimeFor !== 2) {
+      state.winChimeFor = 2;
+      gc.sounds.ui("chime");
+      triggerStamp(gc, "CORRECT", t.pass);
+    }
     ctx.fillStyle    = t.fg;
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
@@ -623,10 +630,10 @@ export const drawLevel2 = (gc: GameContext) => {
   if (scrollOffset >= MAX_SCROLL - 2) hasReachedBottom = true;
 
   // ── Scroll box background ─────────────────────────────────────────────────
-  ctx.fillStyle   = state.darkMode ? "#111" : "#f4f0e8";
+  ctx.fillStyle   = t.panel;
   ctx.fillRect(BOX_LEFT, BOX_TOP, BOX_W, BOX_H);
-  ctx.strokeStyle = state.darkMode ? "#383838" : "#bbb";
-  ctx.lineWidth   = 1;
+  ctx.strokeStyle = t.stroke;
+  ctx.lineWidth   = 1.5;
   ctx.strokeRect(BOX_LEFT, BOX_TOP, BOX_W, BOX_H);
 
   // ── Clip + render text ────────────────────────────────────────────────────
@@ -650,10 +657,10 @@ export const drawLevel2 = (gc: GameContext) => {
     );
 
     if (isHeader) {
-      ctx.fillStyle    = state.darkMode ? "#e8e8e8" : "#111";
+      ctx.fillStyle    = t.ink;
       ctx.font         = `bold ${FONT_SZ}px ${bodyFont}`;
     } else {
-      ctx.fillStyle    = state.darkMode ? "#909090" : "#444";
+      ctx.fillStyle    = t.fgMid;
       ctx.font         = `${FONT_SZ}px ${bodyFont}`;
     }
     ctx.textAlign    = "left";
@@ -667,13 +674,13 @@ export const drawLevel2 = (gc: GameContext) => {
   const SB_X    = BOX_LEFT + BOX_W + 2;
   const SB_W    = 8;
   const SB_H    = BOX_H;
-  ctx.fillStyle = state.darkMode ? "#222" : "#ddd";
+  ctx.fillStyle = t.hairline;
   ctx.fillRect(SB_X, BOX_TOP, SB_W, SB_H);
 
   if (MAX_SCROLL > 0) {
     const thumbH  = Math.max(20, SB_H * (BOX_H / TOTAL_H));
     const thumbY  = BOX_TOP + (scrollOffset / MAX_SCROLL) * (SB_H - thumbH);
-    ctx.fillStyle = state.darkMode ? "#555" : "#999";
+    ctx.fillStyle = t.fgDim;
     ctx.fillRect(SB_X, thumbY, SB_W, thumbH);
   }
 
@@ -715,7 +722,7 @@ export const drawLevel2 = (gc: GameContext) => {
     ctx.lineWidth   = hovered ? 2.5 : 1.5;
     ctx.stroke();
     ctx.fillStyle    = labelColor;
-    ctx.font         = `bold ${Math.round(BTN_H2 * 0.44)}px ${displayFont}`;
+    ctx.font         = `bold ${Math.round(BTN_H2 * 0.42)}px ${bodyFont}`;
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(label, x + w / 2, y + h / 2);
@@ -741,7 +748,7 @@ export const drawLevel2 = (gc: GameContext) => {
         state.levelSubPhase = "won";
         gc.render();
       } else {
-        gc.loseLife();
+        wrong(gc);
       }
     },
   });

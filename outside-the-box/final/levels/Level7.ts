@@ -1,6 +1,8 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
+import { uiScale }     from '../renderer';
+import { wrong }       from './lateralHelpers';
 
 // ── Letter layout (33 letters, exactly 13 F's) ────────────────────────────────
 // cx/cy are normalised 0-1 within the chalkboard area
@@ -198,7 +200,7 @@ export const drawLevel7 = (gc: GameContext) => {
     ctx.lineWidth    = 1.5;
     ctx.strokeRect(bx, btnY, btnW, btnH);
     ctx.fillStyle    = "#2a1a08";
-    ctx.font         = `bold 22px ${displayFont}`;
+    ctx.font         = `bold ${Math.round(22 * uiScale(ctx))}px ${displayFont}`;
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(opt, bx + btnW / 2, btnY + btnH / 2);
@@ -210,11 +212,12 @@ export const drawLevel7 = (gc: GameContext) => {
           if (parseInt(opt) === remainingFs) {
             // Correct — answer matches actual visible F count
             eraserX = -1; erasedSet.clear(); isDragging = false;
+            gc.sounds.ui("chime");
             state.currentLevel  = 8;
             state.levelSubPhase = "";
             gc.render();
           } else {
-            gc.loseLife();
+            wrong(gc);
           }
         },
       });

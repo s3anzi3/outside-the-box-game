@@ -139,11 +139,14 @@ export const drawLevel = (gc: GameContext) => {
     const pw = topBoxWidth * 0.92;
     const ph = topBoxHeight * 0.90;
 
-    ctx.fillStyle = state.darkMode ? "rgba(10,20,10,0.96)" : "rgba(240,240,230,0.97)";
+    ctx.fillStyle = t.panel;
     ctx.fillRect(px, py, pw, ph);
     ctx.strokeStyle = t.stroke;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
     ctx.strokeRect(px, py, pw, ph);
+    ctx.strokeStyle = t.hairline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 5, py + 5, pw - 10, ph - 10);
 
     // Player sprite avatar
     const robotCX = px + pw * 0.12;
@@ -160,19 +163,19 @@ export const drawLevel = (gc: GameContext) => {
     if (sprite21Loaded) {
       ctx.drawImage(sprite21Img, spriteX21, spriteY21, spriteSize21, spriteSize21);
     }
-    ctx.fillStyle = t.fgDim;
-    ctx.font = `bold 8px ${displayFont}`;
+    ctx.fillStyle = t.accent;
+    ctx.font = `9px ${gc.monoFont}`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText("EXAM  GUIDE", robotCX, spriteY21 + spriteSize21 + 4);
+    ctx.fillText("EXAMINER", robotCX, spriteY21 + spriteSize21 + 4);
 
     // Speech
     const speechX21 = px + pw * 0.22;
     const speechW21 = pw * 0.74;
     ctx.textAlign = "left";
-    ctx.font = `bold 13px ${displayFont}`;
+    ctx.font = `11px ${gc.monoFont}`;
     ctx.fillStyle = t.fgDim;
-    ctx.fillText("EXAM GUIDE  »", speechX21, py + ph * 0.10);
+    ctx.fillText("EXAMINER'S REMARKS", speechX21, py + ph * 0.10);
 
     const guideLines21 = [
       "Good job not killing me... I guess.",

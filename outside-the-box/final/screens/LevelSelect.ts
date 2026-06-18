@@ -1,22 +1,32 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawButton }  from '../renderer';
+import { drawButton, uiScale } from '../renderer';
 import { LEVEL_COUNT } from '../levelData';
 
+const ROMAN = ['I', 'II', 'III', 'IV', 'V'];
+
+// Level Select, dressed as a candidate answer sheet: numbered bubbles in a
+// 10-column grid, one Act per row.
 export const drawLevelSelect = (gc: GameContext) => {
-  const { ctx, state, displayFont, bodyFont } = gc;
-  const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
-  const cx = w / 2;
+  const { ctx, state, displayFont, monoFont } = gc;
+  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
+  const cx = topBoxX + topBoxWidth / 2;
   const t  = getTheme(state);
+  const s  = uiScale(ctx);
 
-  ctx.fillStyle    = t.fg;
-  ctx.textAlign    = "center";
-  ctx.textBaseline = "middle";
-  ctx.font         = `bold 36px ${displayFont}`;
-  ctx.fillText("LEVEL SELECT", cx, topBoxY + topBoxHeight * 0.1);
+  // heading
+  ctx.fillStyle    = t.ink;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font         = `bold ${Math.max(24, Math.min(38, Math.round(topBoxWidth * 0.034)))}px ${displayFont}`;
+  ctx.fillText('Candidate Answer Sheet', cx, topBoxY + topBoxHeight * 0.09);
 
-  // 10-column × 5-row grid (50 levels)
+  ctx.fillStyle = t.fgDim;
+  ctx.font      = `${Math.round(12 * s)}px ${monoFont}`;
+  ctx.fillText('MARK AN ITEM TO ATTEMPT IT', cx, topBoxY + topBoxHeight * 0.155);
+
+  // grid metrics (kept close to the original so spacing stays comfortable)
   const cols  = 10;
   const tileW = topBoxWidth  * 0.072;
   const tileH = topBoxHeight * 0.116;
@@ -24,7 +34,8 @@ export const drawLevelSelect = (gc: GameContext) => {
   const vGap  = topBoxHeight * 0.030;
   const gridW = tileW * cols + hGap * (cols - 1);
   const gridX = cx - gridW / 2;
-  const gridY = topBoxY + topBoxHeight * 0.17;
+  const gridY = topBoxY + topBoxHeight * 0.24;
+  const bubbleR = Math.min(tileW, tileH) * 0.40;
 
   for (let i = 0; i < LEVEL_COUNT; i++) {
     const col = i % cols;
@@ -32,94 +43,67 @@ export const drawLevelSelect = (gc: GameContext) => {
     const tx  = gridX + col * (tileW + hGap);
     const ty  = gridY + row * (tileH + vGap);
     const lvl = i + 1;
+    const bx  = tx + tileW / 2;
+    const by  = ty + tileH / 2;
 
-    const locked = false;
-
-    if (gc.levelBGLoaded) {
-      ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, tx, ty, tileW, tileH);
-    } else {
-      ctx.strokeStyle = locked ? "#555555" : t.stroke;
-      ctx.lineWidth   = 2.5;
-      ctx.strokeRect(tx, ty, tileW, tileH);
+    // Act numeral at the start of each row
+    if (col === 0) {
+      ctx.fillStyle    = t.fgMid;
+      ctx.textAlign    = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.font         = `${Math.round(11 * s)}px ${monoFont}`;
+      ctx.fillText(ROMAN[row] ?? '', gridX - bubbleR - 8, by);
     }
 
-    // Dark overlay for locked levels
-    if (locked) {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
-      ctx.fillRect(tx, ty, tileW, tileH);
-    }
+    const hovered = gc.mouseX >= tx && gc.mouseX <= tx + tileW &&
+                    gc.mouseY >= ty && gc.mouseY <= ty + tileH;
 
-    ctx.fillStyle    = locked ? "#666666" : "#1a1a1a";
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.font         = `bold ${Math.round(tileH * 0.42)}px ${displayFont}`;
-    ctx.fillText(`${lvl}`, tx + tileW / 2, ty + tileH / 2);
+    // bubble
+    ctx.beginPath();
+    ctx.arc(bx, by, bubbleR, 0, Math.PI * 2);
+    ctx.fillStyle = hovered ? t.accent : t.bg;
+    ctx.fill();
+    ctx.strokeStyle = hovered ? t.accentDeep : t.hairline;
+    ctx.lineWidth   = hovered ? 2 : 1.5;
+    ctx.stroke();
 
-    if (!locked) {
-      const captured = lvl;
-      gc.hitAreas.push({
-        x: tx, y: ty, w: tileW, h: tileH,
-        action: () => {
-          state.currentLevel    = captured;
-          state.playMode        = "levelselect";
-          state.gameOver        = false;
-          state.lives           = 3;
-          state.levelTimerEnd   = 0;
-          state.levelSubPhase   = "";
-          state.currentScreen   = "level";
-          gc.render();
-        },
-      });
-    }
+    // item number
+    ctx.fillStyle    = hovered ? '#F7F1E3' : t.fgMid;
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font         = `${Math.round(bubbleR * 0.95)}px ${monoFont}`;
+    ctx.fillText(`${lvl}`, bx, by + 1);
+
+    const captured = lvl;
+    gc.hitAreas.push({
+      x: tx, y: ty, w: tileW, h: tileH,
+      action: () => {
+        state.currentLevel  = captured;
+        state.playMode      = 'levelselect';
+        state.gameOver      = false;
+        state.lives         = 3;
+        state.levelTimerEnd = 0;
+        state.levelSubPhase = '';
+        state.currentScreen = 'level';
+        gc.render();
+      },
+    });
   }
-
 };
 
-// Drawn separately after drawBottomPanel so nothing can render over it
+// Drawn separately after drawBottomPanel so nothing can render over it.
 export const drawLevelSelectBackButton = (gc: GameContext) => {
-  const { ctx, state, displayFont } = gc;
+  const { ctx } = gc;
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
 
-  const btnW = Math.round(topBoxWidth * 0.09);
-  const btnH = Math.round(btnW * 0.38);
-  const btnX = topBoxX + Math.round(topBoxWidth * 0.025);
-  const btnY = topBoxY + topBoxHeight - btnH - Math.round(topBoxHeight * 0.04);
-  const r    = 6;
+  const btnW = Math.round(topBoxWidth * 0.11);
+  const btnH = Math.round(btnW * 0.34);
+  const btnX = topBoxX + Math.round(topBoxWidth * 0.02);
+  const btnY = topBoxY + topBoxHeight - btnH - Math.round(topBoxHeight * 0.035);
 
-  const hovered = gc.mouseX >= btnX && gc.mouseX <= btnX + btnW &&
-                  gc.mouseY >= btnY && gc.mouseY <= btnY + btnH;
-
-  // Paper/cream fill to echo back.png style
-  ctx.beginPath();
-  ctx.moveTo(btnX + r, btnY);
-  ctx.lineTo(btnX + btnW - r, btnY);
-  ctx.arcTo(btnX + btnW, btnY,         btnX + btnW, btnY + r,         r);
-  ctx.lineTo(btnX + btnW, btnY + btnH - r);
-  ctx.arcTo(btnX + btnW, btnY + btnH,  btnX + btnW - r, btnY + btnH,  r);
-  ctx.lineTo(btnX + r,   btnY + btnH);
-  ctx.arcTo(btnX,        btnY + btnH,  btnX, btnY + btnH - r,         r);
-  ctx.lineTo(btnX,       btnY + r);
-  ctx.arcTo(btnX,        btnY,         btnX + r, btnY,                r);
-  ctx.closePath();
-
-  ctx.fillStyle   = hovered ? "#d8d0c0" : "#e8e0d0";
-  ctx.fill();
-  ctx.strokeStyle = "#1a1a1a";
-  ctx.lineWidth   = 2;
-  ctx.stroke();
-
-  ctx.fillStyle    = "#1a1a1a";
-  ctx.textAlign    = "center";
-  ctx.textBaseline = "middle";
-  ctx.font         = `bold ${Math.round(btnH * 0.46)}px ${displayFont}`;
-  ctx.fillText("← BACK", btnX + btnW / 2, btnY + btnH / 2);
-
-  gc.hitAreas.push({
-    x: btnX, y: btnY, w: btnW, h: btnH,
-    action: () => {
-      state.currentScreen = "mainmenu";
-      gc.resetPlayerName();
-      gc.render();
-    },
-  });
+  drawButton(gc, '← BACK', btnX, btnY, btnW, btnH, () => {
+    gc.state.currentScreen = 'mainmenu';
+    gc.resetPlayerName();
+    gc.render();
+  }, 14);
 };

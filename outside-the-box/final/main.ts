@@ -1,7 +1,7 @@
 console.log("FINAL MAIN LOADED");
 
 import { GameContext, GameState, MovementArea } from "./types";
-import { drawBackground, drawLogo, drawGameplayFrame, drawBottomPanel, drawCheatsButton, drawExamTimer, drawLoadingScreen } from "./renderer";
+import { drawBackground, drawLogo, drawGameplayFrame, drawBottomPanel, drawCheatsButton, drawExamTimer, drawLoadingScreen, uiScale, drawFxStamp } from "./renderer";
 import { drawCheatsOverlay } from "./overlays/CheatsOverlay";
 import { LEVEL_DATA } from "./levelData";
 import { drawIntro, INTRO_LINES } from "./screens/Intro";
@@ -47,7 +47,7 @@ window.onload = () => {
     lives: 3,
     paused: false,
     controlsOpen: false,
-    darkMode: true,
+    darkMode: false,
     storyTitle: "Exam Briefing",
     storyLines: [
       "Welcome, candidate. I will be guiding you through the \"Outside-the-Box\" assessment.",
@@ -80,6 +80,8 @@ window.onload = () => {
   const player = new PlayerControl(emitter);
   let previousLevel = state.currentLevel;
   let previousScreen = state.currentScreen;
+  let fxScreen: string = state.currentScreen;
+  let fxStart = performance.now();
   let needsMovementReset = false;
   let flashOpacity = 0;
   let lastTimerTick = performance.now();
@@ -104,8 +106,9 @@ window.onload = () => {
     submitPauseCheat: () => {},
     getCurrentAnswer: () => "",
     getAnswerPreview: () => "",
-    displayFont: `"Trebuchet MS", "Verdana", sans-serif`,
-    bodyFont: `"Trebuchet MS", "Arial", sans-serif`,
+    displayFont: `Georgia, "Times New Roman", "Cambria", serif`,
+    bodyFont: `"Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif`,
+    monoFont: `"Courier New", "Courier", monospace`,
     logo: new Image(),
     gameplayFrame: new Image(),
     pauseButton: new Image(),
@@ -507,7 +510,21 @@ window.onload = () => {
 
     drawBackground(gc);
 
-    if (!movementLevelActive) {
+    // Screen-entrance transition: fade + rise the page content on a screen change.
+    if (gc.state.currentScreen !== fxScreen) {
+      fxScreen = gc.state.currentScreen;
+      fxStart = performance.now();
+      gc.sounds.ui("page");
+    }
+    const fxEase = 1 - Math.pow(1 - Math.min(1, (performance.now() - fxStart) / 280), 3);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, fxEase);
+    ctx.translate(0, (1 - fxEase) * 14 * uiScale(ctx));
+
+    const onCertificate = gc.state.currentScreen === "level" && gc.state.currentLevel === 50 &&
+      (gc.state.levelSubPhase === "certificate" || gc.state.levelSubPhase === "win");
+
+    if (!movementLevelActive && !onCertificate) {
       drawLogo(gc);
       drawGameplayFrame(gc);
     }
@@ -524,14 +541,15 @@ window.onload = () => {
         break;
     }
 
-    drawBottomPanel(gc);
+    if (!onCertificate) drawBottomPanel(gc);
 
     if (gc.state.currentScreen === "levelselect") {
       drawLevelSelectBackButton(gc);
     }
 
-    const onCertificate = gc.state.currentLevel === 50 &&
-      (gc.state.levelSubPhase === 'certificate' || gc.state.levelSubPhase === 'win');
+    ctx.restore();
+
+    drawFxStamp(gc);
 
     // Cheats button (above play area, only when cheats active on levels 2-50)
     if (!onCertificate && gc.state.cheatsEnabled && gc.state.currentScreen === "level" &&
@@ -593,9 +611,11 @@ window.onload = () => {
   };
 
   gameCanvas.addEventListener("click", (e) => {
+    gc.sounds.resumeFx();
     const { x, y } = toCanvas(e);
     for (const area of gc.hitAreas) {
       if (x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h) {
+        gc.sounds.ui("click");
         area.action();
         break;
       }
@@ -635,6 +655,7 @@ window.onload = () => {
   }, { passive: false });
 
   window.addEventListener("keydown", (e) => {
+    gc.sounds.resumeFx();
     gc.keysDown.add(e.key);
 
     if (gc.state.nameFocused && !gc.state.paused && !gc.state.controlsOpen) {
@@ -955,8 +976,11 @@ window.onload = () => {
     // Fade out red flash (works on all screens, not just movement levels)
     if (flashOpacity > 0) {
       flashOpacity = Math.max(0, flashOpacity - 0.04);
-      gc.render();
     }
+
+    // Continuous render so seals shimmer, buttons react to hover, screen
+    // transitions animate, and the proctor clock ticks smoothly.
+    gc.render();
 
     requestAnimationFrame(gameLoop);
   };

@@ -1,10 +1,10 @@
 import { GameContext } from "../types";
 import { getTheme } from "../theme";
 import { getLayout } from "../layout";
-import { drawImgButton } from "../renderer";
+import { roundRect, drawButton, drawDocumentBox, uiScale } from "../renderer";
 
 export const drawPauseOverlay = (gc: GameContext) => {
-  const { ctx, state, displayFont } = gc;
+  const { ctx, state, displayFont, monoFont } = gc;
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const pad = topBoxWidth * 0.05;
   const ox = topBoxX + pad;
@@ -13,30 +13,28 @@ export const drawPauseOverlay = (gc: GameContext) => {
   const oh = topBoxHeight - pad * 2;
   const cx = ox + ow / 2;
   const t = getTheme(state);
+  const s = uiScale(ctx);
 
-  ctx.fillStyle = t.overlayBg;
-  ctx.fillRect(ox, oy, ow, oh);
-  ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(ox, oy, ow, oh);
+  drawDocumentBox(gc, ox, oy, ow, oh, { title: "Examination Suspended" });
 
-  ctx.fillStyle = t.fg;
+  ctx.fillStyle = t.ink;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `bold 38px ${displayFont}`;
-  ctx.fillText("PAUSED", cx, oy + oh * 0.18);
+  ctx.font = `bold ${Math.round(33 * s)}px ${displayFont}`;
+  ctx.fillText("Paused", cx, oy + oh * 0.17);
 
-  ctx.strokeStyle = t.divider;
+  ctx.strokeStyle = t.hairline;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(ox + ow * 0.1, oy + oh * 0.3);
-  ctx.lineTo(ox + ow * 0.9, oy + oh * 0.3);
+  ctx.moveTo(ox + ow * 0.1, oy + oh * 0.29);
+  ctx.lineTo(ox + ow * 0.9, oy + oh * 0.29);
   ctx.stroke();
 
   // Clear all underlying hit areas so the game behind is blocked
   gc.hitAreas = [];
 
   const btnW = 220;
+  const btnH = Math.max(40, oh * 0.13);
   const btnX = ox + ow * 0.62;
   const sliderW = Math.min(ow * 0.34, 220);
   const sliderH = 10;
@@ -49,7 +47,7 @@ export const drawPauseOverlay = (gc: GameContext) => {
   const cheatBoxH = 38;
   const cheatBoxX = sliderX;
   const cheatBoxY = sliderY + 38;
-  const cheatButtonW = 34;
+  const cheatButtonW = 40;
   const cheatButtonH = cheatBoxH;
   const cheatButtonGap = 12;
   const cheatButtonX = cheatBoxX + cheatBoxW + cheatButtonGap;
@@ -75,36 +73,45 @@ export const drawPauseOverlay = (gc: GameContext) => {
     gc.sounds.setMasterVolume(gc.sounds.getMasterVolume() + delta);
   }
 
-  drawImgButton(gc, gc.resumeImg, gc.resumeLoaded,
-    304, 379, 929, 208, btnX, oy + oh * 0.30, btnW,
-    () => { state.paused = false; gc.render(); },
-    "RESUME",
-  );
+  // ── Right column: resume / quit / appearance ───────────────────────────────
+  drawButton(gc, "RESUME", btnX, oy + oh * 0.30, btnW, btnH, () => {
+    state.paused = false;
+    gc.render();
+  }, 18);
 
-  drawImgButton(gc, gc.quitExamImg, gc.quitExamLoaded,
-    303, 378, 930, 197, btnX, oy + oh * 0.48, btnW,
-    () => { state.paused = false; state.lives = 3; gc.resetPlayerName(); state.currentScreen = "mainmenu"; gc.render(); },
-    "QUIT TO MENU",
-  );
+  drawButton(gc, "QUIT TO MENU", btnX, oy + oh * 0.30 + btnH + oh * 0.05, btnW, btnH, () => {
+    state.paused = false;
+    state.lives = 3;
+    gc.resetPlayerName();
+    state.currentScreen = "mainmenu";
+    gc.render();
+  }, 16);
 
-  ctx.fillStyle = t.fg;
+  drawButton(gc, state.darkMode ? "LIGHT MODE" : "DARK MODE",
+    btnX, oy + oh * 0.30 + (btnH + oh * 0.05) * 2, btnW, btnH, () => {
+      state.darkMode = !state.darkMode;
+      gc.render();
+    }, 16);
+
+  // ── Left column: sound + level-select cheat ────────────────────────────────
+  ctx.fillStyle = t.fgDim;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.font = `bold 16px ${displayFont}`;
-  ctx.fillText(`SOUND ${volumePercent}%`, leftPanelCenterX, sliderLabelY);
+  ctx.font = `${Math.round(11 * s)}px ${monoFont}`;
+  ctx.fillText(`SOUND  ${volumePercent}%`, leftPanelCenterX, sliderLabelY);
 
   ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 1.5;
   ctx.strokeRect(sliderX, sliderY - sliderH / 2, sliderW, sliderH);
-  ctx.fillStyle = state.darkMode ? "rgba(255,255,255,0.16)" : "rgba(0,0,0,0.10)";
+  ctx.fillStyle = state.darkMode ? "rgba(242,235,218,0.12)" : "rgba(30,26,21,0.08)";
   ctx.fillRect(sliderX, sliderY - sliderH / 2, sliderW, sliderH);
-  ctx.fillStyle = t.fg;
+  ctx.fillStyle = t.accent;
   ctx.fillRect(sliderX, sliderY - sliderH / 2, sliderW * gc.sounds.getMasterVolume(), sliderH);
 
   const knobX = sliderX + sliderW * gc.sounds.getMasterVolume();
   ctx.beginPath();
-  ctx.arc(knobX, sliderY, 10, 0, Math.PI * 2);
-  ctx.fillStyle = t.fg;
+  ctx.arc(knobX, sliderY, 9, 0, Math.PI * 2);
+  ctx.fillStyle = t.accent;
   ctx.fill();
   ctx.strokeStyle = t.stroke;
   ctx.lineWidth = 2;
@@ -121,32 +128,37 @@ export const drawPauseOverlay = (gc: GameContext) => {
     },
   });
 
-  ctx.fillStyle = t.fg;
+  ctx.fillStyle = t.fgDim;
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  ctx.font = `bold 13px ${displayFont}`;
-  ctx.fillText("LEVEL SELECT CHEAT", leftPanelCenterX, cheatBoxY - 8);
+  ctx.font = `${Math.round(11 * s)}px ${monoFont}`;
+  ctx.fillText("INVIGILATOR OVERRIDE", leftPanelCenterX, cheatBoxY - 8);
 
-  ctx.fillStyle = state.darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-  ctx.fillRect(cheatBoxX, cheatBoxY, cheatBoxW, cheatBoxH);
-  ctx.strokeStyle = state.pauseCheatFocused ? "#a7adb7" : t.stroke;
-  ctx.lineWidth = state.pauseCheatFocused ? 3 : 2;
-  ctx.strokeRect(cheatBoxX, cheatBoxY, cheatBoxW, cheatBoxH);
+  roundRect(ctx, cheatBoxX, cheatBoxY, cheatBoxW, cheatBoxH, 4);
+  ctx.fillStyle = t.bg;
+  ctx.fill();
+  ctx.strokeStyle = state.pauseCheatFocused ? t.accent : t.stroke;
+  ctx.lineWidth = state.pauseCheatFocused ? 3 : 1.5;
+  ctx.stroke();
 
-  ctx.fillStyle = state.pauseCheatInput.length > 0 ? t.fg : t.fgDim;
+  ctx.fillStyle = state.pauseCheatInput.length > 0 ? t.ink : t.fgDim;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.font = `bold 16px ${displayFont}`;
+  ctx.font = `${Math.round(15 * s)}px ${monoFont}`;
   const cheatText = state.pauseCheatInput.length > 0
     ? state.pauseCheatInput + (state.pauseCheatFocused ? "|" : "")
-    : (state.pauseCheatFocused ? "|" : "Cheat Key");
+    : (state.pauseCheatFocused ? "|" : "Override Key");
   ctx.fillText(cheatText, cheatBoxX + 12, cheatBoxY + cheatBoxH / 2, cheatBoxW - 24);
 
-  ctx.fillStyle = "#9ea4ad";
-  ctx.fillRect(cheatButtonX, cheatButtonY, cheatButtonW, cheatButtonH);
-  ctx.strokeStyle = "#595f69";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(cheatButtonX, cheatButtonY, cheatButtonW, cheatButtonH);
+  // submit chevron
+  roundRect(ctx, cheatButtonX, cheatButtonY, cheatButtonW, cheatButtonH, 4);
+  ctx.fillStyle = t.accent;
+  ctx.fill();
+  ctx.fillStyle = "#F7F1E3";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `bold ${Math.round(18 * s)}px ${monoFont}`;
+  ctx.fillText("›", cheatButtonX + cheatButtonW / 2, cheatButtonY + cheatButtonH / 2);
 
   gc.hitAreas.push({
     x: cheatBoxX,
@@ -168,13 +180,4 @@ export const drawPauseOverlay = (gc: GameContext) => {
       gc.submitPauseCheat();
     },
   });
-
-  // In dark mode show the "switch to light" button, and vice versa
-  const modeImg    = state.darkMode ? gc.lightModeImg  : gc.darkModeImg;
-  const modeLoaded = state.darkMode ? gc.lightModeLoaded : gc.darkModeLoaded;
-  drawImgButton(gc, modeImg, modeLoaded,
-    265, 380, 1007, 220, btnX, oy + oh * 0.66, btnW,
-    () => { state.darkMode = !state.darkMode; gc.render(); },
-    state.darkMode ? "LIGHT MODE" : "DARK MODE",
-  );
 };

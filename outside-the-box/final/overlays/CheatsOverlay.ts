@@ -1,6 +1,7 @@
 import { GameContext } from "../types";
 import { getTheme } from "../theme";
-import { getLayout, getMovementLayout } from "../layout";
+import { getLayout } from "../layout";
+import { roundRect, drawStamp, uiScale } from "../renderer";
 
 const HINTS: Record<number, string[]> = {
   2: [
@@ -218,96 +219,88 @@ const HINTS: Record<number, string[]> = {
 };
 
 export const drawCheatsOverlay = (gc: GameContext) => {
-  const { ctx, state, displayFont, bodyFont } = gc;
+  const { ctx, state, displayFont, bodyFont, monoFont } = gc;
   const lvl = state.currentLevel;
   const t = getTheme(state);
-  const isMovement = false;   // 11–20 are now normal bespoke levels
+  const s = uiScale(ctx);
 
-  // ── Bounding box for the popup ─────────────────────────────────────────────
-  let ox: number, oy: number, ow: number, oh: number;
-  if (isMovement) {
-    const ml = getMovementLayout(ctx);
-    ox = ml.gameFrameX + ml.gameFrameWidth * 0.05;
-    oy = ml.gameFrameY + ml.gameFrameHeight * 0.06;
-    ow = ml.gameFrameWidth * 0.9;
-    oh = ml.gameFrameHeight * 0.52;
-  } else {
-    const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
-    ox = topBoxX + topBoxWidth * 0.05;
-    oy = topBoxY + topBoxHeight * 0.05;
-    ow = topBoxWidth * 0.9;
-    oh = topBoxHeight * 0.88;
-  }
-
+  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
+  const ox = topBoxX + topBoxWidth * 0.05;
+  const oy = topBoxY + topBoxHeight * 0.05;
+  const ow = topBoxWidth * 0.9;
+  const oh = topBoxHeight * 0.88;
   const cx = ox + ow / 2;
   const hints = HINTS[lvl] ?? ["No hint available for this level."];
 
-  // ── Clear hit areas so the popup is fully modal ────────────────────────────
+  // Clear hit areas so the popup is fully modal
   gc.hitAreas = [];
 
-  // ── Backdrop ───────────────────────────────────────────────────────────────
-  ctx.fillStyle = state.darkMode
-    ? "rgba(8,6,0,0.96)"
-    : "rgba(248,242,210,0.97)";
-  ctx.fillRect(ox, oy, ow, oh);
-  ctx.strokeStyle = "#d4b820";
+  // Panel — paper with a confidential gold treatment
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.6)" : "rgba(60,45,20,0.28)";
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetY = 8;
+  roundRect(ctx, ox, oy, ow, oh, 6);
+  ctx.fillStyle = t.panel;
+  ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = t.seal;
   ctx.lineWidth = 2.5;
-  ctx.strokeRect(ox, oy, ow, oh);
+  roundRect(ctx, ox, oy, ow, oh, 6); ctx.stroke();
+  ctx.strokeStyle = t.sealDim;
+  ctx.lineWidth = 1;
+  roundRect(ctx, ox + 6, oy + 6, ow - 12, oh - 12, 3); ctx.stroke();
 
-  // ── Title ──────────────────────────────────────────────────────────────────
-  ctx.fillStyle = "#d4b820";
+  // Title
+  ctx.fillStyle = t.seal;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.font = `bold 17px ${displayFont}`;
-  ctx.fillText(`CHEATS  —  LEVEL ${lvl}`, cx, oy + oh * 0.06);
+  ctx.font = `bold ${Math.round(18 * s)}px ${displayFont}`;
+  ctx.fillText(`Answer Key  ·  Item ${lvl}`, cx, oy + oh * 0.07);
 
-  // ── Divider ────────────────────────────────────────────────────────────────
-  ctx.strokeStyle = "rgba(212,184,32,0.35)";
+  drawStamp(gc, ox + ow * 0.82, oy + oh * 0.13, "CONFIDENTIAL", t.danger, { angle: -10, fontPx: 12, alpha: 0.85 });
+
+  // Divider
+  ctx.strokeStyle = t.sealDim;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(ox + ow * 0.06, oy + oh * 0.2);
   ctx.lineTo(ox + ow * 0.94, oy + oh * 0.2);
   ctx.stroke();
 
-  // ── Hint lines ─────────────────────────────────────────────────────────────
-  const lineH = isMovement ? 22 : 26;
+  // Hint lines
+  const lineH = 26;
   const startY = oy + oh * 0.26;
   ctx.fillStyle = t.fg;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.font = `15px ${bodyFont}`;
+  ctx.font = `${Math.round(15 * s)}px ${bodyFont}`;
   hints.forEach((line, i) => {
     ctx.fillText(line, cx, startY + i * lineH, ow * 0.88);
   });
 
-  // ── Close button ───────────────────────────────────────────────────────────
-  const btnW = 110;
+  // Close button
+  const btnW = 120;
   const btnH = 32;
   const btnX = cx - btnW / 2;
   const btnY = oy + oh - btnH - oh * 0.06;
+  const hover = gc.mouseX >= btnX && gc.mouseX <= btnX + btnW &&
+                gc.mouseY >= btnY && gc.mouseY <= btnY + btnH;
 
-  const hover =
-    gc.mouseX >= btnX &&
-    gc.mouseX <= btnX + btnW &&
-    gc.mouseY >= btnY &&
-    gc.mouseY <= btnY + btnH;
-
-  ctx.fillStyle = hover ? "#f0cc28" : "#d4b820";
-  ctx.fillRect(btnX, btnY, btnW, btnH);
-  ctx.strokeStyle = "#7a6400";
+  roundRect(ctx, btnX, btnY, btnW, btnH, 3);
+  ctx.fillStyle = hover ? t.seal : "rgba(176,137,47,0.18)";
+  ctx.fill();
+  ctx.strokeStyle = t.seal;
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(btnX, btnY, btnW, btnH);
-  ctx.fillStyle = "#1a1200";
+  ctx.stroke();
+  ctx.fillStyle = hover ? (state.darkMode ? "#161310" : "#FBF8EF") : t.seal;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `bold 13px ${displayFont}`;
+  ctx.font = `bold ${Math.round(13 * s)}px ${monoFont}`;
   ctx.fillText("CLOSE", btnX + btnW / 2, btnY + btnH / 2);
 
   gc.hitAreas.push({
-    x: btnX,
-    y: btnY,
-    w: btnW,
-    h: btnH,
+    x: btnX, y: btnY, w: btnW, h: btnH,
     action: () => {
       state.cheatsPopupOpen = false;
       gc.render();

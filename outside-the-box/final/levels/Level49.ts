@@ -1,7 +1,7 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawChoice, ensureActive, drawWinScreen } from './lateralHelpers';
+import { drawChoice, ensureActive, drawWinScreen, wrong } from './lateralHelpers';
 
 // ── Q49 — The Combination ─────────────────────────────────────────────────────
 // The last lock before the end. Each digit is the answer to a question you've
@@ -60,7 +60,7 @@ export const drawLevel49 = (gc: GameContext) => {
     }, { fontSize: 16 });
 
     // digit
-    ctx.fillStyle = state.darkMode ? '#1a1a1a' : '#e8e8e8';
+    ctx.fillStyle = t.bg;
     ctx.fillRect(dx, dialY, dialW, dialH);
     ctx.strokeStyle = t.stroke;
     ctx.lineWidth = 2.5;
@@ -82,9 +82,9 @@ export const drawLevel49 = (gc: GameContext) => {
   drawChoice(gc, 'SUBMIT', cx - sW / 2, topBoxY + topBoxHeight * 0.84, sW, sH, () => {
     if (digits49[0] === CODE[0] && digits49[1] === CODE[1] && digits49[2] === CODE[2]) {
       state.levelSubPhase = 'win';
+      gc.render();
     } else {
-      gc.loseLife();
+      wrong(gc);
     }
-    gc.render();
   }, { fontSize: 18 });
 };

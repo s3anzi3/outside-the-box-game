@@ -2,6 +2,7 @@ import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { drawButton }  from '../renderer';
+import { drawChoice, wrong } from './lateralHelpers';
 
 // ── Logic: (P → Q) ∧ (Q → P) ─────────────────────────────────────────────────
 // Rows: [T,T] [T,F] [F,T] [F,F]
@@ -39,7 +40,8 @@ export const drawLevel23 = (gc: GameContext) => {
 
   // ── Win screen ───────────────────────────────────────────────────────────────
   if (state.levelSubPhase === 'win') {
-    ctx.fillStyle    = t.fg;
+    if (state.winChimeFor !== 23) { state.winChimeFor = 23; gc.sounds.ui('chime'); }
+    ctx.fillStyle    = t.pass;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.font         = `bold 44px ${displayFont}`;
@@ -61,6 +63,7 @@ export const drawLevel23 = (gc: GameContext) => {
   // ── Init ──────────────────────────────────────────────────────────────────────
   if (state.levelSubPhase !== 'active') {
     cells23 = fresh23();
+    state.winChimeFor = -1;
     state.levelSubPhase = 'active';
   }
 
@@ -88,7 +91,7 @@ export const drawLevel23 = (gc: GameContext) => {
   const tblY  = topBoxY + topBoxHeight * 0.22;
 
   // Header background
-  ctx.fillStyle = state.darkMode ? '#1e1e1e' : '#d8d8d8';
+  ctx.fillStyle = t.panel;
   ctx.fillRect(tblX, tblY, tblW, rowH);
 
   // Outer border
@@ -163,9 +166,7 @@ export const drawLevel23 = (gc: GameContext) => {
         ctx.textBaseline = 'middle';
         ctx.fillText('—', cellCX, rcy);
       } else {
-        ctx.fillStyle = val === 'T'
-          ? (state.darkMode ? '#55cc77' : '#1a7a3a')
-          : (state.darkMode ? '#ee5555' : '#bb1111');
+        ctx.fillStyle = val === 'T' ? t.pass : t.danger;
         ctx.font      = `bold 17px ${displayFont}`;
         ctx.textAlign = 'center';
         ctx.fillText(val, cellCX, rcy);
@@ -212,33 +213,9 @@ export const drawLevel23 = (gc: GameContext) => {
     const bx  = cx - optBtnW - optGapX / 2 + col * (optBtnW + optGapX);
     const by  = optY0 + row * (optBtnH + optGapY);
 
-    // Uniform stone-tile background — same as Level 3 / Level 9 buttons
-    if (gc.levelBGLoaded) {
-      ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, bx, by, optBtnW, optBtnH);
-    } else {
-      ctx.strokeStyle = t.stroke;
-      ctx.lineWidth   = 1.5;
-      ctx.strokeRect(bx, by, optBtnW, optBtnH);
-    }
-
-    ctx.fillStyle    = '#1a1a1a';
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 12px ${bodyFont}`;
-    ctx.fillText(opt.text, bx + optBtnW / 2, by + optBtnH / 2, optBtnW - 12);
-
-    gc.hitAreas.push({
-      x: bx, y: by, w: optBtnW, h: optBtnH,
-      action: () => {
-        if (opt.right) {
-          if (tableOK) {
-            state.levelSubPhase = 'win';
-          }
-        } else {
-          gc.loseLife();
-        }
-        gc.render();
-      },
-    });
+    drawChoice(gc, opt.text, bx, by, optBtnW, optBtnH, () => {
+      if (opt.right && tableOK) state.levelSubPhase = 'win';
+      else if (!opt.right) wrong(gc);
+    }, { fontSize: 13 });
   });
 };

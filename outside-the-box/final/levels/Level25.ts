@@ -384,12 +384,12 @@ export const drawLevel25 = (gc: GameContext) => {
     const btnH  = 28;
     const btnX  = ox + topBoxWidth - btnW - 6;
     const btnY  = oy + 6;
-    ctx.fillStyle   = state.darkMode ? '#333355' : '#ddddcc';
-    ctx.strokeStyle = t.stroke;
+    ctx.fillStyle   = t.bg;
+    ctx.strokeStyle = t.seal;
     ctx.lineWidth   = 1.5;
     ctx.fillRect(btnX, btnY, btnW, btnH);
     ctx.strokeRect(btnX, btnY, btnW, btnH);
-    ctx.fillStyle    = t.fg;
+    ctx.fillStyle    = t.ink;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.font         = `bold 12px ${bodyFont}`;
@@ -411,7 +411,7 @@ export const drawLevel25 = (gc: GameContext) => {
   const barX      = cx - barW / 2;
   const barY      = oy + topBoxHeight - 14;
 
-  ctx.strokeStyle = t.divider;
+  ctx.strokeStyle = t.hairline;
   ctx.lineWidth   = 1;
   ctx.strokeRect(barX, barY, barW, barH);
 
@@ -420,7 +420,7 @@ export const drawLevel25 = (gc: GameContext) => {
   ctx.fillStyle = urgency ? `hsl(0,70%,50%)` : `hsl(${Math.round(progress * 120)},70%,45%)`;
   ctx.fillRect(barX + 1, barY + 1, (barW - 2) * progress, barH - 2);
 
-  ctx.fillStyle    = urgency ? '#ff4444' : t.fgDim;
+  ctx.fillStyle    = urgency ? t.danger : t.fgDim;
   ctx.font         = `bold 10px ${bodyFont}`;
   ctx.textAlign    = 'right';
   ctx.textBaseline = 'middle';

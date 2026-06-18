@@ -1,6 +1,8 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
+import { drawButton }  from '../renderer';
+import { drawChoice, wrong } from './lateralHelpers';
 
 // ── Decoy buttons scattered around the box (all lose a life) ──────────────────
 // Positions are fractions of topBoxWidth / topBoxHeight
@@ -34,7 +36,8 @@ export const drawLevel24 = (gc: GameContext) => {
 
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === 'win') {
-    ctx.fillStyle    = t.fg;
+    if (state.winChimeFor !== 24) { state.winChimeFor = 24; gc.sounds.ui('chime'); }
+    ctx.fillStyle    = t.pass;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.font         = `bold 44px ${displayFont}`;
@@ -42,29 +45,17 @@ export const drawLevel24 = (gc: GameContext) => {
     ctx.font      = `20px ${bodyFont}`;
     ctx.fillStyle = t.fgMid;
     ctx.fillText('15 + 15 = 30.  Well done.', cx, topBoxY + topBoxHeight * 0.50);
-    // Win — draw CONTINUE inline (no drawButton import needed, replicate manually)
-    const bx = cx - 100, by = topBoxY + topBoxHeight * 0.65, bw = 200, bh = 48;
-    ctx.fillStyle   = state.darkMode ? '#222' : '#ddd';
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth   = 2;
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeRect(bx, by, bw, bh);
-    ctx.fillStyle    = t.fg;
-    ctx.font         = `bold 18px ${displayFont}`;
-    ctx.fillText('CONTINUE  →', cx, by + bh / 2);
-    gc.hitAreas.push({
-      x: bx, y: by, w: bw, h: bh,
-      action: () => {
-        state.currentLevel  = 25;
-        state.levelSubPhase = '';
-        gc.render();
-      },
+    drawButton(gc, 'CONTINUE  →', cx - 100, topBoxY + topBoxHeight * 0.65, 200, 48, () => {
+      state.currentLevel  = 25;
+      state.levelSubPhase = '';
+      gc.render();
     });
     return;
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────────
   if (state.levelSubPhase !== 'active') {
+    state.winChimeFor = -1;
     state.levelSubPhase = 'active';
   }
 
@@ -81,23 +72,7 @@ export const drawLevel24 = (gc: GameContext) => {
     const by = topBoxY + fy * topBoxHeight;
     const bw = fw * topBoxWidth;
     const bh = fh * topBoxHeight;
-
-    ctx.fillStyle   = state.darkMode ? '#242424' : '#d0d0d0';
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth   = 2;
-    ctx.fillRect(bx, by, bw, bh);
-    ctx.strokeRect(bx, by, bw, bh);
-
-    ctx.fillStyle    = t.fg;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 13px ${bodyFont}`;
-    ctx.fillText(label, bx + bw / 2, by + bh / 2);
-
-    gc.hitAreas.push({
-      x: bx, y: by, w: bw, h: bh,
-      action: () => { gc.loseLife(); gc.render(); },
-    });
+    drawChoice(gc, label, bx, by, bw, bh, () => wrong(gc), { fontSize: 13 });
   });
 
   // ── 4 answer buttons ──────────────────────────────────────────────────────────
@@ -110,29 +85,9 @@ export const drawLevel24 = (gc: GameContext) => {
 
   ANSWERS.forEach(({ label, correct }, i) => {
     const bx = ansStartX + i * (ansBtnW + ansGap);
-
-    ctx.fillStyle   = state.darkMode ? '#1e1e1e' : '#e8e8e8';
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth   = 2.5;
-    ctx.fillRect(bx, ansY, ansBtnW, ansBtnH);
-    ctx.strokeRect(bx, ansY, ansBtnW, ansBtnH);
-
-    ctx.fillStyle    = t.fg;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 28px ${displayFont}`;
-    ctx.fillText(label, bx + ansBtnW / 2, ansY + ansBtnH / 2);
-
-    gc.hitAreas.push({
-      x: bx, y: ansY, w: ansBtnW, h: ansBtnH,
-      action: () => {
-        if (correct) {
-          state.levelSubPhase = 'win';
-        } else {
-          gc.loseLife();
-        }
-        gc.render();
-      },
-    });
+    drawChoice(gc, label, bx, ansY, ansBtnW, ansBtnH, () => {
+      if (correct) state.levelSubPhase = 'win';
+      else wrong(gc);
+    }, { fontSize: 28 });
   });
 };

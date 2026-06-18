@@ -1,6 +1,8 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
+import { roundRect }   from '../renderer';
+import { wrong }       from './lateralHelpers';
 
 const BTN_W  = 240;
 const BTN_H  = Math.round(BTN_W * (215 / 1060));
@@ -82,22 +84,26 @@ export const drawLevel5 = (gc: GameContext) => {
   const hovered = gc.mouseX >= btnX && gc.mouseX <= btnX + BTN_W &&
                   gc.mouseY >= btnY && gc.mouseY <= btnY + BTN_H;
 
-  if (gc.levelBGLoaded) {
-    ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, btnX, btnY, BTN_W, BTN_H);
-  } else {
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(btnX, btnY, BTN_W, BTN_H);
-  }
-  ctx.fillStyle    = "#1a1a1a";
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.4)" : "rgba(60,45,20,0.2)";
+  ctx.shadowBlur = 9; ctx.shadowOffsetY = 3;
+  roundRect(ctx, btnX, btnY, BTN_W, BTN_H, 6);
+  ctx.fillStyle = hovered ? t.danger : t.panel;
+  ctx.fill();
+  ctx.restore();
+  ctx.strokeStyle = hovered ? "#7a2420" : t.stroke;
+  ctx.lineWidth   = 2;
+  roundRect(ctx, btnX, btnY, BTN_W, BTN_H, 6);
+  ctx.stroke();
+  ctx.fillStyle    = hovered ? "#F7F1E3" : t.ink;
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
-  ctx.font         = `bold ${Math.round(BTN_H * 0.42)}px ${displayFont}`;
-  ctx.fillText(hovered ? "DONT CLICK" : "CLICK ME", btnX + BTN_W / 2, btnY + BTN_H / 2);
+  ctx.font         = `bold ${Math.round(BTN_H * 0.40)}px ${gc.bodyFont}`;
+  ctx.fillText(hovered ? "DON'T CLICK" : "CLICK ME", btnX + BTN_W / 2, btnY + BTN_H / 2);
 
   gc.hitAreas.push({
     x: btnX, y: btnY, w: BTN_W, h: BTN_H,
-    action: () => { gc.loseLife(); },
+    action: () => wrong(gc),
   });
 
   // ── RAF loop — keep animating while on this level ─────────────────────────
@@ -114,7 +120,7 @@ export const drawLevel5 = (gc: GameContext) => {
   const dotCX = topBoxX + topBoxWidth  * 0.87;
   const dotCY = topBoxY + topBoxHeight * 0.76;
 
-  ctx.fillStyle = state.darkMode ? "#1e1e1e" : "#e8e8e8";
+  ctx.fillStyle = t.hairline;
   ctx.beginPath();
   ctx.arc(dotCX, dotCY, DOT_R, 0, Math.PI * 2);
   ctx.fill();
@@ -124,6 +130,7 @@ export const drawLevel5 = (gc: GameContext) => {
     noCursor: true,
     action: () => {
       cancelAnimationFrame(animId5);
+      gc.sounds.ui("chime");
       resetBtn();
       state.currentLevel  = 6;
       state.levelSubPhase = "";

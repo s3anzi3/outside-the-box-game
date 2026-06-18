@@ -70,7 +70,8 @@ export const drawLevel22 = (gc: GameContext) => {
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === 'win') {
     cancelAnimationFrame(animId22);
-    ctx.fillStyle    = t.fg;
+    if (state.winChimeFor !== 22) { state.winChimeFor = 22; gc.sounds.ui('chime'); }
+    ctx.fillStyle    = t.pass;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
     ctx.font         = `bold 44px ${displayFont}`;
@@ -94,6 +95,7 @@ export const drawLevel22 = (gc: GameContext) => {
     waitSecs22     = 3 + Math.random() * 5;
     input22        = '';
     lastTime22     = 0;
+    state.winChimeFor = -1;
     state.levelSubPhase = 'active';
   }
 
@@ -128,7 +130,7 @@ export const drawLevel22 = (gc: GameContext) => {
 
     // Small "NOW!" label
     ctx.font      = `bold 14px ${bodyFont}`;
-    ctx.fillStyle = state.darkMode ? '#ffcc00' : '#cc6600';
+    ctx.fillStyle = t.seal;
     ctx.fillText('MEMORISE NOW', cx, cy + 70);
   }
 

@@ -34,7 +34,7 @@ export const drawLevel40 = (gc: GameContext) => {
   const jit = Math.sin(now / 40) > 0.5 ? (Math.random() - 0.5) * 5 : 0;
   ctx.save();
   ctx.translate(jit, 0);
-  ctx.fillStyle    = '#e23b3b';
+  ctx.fillStyle    = t.danger;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'top';
   ctx.font         = `bold 30px ${displayFont}`;
@@ -64,10 +64,10 @@ export const drawLevel40 = (gc: GameContext) => {
   }
 
   const progress = Math.min(1, heldMs40 / HOLD_MS);
-  ctx.fillStyle = over && gc.mouseDown ? '#7a2222' : (state.darkMode ? '#2a1414' : '#e6c4c4');
+  ctx.fillStyle = over && gc.mouseDown ? '#6E1E1A' : t.danger;
   ctx.fillRect(bx, by, bw, bh);
   // Progress fill
-  ctx.fillStyle = '#39c46b';
+  ctx.fillStyle = t.pass;
   ctx.fillRect(bx, by + bh - 8, bw * progress, 8);
   ctx.strokeStyle = t.stroke;
   ctx.lineWidth = 3;

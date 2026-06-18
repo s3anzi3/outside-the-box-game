@@ -1,7 +1,8 @@
 import { GameContext } from "../types";
 import { getTheme } from "../theme";
 import { getLayout } from "../layout";
-import { getGuideTextMetrics } from "../renderer";
+import { getGuideTextMetrics, roundRect, uiScale } from "../renderer";
+import { wrong } from "./lateralHelpers";
 
 export const drawLevel3 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
@@ -10,7 +11,6 @@ export const drawLevel3 = (gc: GameContext) => {
   const t = getTheme(state);
 
   // 2×2 grid of decoy options — all wrong
-  // levelBGImg (same crop used by the level-select tiles) is the reliable button background
   const cols  = 2;
   const tileW = topBoxWidth * 0.38;
   const tileH = Math.round(topBoxHeight * 0.20);
@@ -25,55 +25,57 @@ export const drawLevel3 = (gc: GameContext) => {
     const row = Math.floor(i / cols);
     const tx = gridX + col * (tileW + hGap);
     const ty = gridY + row * (tileH + vGap);
+    const hover = gc.mouseX >= tx && gc.mouseX <= tx + tileW && gc.mouseY >= ty && gc.mouseY <= ty + tileH;
 
-    // Stone-tile button background — same crop used in the level select screen
-    if (gc.levelBGLoaded) {
-      ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, tx, ty, tileW, tileH);
-    } else {
-      ctx.strokeStyle = t.stroke;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(tx, ty, tileW, tileH);
-    }
+    // paper answer card
+    ctx.save();
+    ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.4)" : "rgba(60,45,20,0.18)";
+    ctx.shadowBlur = hover ? 12 : 7;
+    ctx.shadowOffsetY = hover ? 3 : 2;
+    roundRect(ctx, tx, ty, tileW, tileH, 6);
+    ctx.fillStyle = hover ? t.accent : t.panel;
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = hover ? t.accentDeep : t.stroke;
+    ctx.lineWidth = 2;
+    roundRect(ctx, tx, ty, tileW, tileH, 6);
+    ctx.stroke();
 
-    ctx.fillStyle    = "#1a1a1a";
-    ctx.textAlign    = "center";
+    const txtColor = hover ? "#F7F1E3" : t.ink;
+    ctx.fillStyle = txtColor;
+    ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    // Font sizes scale with BOTH tile height and width so labels can't spill out
-    // of a narrow tile; maxW is a hard cap as the final safety net.
-    const big   = Math.round(Math.min(tileH * 0.38, tileW * 0.17));
-    const med   = Math.round(Math.min(tileH * 0.28, tileW * 0.075));
-    const small = Math.round(Math.min(tileH * 0.24, tileW * 0.085));
-    const maxW  = tileW * 0.74;
+    const big = Math.round(Math.min(tileH * 0.34, tileW * 0.16));
+    const med = Math.round(Math.min(tileH * 0.26, tileW * 0.075));
+    const small = Math.round(Math.min(tileH * 0.22, tileW * 0.085));
+    const maxW = tileW * 0.78;
 
     if (i === 0) {
       ctx.font = `bold ${big}px ${displayFont}`;
       ctx.fillText("dot", tx + tileW / 2, ty + tileH / 2, maxW);
     } else if (i === 1) {
-      ctx.font = `bold ${med}px ${displayFont}`;
+      ctx.font = `bold ${med}px ${bodyFont}`;
       ctx.fillText("Kendrick 'K-dot' Lamar", tx + tileW / 2, ty + tileH / 2, maxW);
     } else if (i === 2) {
       ctx.font = `bold ${big}px ${displayFont}`;
-      ctx.fillText("\u2022 \u2022 \u2022", tx + tileW / 2, ty + tileH / 2, maxW);
+      ctx.fillText("• • •", tx + tileW / 2, ty + tileH / 2, maxW);
     } else {
-      ctx.font = `bold ${med}px ${displayFont}`;
+      ctx.font = `bold ${med}px ${bodyFont}`;
       ctx.fillText("Dept. of Technology", tx + tileW / 2, ty + tileH * 0.38, maxW);
+      ctx.fillStyle = hover ? "rgba(247,241,227,0.82)" : t.fgDim;
       ctx.font = `${small}px ${bodyFont}`;
-      ctx.fillStyle = "#444";
       ctx.fillText("(D.O.T)", tx + tileW / 2, ty + tileH * 0.72, maxW);
     }
 
     gc.hitAreas.push({
-      x: tx,
-      y: ty,
-      w: tileW,
-      h: tileH,
-      action: () => gc.loseLife(),
+      x: tx, y: ty, w: tileW, h: tileH,
+      action: () => wrong(gc),
     });
   }
 
   // Hidden hit area: the tittle (dot) on the 'i' in "Click" in the bottom panel.
-  // Use the SAME responsive metrics the panel renders with, so the dot stays
+  // Uses the SAME responsive metrics the panel renders with, so the dot stays
   // aligned and clickable at any screen size.
   const gm = getGuideTextMetrics(ctx);
   const speechX = gm.speechX;
@@ -93,6 +95,7 @@ export const drawLevel3 = (gc: GameContext) => {
     w: hitR * 2,
     h: hitR * 2,
     action: () => {
+      gc.sounds.ui("chime");
       state.currentLevel = 4;
       gc.render();
     },

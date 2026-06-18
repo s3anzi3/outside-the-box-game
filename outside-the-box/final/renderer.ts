@@ -1,7 +1,386 @@
 import { GameContext } from "./types";
 import { getTheme } from "./theme";
-import { getLayout, getMovementLayout } from "./layout";
+import { getLayout } from "./layout";
 import { LEVEL_DATA } from "./levelData";
+
+// ── Institute identity ────────────────────────────────────────────────────────
+export const INSTITUTE = "Institute of Lateral Cognition";
+
+// Responsive type scale: keeps text legible on large displays instead of pinning
+// it to fixed pixels that look tiny on a big canvas.
+export const uiScale = (ctx: CanvasRenderingContext2D) => {
+  const s = Math.min(ctx.canvas.width / 1280, ctx.canvas.height / 800);
+  return Math.max(0.9, Math.min(s, 1.7));
+};
+
+// ── Low-level drawing helpers ─────────────────────────────────────────────────
+
+// Rounded-rect path (ctx.roundRect isn't guaranteed on every canvas build).
+export const roundRect = (
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, r: number,
+) => {
+  const rr = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y,     x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x,     y + h, rr);
+  ctx.arcTo(x,     y + h, x,     y,     rr);
+  ctx.arcTo(x,     y,     x + w, y,     rr);
+  ctx.closePath();
+};
+
+// Run a draw callback with canvas letter-spacing applied, then restore it.
+const withTracking = (ctx: CanvasRenderingContext2D, px: number, fn: () => void) => {
+  const c = ctx as unknown as { letterSpacing?: string };
+  const prev = c.letterSpacing;
+  try { c.letterSpacing = `${px}px`; } catch { /* unsupported — ignore */ }
+  try { fn(); } finally { try { c.letterSpacing = prev ?? "0px"; } catch { /* ignore */ } }
+};
+
+// Small inward L-ticks at each corner — the "crop mark" detail of an official form.
+const drawCornerTicks = (
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, w: number, h: number, len: number, color: string,
+) => {
+  const d = 11;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  const corners: Array<[number, number, number, number]> = [
+    [x + d,     y + d,     1,  1],
+    [x + w - d, y + d,    -1,  1],
+    [x + d,     y + h - d, 1, -1],
+    [x + w - d, y + h - d, -1, -1],
+  ];
+  for (const [cx, cy, sx, sy] of corners) {
+    ctx.beginPath();
+    ctx.moveTo(cx + sx * len, cy);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx, cy + sy * len);
+    ctx.stroke();
+  }
+};
+
+// Text set along a circular arc — used for the seal's ring lettering.
+const drawRingText = (
+  ctx: CanvasRenderingContext2D,
+  cx: number, cy: number, radius: number,
+  text: string, color: string, font: string, fontPx: number,
+  centerAngle: number, flip: boolean,
+) => {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.font = `${Math.round(fontPx)}px ${font}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const dir = flip ? -1 : 1;
+  const widths = Array.from(text, (ch) => ctx.measureText(ch).width + 1.5);
+  const totalW = widths.reduce((a, b) => a + b, 0);
+  let a = centerAngle - (totalW / radius) / 2 * dir;
+  for (let i = 0; i < text.length; i++) {
+    const wch = widths[i];
+    const ang = a + (wch / radius) / 2 * dir;
+    ctx.save();
+    ctx.translate(cx + Math.cos(ang) * radius, cy + Math.sin(ang) * radius);
+    ctx.rotate(ang + (flip ? -Math.PI / 2 : Math.PI / 2));
+    ctx.fillText(text[i], 0, 0);
+    ctx.restore();
+    a += (wch / radius) * dir;
+  }
+  ctx.restore();
+};
+
+// Moving foil highlight clipped to a circle — gives gold a live, reflective sheen.
+const foilSweep = (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, speed = 0.45) => {
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.clip();
+  const tnow = performance.now() / 1000;
+  const sweep = ((tnow * speed) % 1.6) - 0.3;
+  const gx = cx + (sweep - 0.5) * 2 * r;
+  const grad = ctx.createLinearGradient(gx - r * 0.5, cy - r, gx + r * 0.5, cy + r);
+  grad.addColorStop(0, "rgba(255,255,255,0)");
+  grad.addColorStop(0.5, "rgba(255,250,228,0.42)");
+  grad.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  ctx.restore();
+};
+
+// ── Brand primitives (reused across screens, overlays and levels) ─────────────
+
+// The official wordmark lockup: eyebrow / serif title / tracked subtitle.
+export const drawWordmark = (gc: GameContext, cx: number, y: number, scale = 1) => {
+  const { ctx, state, displayFont, monoFont } = gc;
+  const t = getTheme(state);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+
+  ctx.fillStyle = t.accent;
+  ctx.font = `${Math.round(12 * scale)}px ${monoFont}`;
+  withTracking(ctx, 2 * scale, () =>
+    ctx.fillText("INSTITUTE OF LATERAL COGNITION", cx, y));
+
+  ctx.fillStyle = t.ink;
+  ctx.font = `${Math.round(50 * scale)}px ${displayFont}`;
+  ctx.fillText("Outside-the-Box", cx, y + Math.round(46 * scale));
+
+  const subY = y + Math.round(68 * scale);
+  ctx.fillStyle = t.fgMid;
+  ctx.font = `${Math.round(11 * scale)}px ${monoFont}`;
+  const sub = "THINKING  CERTIFICATION";
+  const subW = ctx.measureText(sub).width;
+  withTracking(ctx, 2.5 * scale, () => ctx.fillText(sub, cx, subY));
+
+  const half = Math.max(60 * scale, subW * 0.62);
+  ctx.strokeStyle = t.hairline;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - half - 30 * scale, subY - 4 * scale);
+  ctx.lineTo(cx - half, subY - 4 * scale);
+  ctx.moveTo(cx + half, subY - 4 * scale);
+  ctx.lineTo(cx + half + 30 * scale, subY - 4 * scale);
+  ctx.stroke();
+  ctx.fillStyle = t.seal;
+  for (const dx of [-half - 36 * scale, half + 36 * scale]) {
+    ctx.save();
+    ctx.translate(cx + dx, subY - 4 * scale);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillRect(-2 * scale, -2 * scale, 4 * scale, 4 * scale);
+    ctx.restore();
+  }
+};
+
+// A pressed-wax / foil seal: concentric gold rings, ring lettering, a monogram,
+// with a live foil sheen sweeping across it.
+export const drawSeal = (
+  gc: GameContext, cx: number, cy: number, r: number,
+  opts: { monogram?: string; color?: string } = {},
+) => {
+  const { ctx, state, displayFont, monoFont } = gc;
+  const t = getTheme(state);
+  const gold = opts.color ?? t.seal;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = state.darkMode ? "rgba(212,176,90,0.12)" : "rgba(176,137,47,0.10)";
+  ctx.fill();
+
+  // scalloped outer edge
+  const scallops = 32;
+  ctx.beginPath();
+  for (let i = 0; i <= scallops; i++) {
+    const ang = (i / scallops) * Math.PI * 2;
+    const rad = r * (1 + (i % 2 === 0 ? 0.045 : 0));
+    const px = cx + Math.cos(ang) * rad;
+    const py = cy + Math.sin(ang) * rad;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = Math.max(1, r * 0.03);
+  ctx.stroke();
+
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = Math.max(1.5, r * 0.05);
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.9, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = Math.max(1, r * 0.02);
+  ctx.beginPath(); ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2); ctx.stroke();
+
+  drawRingText(ctx, cx, cy, r * 0.73,
+    "INSTITUTE OF LATERAL COGNITION", gold, monoFont, r * 0.13, -Math.PI / 2, false);
+  drawRingText(ctx, cx, cy, r * 0.73,
+    "OUTSIDE THE BOX", gold, monoFont, r * 0.13, Math.PI / 2, true);
+
+  ctx.fillStyle = gold;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = `${Math.round(r * 0.16)}px ${monoFont}`;
+  ctx.fillText("✦", cx - r * 0.73, cy);
+  ctx.fillText("✦", cx + r * 0.73, cy);
+
+  ctx.fillStyle = gold;
+  ctx.font = `${Math.round(r * 0.46)}px ${displayFont}`;
+  ctx.fillText(opts.monogram ?? "OtB", cx, cy + r * 0.03);
+  ctx.restore();
+
+  foilSweep(ctx, cx, cy, r);
+};
+
+// A pseudo-3D medallion that spins about its vertical axis (a turning gold coin).
+export const drawMedallion = (
+  gc: GameContext, cx: number, cy: number, r: number,
+  opts: { spin?: number } = {},
+) => {
+  const { ctx, state, displayFont, monoFont } = gc;
+  const t = getTheme(state);
+  const gold = t.seal;
+  const ang = (performance.now() / 1000) * (opts.spin ?? 0.9);
+  const c = Math.cos(ang);
+  const halfW = Math.max(0.07, Math.abs(c)) * r;
+  const front = c >= 0;
+
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.45)" : "rgba(60,45,20,0.35)";
+  ctx.shadowBlur = r * 0.4;
+  ctx.shadowOffsetY = r * 0.12;
+  const grad = ctx.createLinearGradient(cx - halfW, cy - r, cx + halfW, cy + r);
+  grad.addColorStop(0, "#7d5f1f");
+  grad.addColorStop(0.5, gold);
+  grad.addColorStop(1, "#ecd591");
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, halfW, r, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = "#6e5418";
+  ctx.lineWidth = Math.max(1, r * 0.045);
+  ctx.beginPath(); ctx.ellipse(cx, cy, halfW, r, 0, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = Math.max(1, r * 0.02);
+  ctx.beginPath(); ctx.ellipse(cx, cy, halfW * 0.82, r * 0.82, 0, 0, Math.PI * 2); ctx.stroke();
+
+  // emblem, squashed with the spin
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(Math.max(0.07, Math.abs(c)), 1);
+  ctx.fillStyle = "#5a4410";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  if (front) {
+    ctx.font = `${Math.round(r * 0.66)}px ${displayFont}`;
+    ctx.fillText("OtB", 0, r * 0.04);
+  } else {
+    ctx.font = `${Math.round(r * 0.9)}px ${monoFont}`;
+    ctx.fillText("✦", 0, r * 0.04);
+  }
+  ctx.restore();
+
+  // foil sheen across the (squashed) face
+  ctx.save();
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, halfW, r, 0, 0, Math.PI * 2);
+  ctx.clip();
+  const tnow = performance.now() / 1000;
+  const sweep = ((tnow * 0.6) % 1.6) - 0.3;
+  const gx = cx + (sweep - 0.5) * 2 * r;
+  const sh = ctx.createLinearGradient(gx - r * 0.5, cy - r, gx + r * 0.5, cy + r);
+  sh.addColorStop(0, "rgba(255,255,255,0)");
+  sh.addColorStop(0.5, "rgba(255,251,232,0.55)");
+  sh.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = sh;
+  ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+  ctx.restore();
+};
+
+// A rotated rubber-stamp impression: double border + tracked mono text.
+export const drawStamp = (
+  gc: GameContext, cx: number, cy: number, text: string, color: string,
+  opts: { angle?: number; fontPx?: number; alpha?: number } = {},
+) => {
+  const { ctx, monoFont } = gc;
+  const fontPx = (opts.fontPx ?? 30) * uiScale(ctx);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate((opts.angle ?? -9) * Math.PI / 180);
+  ctx.globalAlpha = opts.alpha ?? 0.92;
+  ctx.font = `bold ${fontPx}px ${monoFont}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  let textW = 0;
+  withTracking(ctx, fontPx * 0.1, () => { textW = ctx.measureText(text).width; });
+  const padX = fontPx * 0.7;
+  const padY = fontPx * 0.5;
+  const bw = textW + padX * 2;
+  const bh = fontPx + padY * 2;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(2, fontPx * 0.1);
+  roundRect(ctx, -bw / 2, -bh / 2, bw, bh, fontPx * 0.18); ctx.stroke();
+  ctx.lineWidth = Math.max(1, fontPx * 0.04);
+  roundRect(ctx, -bw / 2 + fontPx * 0.16, -bh / 2 + fontPx * 0.16, bw - fontPx * 0.32, bh - fontPx * 0.32, fontPx * 0.12);
+  ctx.stroke();
+  ctx.fillStyle = color;
+  withTracking(ctx, fontPx * 0.1, () => ctx.fillText(text, 0, fontPx * 0.04));
+  ctx.restore();
+};
+
+// ── Transient "stamp slam" feedback (CORRECT / INCORRECT) ─────────────────────
+
+export const triggerStamp = (gc: GameContext, text: string, color: string) => {
+  gc.state.fxStampText = text;
+  gc.state.fxStampColor = color;
+  gc.state.fxStampAt = performance.now();
+};
+
+// Draws the active feedback stamp slamming down over the play area, then fading.
+export const drawFxStamp = (gc: GameContext) => {
+  const { ctx, state } = gc;
+  if (state.currentScreen !== "level" || !state.fxStampAt) return;
+  const age = performance.now() - state.fxStampAt;
+  const dur = 850;
+  if (age < 0 || age > dur) return;
+
+  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
+  const cx = topBoxX + topBoxWidth / 2;
+  const cy = topBoxY + topBoxHeight / 2;
+
+  const inP = Math.min(1, age / 150);
+  const scale = 1.7 - 0.7 * (1 - Math.pow(1 - inP, 3));   // 1.7 → 1.0 slam-in
+  const alpha = age > dur - 260 ? Math.max(0, (dur - age) / 260) : 1;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(cx, cy);
+  ctx.scale(scale, scale);
+  ctx.translate(-cx, -cy);
+  drawStamp(gc, cx, cy, state.fxStampText ?? "", state.fxStampColor ?? "#9A2B25",
+    { fontPx: 42, angle: -10, alpha: 1 });
+  ctx.restore();
+};
+
+// A reusable framed "document" panel: paper fill, drop shadow, double rule,
+// corner ticks, and an optional title cartouche set into the top rule.
+export const drawDocumentBox = (
+  gc: GameContext, x: number, y: number, w: number, h: number,
+  opts: { title?: string; radius?: number } = {},
+) => {
+  const { ctx, state, monoFont } = gc;
+  const t = getTheme(state);
+  const r = opts.radius ?? 6;
+  const s = uiScale(ctx);
+
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.55)" : "rgba(60,45,20,0.22)";
+  ctx.shadowBlur = 28;
+  ctx.shadowOffsetY = 8;
+  roundRect(ctx, x, y, w, h, r);
+  ctx.fillStyle = t.panel;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = t.stroke;
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, x, y, w, h, r); ctx.stroke();
+  ctx.strokeStyle = t.hairline;
+  ctx.lineWidth = 1;
+  roundRect(ctx, x + 6, y + 6, w - 12, h - 12, Math.max(0, r - 3)); ctx.stroke();
+  drawCornerTicks(ctx, x, y, w, h, 12, t.accent);
+
+  if (opts.title) {
+    ctx.font = `${Math.round(11 * s)}px ${monoFont}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const label = opts.title.toUpperCase();
+    const cw = ctx.measureText(label).width + 26;
+    ctx.fillStyle = t.panel;
+    ctx.fillRect(x + w / 2 - cw / 2, y - 2, cw, 5);
+    ctx.fillStyle = t.accent;
+    withTracking(ctx, 1.5, () => ctx.fillText(label, x + w / 2, y));
+  }
+};
+
+// ── Layout-coupled helpers (unchanged geometry) ───────────────────────────────
 
 export const isSkippable = (currentLevel: number): boolean => {
   const entry = LEVEL_DATA[currentLevel - 1];
@@ -9,9 +388,8 @@ export const isSkippable = (currentLevel: number): boolean => {
 };
 
 // Responsive metrics for the Exam Guide speech text in the bottom panel.
-// Font size and line spacing scale with the panel height so dialogue fits on
-// smaller screens. Exported so levels that hit-test against the rendered text
-// (e.g. Level 3's dot on the 'i' in "Click") stay aligned with what's drawn.
+// IMPORTANT: levels that hit-test against the rendered guide text (e.g. Level 3's
+// dot on the 'i' in "Click") rely on these exact values — do not change the math.
 export const getGuideTextMetrics = (ctx: CanvasRenderingContext2D) => {
   const { frameX, frameW, bottomBoxY, bottomBoxHeight } = getLayout(ctx);
   const contentX = frameX;
@@ -25,97 +403,116 @@ export const getGuideTextMetrics = (ctx: CanvasRenderingContext2D) => {
   return { speechX, speechW, panelCY, fontPx, lineGap, bottomBoxY, bottomBoxHeight };
 };
 
-// Full-screen loading screen shown until image assets have been fetched, so the
-// player never sees half-drawn buttons. Animated spinner + asset progress bar.
+// ── Screens chrome ────────────────────────────────────────────────────────────
+
+// Full-screen loading screen: paper, wordmark, a spinning gold medallion, progress.
 export const drawLoadingScreen = (gc: GameContext) => {
-  const { ctx, state, displayFont } = gc;
+  const { ctx, state, monoFont } = gc;
   const t = getTheme(state);
   const w = ctx.canvas.width;
   const h = ctx.canvas.height;
   const cx = w / 2;
   const cy = h / 2;
+  const s = uiScale(ctx);
   const now = Date.now();
 
-  // Logo once it's available, otherwise the wordmark
-  if (gc.logoLoaded && gc.logo.naturalWidth > 0) {
-    const lw = Math.min(w * 0.16, 230);
-    const lh = lw * (gc.logo.naturalHeight / gc.logo.naturalWidth);
-    ctx.drawImage(gc.logo, cx - lw / 2, cy - h * 0.20 - lh / 2, lw, lh);
-  } else {
-    ctx.fillStyle    = t.fg;
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = `bold ${Math.round(Math.min(w * 0.045, 46))}px ${displayFont}`;
-    ctx.fillText("Outside-the-Box", cx, cy - h * 0.16, w * 0.9);
-  }
+  drawWordmark(gc, cx, cy - h * 0.24, Math.min(1.3, s));
 
-  // Spinner
-  const r = Math.max(14, Math.min(w, h) * 0.045);
-  ctx.lineCap   = "round";
-  ctx.lineWidth = Math.max(3, r * 0.16);
-  ctx.strokeStyle = t.divider;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.stroke();
-  const a0 = (now / 550) % (Math.PI * 2);
-  ctx.strokeStyle = "#d4b820";
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, a0, a0 + Math.PI * 0.6);
-  ctx.stroke();
+  drawMedallion(gc, cx, cy + h * 0.01, Math.max(26, Math.min(w, h) * 0.06));
 
-  // "LOADING…" with animated dots
-  ctx.fillStyle    = t.fgMid;
-  ctx.textAlign    = "center";
+  ctx.fillStyle = t.fgDim;
+  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `bold ${Math.round(Math.max(12, Math.min(w * 0.016, 16)))}px ${displayFont}`;
-  ctx.fillText("LOADING" + ".".repeat(1 + (Math.floor(now / 350) % 3)), cx, cy + h * 0.105);
+  ctx.font = `${Math.round(13 * s)}px ${monoFont}`;
+  withTracking(ctx, 1.5, () =>
+    ctx.fillText("PREPARING EXAMINATION" + ".".repeat(1 + (Math.floor(now / 350) % 3)),
+      cx, cy + h * 0.16));
 
-  // Asset progress bar
-  const barW = Math.min(w * 0.26, 320);
-  const barH = 6;
+  const barW = Math.min(w * 0.26, 340);
+  const barH = 5;
   const barX = cx - barW / 2;
-  const barY = cy + h * 0.15;
-  ctx.fillStyle = t.divider;
+  const barY = cy + h * 0.21;
+  ctx.fillStyle = t.hairline;
   ctx.fillRect(barX, barY, barW, barH);
-  ctx.fillStyle = "#d4b820";
+  ctx.fillStyle = t.seal;
   ctx.fillRect(barX, barY, barW * Math.max(0.04, Math.min(1, gc.assetProgress)), barH);
 };
 
 export const drawBackground = (gc: GameContext) => {
   const { ctx, state } = gc;
   const t = getTheme(state);
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
   document.body.style.background = t.bg;
   ctx.fillStyle = t.bg;
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-};
+  ctx.fillRect(0, 0, w, h);
 
-export const drawLogo = (gc: GameContext) => {
-  const { ctx, state, logo, logoLoaded, displayFont } = gc;
-  const { w, logoY } = getLayout(ctx);
-  if (logoLoaded && logo.naturalWidth > 0) {
-    const logoW = w * 0.10;
-    const logoH = logoW * (logo.naturalHeight / logo.naturalWidth);
-    ctx.drawImage(logo, w / 2 - logoW / 2, logoY - logoH / 2, logoW, logoH);
-  } else {
-    ctx.fillStyle = getTheme(state).fg;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = `bold 54px ${displayFont}`;
-    ctx.fillText("Outside-the-Box", w / 2, logoY);
+  // soft vignette so the paper reads as a lit document on a desk
+  const g = ctx.createRadialGradient(w / 2, h * 0.42, Math.min(w, h) * 0.18, w / 2, h * 0.5, Math.max(w, h) * 0.72);
+  g.addColorStop(0, "rgba(0,0,0,0)");
+  g.addColorStop(1, state.darkMode ? "rgba(0,0,0,0.45)" : "rgba(92,70,38,0.10)");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // faint drifting dust motes for ambient life
+  const tnow = performance.now() / 1000;
+  ctx.fillStyle = state.darkMode ? "rgba(212,176,90,0.05)" : "rgba(120,95,40,0.05)";
+  for (let i = 0; i < 16; i++) {
+    const fx = (i * 0.61803) % 1;
+    const fy = (i * 0.31831 + tnow * 0.012 * ((i % 3) + 1)) % 1;
+    const rr = 1 + (i % 3);
+    ctx.beginPath();
+    ctx.arc(fx * w, (1 - fy) * h, rr, 0, Math.PI * 2);
+    ctx.fill();
   }
 };
 
-export const drawGameplayFrame = (gc: GameContext) => {
-  const { ctx, state, gameplayFrame, gameplayFrameLoaded } = gc;
-  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
-  const t = getTheme(state);
-
-  ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 2;
-  ctx.strokeRect(topBoxX, topBoxY, topBoxWidth, topBoxHeight);
-
+export const drawLogo = (gc: GameContext) => {
+  const { ctx } = gc;
+  const { w, logoY } = getLayout(ctx);
+  drawWordmark(gc, w / 2, logoY - 16, Math.min(1.5, uiScale(ctx)));
 };
 
+// The play-area "examination paper": raised sheet, double rule, corner ticks,
+// and a screen-specific caption set into the top rule.
+export const drawGameplayFrame = (gc: GameContext) => {
+  const { ctx, state, monoFont } = gc;
+  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
+  const t = getTheme(state);
+  const s = uiScale(ctx);
+  const x = topBoxX, y = topBoxY, w = topBoxWidth, h = topBoxHeight;
+
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.5)" : "rgba(60,45,20,0.18)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 6;
+  ctx.fillStyle = t.panel;
+  ctx.fillRect(x, y, w, h);
+  ctx.restore();
+
+  ctx.strokeStyle = t.stroke;
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(x, y, w, h);
+  ctx.strokeStyle = t.hairline;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x + 6, y + 6, w - 12, h - 12);
+  drawCornerTicks(ctx, x, y, w, h, 13, t.accent);
+
+  const caption =
+    state.currentScreen === "mainmenu"    ? "·  OFFICIAL EXAMINATION  ·" :
+    state.currentScreen === "levelselect" ? "·  TABLE OF CONTENTS  ·" :
+                                            "·  EXAMINATION PAPER  ·";
+  ctx.font = `${Math.round(10 * s)}px ${monoFont}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const cw = ctx.measureText(caption).width + 20;
+  ctx.fillStyle = t.panel;
+  ctx.fillRect(x + w / 2 - cw / 2, y - 2, cw, 5);
+  ctx.fillStyle = t.fgDim;
+  withTracking(ctx, 1, () => ctx.fillText(caption, x + w / 2, y));
+};
+
+// An embossed, official-looking button. Signature preserved for all callers.
 export const drawButton = (
   gc: GameContext,
   label: string,
@@ -124,18 +521,36 @@ export const drawButton = (
   w: number,
   h: number,
   action: () => void,
-  fontSize = 22,
+  fontSize = 18,
 ) => {
-  const { ctx, state, displayFont } = gc;
+  const { ctx, state, bodyFont } = gc;
   const t = getTheme(state);
-  ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(x, y, w, h);
-  ctx.fillStyle = t.fg;
+  const s = uiScale(ctx);
+  const hover = gc.mouseX >= x && gc.mouseX <= x + w && gc.mouseY >= y && gc.mouseY <= y + h;
+  const pressed = hover && gc.mouseDown;
+  const dy = pressed ? 1 : 0;
+
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.45)" : "rgba(60,45,20,0.22)";
+  ctx.shadowBlur = pressed ? 2 : hover ? 14 : 9;
+  ctx.shadowOffsetY = pressed ? 1 : hover ? 4 : 3;
+  roundRect(ctx, x, y + dy, w, h, 5);
+  ctx.fillStyle = hover ? t.accent : t.bg;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = hover ? t.accentDeep : t.stroke;
+  ctx.lineWidth = 2;
+  roundRect(ctx, x, y + dy, w, h, 5);
+  ctx.stroke();
+
+  const fontPx = Math.min(Math.round(fontSize * s), h * 0.52);
+  ctx.fillStyle = hover ? "#F7F1E3" : t.ink;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font = `bold ${fontSize}px ${displayFont}`;
-  ctx.fillText(label, x + w / 2, y + h / 2, w - 16);
+  ctx.font = `bold ${fontPx}px ${bodyFont}`;
+  withTracking(ctx, 0.5, () => ctx.fillText(label.toUpperCase(), x + w / 2, y + h / 2 + dy, w - 18));
+
   gc.hitAreas.push({ x, y, w, h, action });
 };
 
@@ -153,77 +568,42 @@ export const drawImgButton = (
   const h = w * (sh / sw);
   if (loaded) {
     gc.ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    gc.hitAreas.push({ x, y, w, h, action });
   } else {
     drawButton(gc, fallbackLabel, x, y, w, h, action);
   }
-  gc.hitAreas.push({ x, y, w, h, action });
 };
 
+// The Examiner's panel below the paper: a margin-note style annotation block.
+// The guide speech text keeps its original position/font so Level 3's glyph
+// hit-testing stays aligned — only the surrounding chrome is restyled.
 export const drawBottomPanel = (gc: GameContext) => {
-  const { ctx, state, displayFont, bodyFont } = gc;
-  const isMovementLevel = false;   // 11–20 are now normal bespoke levels
-
-  if (isMovementLevel) {
-    const movementLayout = getMovementLayout(ctx);
-    const t = getTheme(state);
-    const currentAnswer = gc.getAnswerPreview();
-    const timerText = `${String(gc.timeLeftSeconds).padStart(2, "0")}s`;
-    const timerColor = gc.timeLeftSeconds < 10 ? "#ff5252" : t.fgMid;
-    const submitW = 160;
-    const submitH = 48;
-    const submitX = movementLayout.bottomFrameWidth - submitW - 32;
-    const submitY = movementLayout.bottomFrameY + movementLayout.bottomFrameHeight / 2 - submitH / 2;
-    const resetW = 100;
-    const resetH = 34;
-    const resetX = movementLayout.bottomFrameWidth - resetW - 46;
-    const resetY = movementLayout.bottomFrameY + 28;
-
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth = 4;
-    ctx.strokeRect(
-      movementLayout.bottomFrameX,
-      movementLayout.bottomFrameY,
-      movementLayout.bottomFrameWidth,
-      movementLayout.bottomFrameHeight,
-    );
-
-    ctx.fillStyle = t.fg;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "top";
-    ctx.font = `bold 27px ${displayFont}`;
-    ctx.fillText(`Quiz: ${gc.quizPrompt}`, 28, movementLayout.bottomFrameY + 24, movementLayout.bottomFrameWidth * 0.62);
-
-    ctx.font = `bold 21px ${bodyFont}`;
-    ctx.fillStyle = timerColor;
-    ctx.fillText(`Time Left: ${timerText}`, 28, movementLayout.bottomFrameY + 82, 240);
-
-    ctx.fillStyle = t.fg;
-    ctx.fillText(`Your Answer: ${currentAnswer}`, 28, movementLayout.bottomFrameY + 118, movementLayout.bottomFrameWidth * 0.56);
-
-    drawButton(gc, "RESET", resetX, resetY, resetW, resetH, () => {
-      gc.resetMovementLevel();
-    }, 14);
-
-    drawButton(gc, "SUBMIT", submitX, submitY, submitW, submitH, () => {
-      gc.submitMovementAnswer();
-    }, 18);
-    return;
-  }
-
+  const { ctx, state, monoFont, bodyFont } = gc;
   const { frameX, frameW, bottomBoxY, bottomBoxHeight } = getLayout(ctx);
   const t = getTheme(state);
+  const s = uiScale(ctx);
   const contentX = frameX;
   const contentWidth = frameW;
 
+  ctx.save();
+  ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.45)" : "rgba(60,45,20,0.16)";
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 5;
+  ctx.fillStyle = t.panel;
+  ctx.fillRect(contentX, bottomBoxY, contentWidth, bottomBoxHeight);
+  ctx.restore();
   ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 2;
   ctx.strokeRect(contentX, bottomBoxY, contentWidth, bottomBoxHeight);
+  ctx.strokeStyle = t.hairline;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(contentX + 5, bottomBoxY + 5, contentWidth - 10, bottomBoxHeight - 10);
 
   const panelCY = bottomBoxY + bottomBoxHeight / 2;
   const robotCX = contentX + contentWidth * 0.07;
-  const spriteSize = Math.min(bottomBoxHeight * 0.75, 56);
+  const spriteSize = Math.min(bottomBoxHeight * 0.62, 50);
   const charX = robotCX + gc.guideCharOffsetX;
-  const charY = panelCY - spriteSize / 2 + gc.guideCharOffsetY;
+  const charY = panelCY - spriteSize / 2 + gc.guideCharOffsetY - 6;
 
   const dirSprites: Record<string, { img: HTMLImageElement; loaded: boolean }> = {
     down:  { img: gc.playerDownImg,  loaded: gc.playerDownLoaded },
@@ -232,19 +612,18 @@ export const drawBottomPanel = (gc: GameContext) => {
     right: { img: gc.playerRightImg, loaded: gc.playerRightLoaded },
   };
   const { img: spriteImg, loaded: spriteLoaded } = dirSprites[gc.guideCharDir] ?? dirSprites.down;
-
   if (spriteLoaded) {
     ctx.drawImage(spriteImg, charX - spriteSize / 2, charY, spriteSize, spriteSize);
   }
 
-  ctx.fillStyle = t.fgDim;
+  ctx.fillStyle = t.accent;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  ctx.font = `bold 9px ${displayFont}`;
-  ctx.fillText("EXAM  GUIDE", charX, charY + spriteSize + 4, spriteSize + 16);
+  ctx.font = `${Math.round(10 * s)}px ${monoFont}`;
+  withTracking(ctx, 1, () => ctx.fillText("EXAMINER", charX, charY + spriteSize + 5));
 
   const divX = contentX + contentWidth * 0.155;
-  ctx.strokeStyle = t.divider;
+  ctx.strokeStyle = t.hairline;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(divX, bottomBoxY + bottomBoxHeight * 0.10);
@@ -261,8 +640,9 @@ export const drawBottomPanel = (gc: GameContext) => {
   ctx.fillStyle = t.fgDim;
   ctx.textAlign = "left";
   ctx.textBaseline = "top";
-  ctx.font = `bold 11px ${displayFont}`;
-  ctx.fillText("EXAM GUIDE  »", speechX, bottomBoxY + bottomBoxHeight * 0.10);
+  ctx.font = `${Math.round(11 * s)}px ${monoFont}`;
+  withTracking(ctx, 1, () =>
+    ctx.fillText("EXAMINER'S REMARKS", speechX, bottomBoxY + bottomBoxHeight * 0.10));
 
   const fullLines = levelData.lines;
   const totalChars = fullLines.reduce((sum, line) => sum + line.length, 0);
@@ -271,14 +651,11 @@ export const drawBottomPanel = (gc: GameContext) => {
   let charsLeft = Math.max(0, state.guideReveal);
   const displayLines: string[] = [];
   for (const line of fullLines) {
-    if (charsLeft <= 0) {
-      break;
-    }
+    if (charsLeft <= 0) break;
     const shown = Math.min(charsLeft, line.length);
     displayLines.push(line.slice(0, shown));
     charsLeft -= shown;
   }
-
   if (displayLines.length > 0 && (isTyping || state.guideCursor)) {
     displayLines[displayLines.length - 1] += " |";
   }
@@ -296,205 +673,121 @@ export const drawBottomPanel = (gc: GameContext) => {
   }
 };
 
+// In-level form header: item number (top-left), pause control + attempts (right).
 export const drawLevelHUD = (gc: GameContext) => {
-  const { ctx, state, displayFont } = gc;
-  const isMovementLevel = false;   // 11–20 are now normal bespoke levels
-  if (isMovementLevel) {
-    const movementLayout = getMovementLayout(ctx);
-    const t = getTheme(state);
-    const padX = 28;
-    const padY = 28;
-
-    ctx.fillStyle = t.fg;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.font = `bold 24px ${displayFont}`;
-    ctx.fillText(`Q.${state.currentLevel}`, movementLayout.gameFrameX + padX, movementLayout.gameFrameY + padY);
-
-    const pauseSize = padY * 1.6;
-    const pauseX = movementLayout.gameFrameX + movementLayout.gameFrameWidth - padX - pauseSize;
-    const pauseY = movementLayout.gameFrameY + padY - pauseSize / 2;
-    if (gc.pauseButtonLoaded) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(pauseX + pauseSize / 2, pauseY + pauseSize / 2, pauseSize / 2, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.drawImage(gc.pauseButton, 406, 118, 735, 760, pauseX, pauseY, pauseSize, pauseSize);
-      ctx.restore();
-    } else {
-      ctx.strokeStyle = t.stroke;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(pauseX, pauseY, pauseSize, pauseSize);
-      ctx.fillStyle = t.fg;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = `bold 16px ${displayFont}`;
-      ctx.fillText("II", pauseX + pauseSize / 2, pauseY + pauseSize / 2);
-    }
-    gc.hitAreas.push({
-      x: pauseX,
-      y: pauseY,
-      w: pauseSize,
-      h: pauseSize,
-      action: () => {
-        state.paused = true;
-        gc.render();
-      },
-    });
-
-    const heartSize = 36;
-    const heartGap = 8;
-    const totalW = 3 * heartSize + 2 * heartGap;
-    const livesX = movementLayout.gameFrameX + movementLayout.gameFrameWidth - padX - totalW;
-    const livesY = movementLayout.gameFrameY + movementLayout.gameFrameHeight - padY - heartSize / 2;
-    for (let i = 0; i < 3; i++) {
-      const img = i < state.lives ? gc.heartImg : gc.lostHeartImg;
-      const loaded = i < state.lives ? gc.heartLoaded : gc.lostHeartLoaded;
-      const sx = i < state.lives ? 274 : 343;
-      const sy = i < state.lives ? 0   : 55;
-      const sw = i < state.lives ? 1011 : 856;
-      const sh = i < state.lives ? 864  : 821;
-      const hx = livesX + i * (heartSize + heartGap);
-      if (loaded) {
-        ctx.drawImage(img, sx, sy, sw, sh, hx, livesY, heartSize, heartSize);
-      } else {
-        ctx.fillStyle = i < state.lives ? "#e03030" : state.darkMode ? "#444444" : "#bbbbbb";
-        ctx.font = `${heartSize}px sans-serif`;
-        ctx.textBaseline = "top";
-        ctx.textAlign = "left";
-        ctx.fillText("\u2665", hx, livesY);
-      }
-    }
-    return;
-  }
-
+  const { ctx, state, monoFont } = gc;
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const padX = topBoxWidth * 0.05;
   const padY = topBoxHeight * 0.08;
   const t = getTheme(state);
+  const s = uiScale(ctx);
 
-  ctx.fillStyle = t.fg;
+  // item number — preserve Level 3's intentional dot-less label
+  ctx.fillStyle = t.ink;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.font = `bold 26px ${displayFont}`;
-  ctx.fillText(state.currentLevel === 3 ? `Q${state.currentLevel}` : `Q.${state.currentLevel}`, topBoxX + padX, topBoxY + padY);
+  ctx.font = `bold ${Math.round(22 * s)}px ${monoFont}`;
+  ctx.fillText(state.currentLevel === 3 ? `Q${state.currentLevel}` : `Q.${state.currentLevel}`,
+    topBoxX + padX, topBoxY + padY);
 
-  const pauseSize = padY * 1.6;
+  // pause control
+  const pauseSize = padY * 1.5;
   const pauseX = topBoxX + topBoxWidth - padX - pauseSize;
   const pauseY = topBoxY + padY - pauseSize / 2;
-  if (gc.pauseButtonLoaded) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(pauseX + pauseSize / 2, pauseY + pauseSize / 2, pauseSize / 2, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.drawImage(gc.pauseButton, 406, 118, 735, 760, pauseX, pauseY, pauseSize, pauseSize);
-    ctx.restore();
-  } else {
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(pauseX, pauseY, pauseSize, pauseSize);
-    ctx.fillStyle = t.fg;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = `bold 16px ${displayFont}`;
-    ctx.fillText("II", pauseX + pauseSize / 2, pauseY + pauseSize / 2);
-  }
+  roundRect(ctx, pauseX, pauseY, pauseSize, pauseSize, 4);
+  ctx.fillStyle = t.bg;
+  ctx.fill();
+  ctx.strokeStyle = t.stroke;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = t.accent;
+  const barW = pauseSize * 0.12;
+  const barH = pauseSize * 0.42;
+  const barGap = pauseSize * 0.14;
+  ctx.fillRect(pauseX + pauseSize / 2 - barGap / 2 - barW, pauseY + pauseSize / 2 - barH / 2, barW, barH);
+  ctx.fillRect(pauseX + pauseSize / 2 + barGap / 2, pauseY + pauseSize / 2 - barH / 2, barW, barH);
   gc.hitAreas.push({
-    x: pauseX,
-    y: pauseY,
-    w: pauseSize,
-    h: pauseSize,
-    action: () => {
-      state.paused = true;
-      gc.render();
-    },
+    x: pauseX, y: pauseY, w: pauseSize, h: pauseSize,
+    action: () => { state.paused = true; gc.render(); },
   });
 
-  const heartSize = 36;
-  const heartGap  = 8;
-  const totalHW   = 3 * heartSize + 2 * heartGap;
-  const livesX    = topBoxX + topBoxWidth - padX - totalHW;
-  const livesY    = topBoxY + topBoxHeight - padY * 1.2 - heartSize / 2;
+  // attempts — three form checkboxes, filled = remaining
+  const pip = Math.round(15 * s);
+  const pipGap = Math.round(7 * s);
+  const totalW = 3 * pip + 2 * pipGap;
+  const pipsX = topBoxX + topBoxWidth - padX - totalW;
+  const pipsY = topBoxY + topBoxHeight - padY * 1.1 - pip;
+
+  ctx.fillStyle = t.fgDim;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
+  ctx.font = `${Math.round(9 * s)}px ${monoFont}`;
+  withTracking(ctx, 0.5, () => ctx.fillText("ATTEMPTS", pipsX + totalW, pipsY - 9));
 
   for (let i = 0; i < 3; i++) {
-    const img    = i < state.lives ? gc.heartImg    : gc.lostHeartImg;
-    const loaded = i < state.lives ? gc.heartLoaded : gc.lostHeartLoaded;
-    const sx = i < state.lives ? 274  : 343;
-    const sy = i < state.lives ? 0    : 55;
-    const sw = i < state.lives ? 1011 : 856;
-    const sh = i < state.lives ? 864  : 821;
-    const hx = livesX + i * (heartSize + heartGap);
-    if (loaded) {
-      ctx.drawImage(img, sx, sy, sw, sh, hx, livesY, heartSize, heartSize);
+    const px = pipsX + i * (pip + pipGap);
+    const remaining = i < state.lives;
+    roundRect(ctx, px, pipsY, pip, pip, 2);
+    ctx.strokeStyle = remaining ? t.accent : t.hairline;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    if (remaining) {
+      ctx.fillStyle = t.accent;
+      ctx.fill();
     } else {
-      ctx.fillStyle    = i < state.lives ? "#e03030" : state.darkMode ? "#444444" : "#bbbbbb";
-      ctx.font         = `${heartSize}px sans-serif`;
-      ctx.textBaseline = "top";
-      ctx.textAlign    = "left";
-      ctx.fillText("\u2665", hx, livesY);
+      ctx.strokeStyle = t.hairline;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(px + 3, pipsY + 3);
+      ctx.lineTo(px + pip - 3, pipsY + pip - 3);
+      ctx.stroke();
     }
   }
 };
 
+// "ANSWER KEY" toggle (cheats) — styled as a stamped gold tab above the paper.
 export const drawCheatsButton = (gc: GameContext) => {
-  const { ctx, state, displayFont } = gc;
-  const lvl = state.currentLevel;
-  const isMovement = false;   // 11–20 are now normal bespoke levels
-
-  let btnX: number, btnY: number;
-  if (isMovement) {
-    const ml = getMovementLayout(ctx);
-    btnX = ml.gameFrameX;
-    btnY = ml.gameFrameY - 30;
-  } else {
-    const { topBoxX, topBoxY } = getLayout(ctx);
-    btnX = topBoxX;
-    btnY = topBoxY - 30;
-  }
-
-  const btnW = 84;
-  const btnH = 24;
+  const { ctx, state, monoFont } = gc;
+  const { topBoxX, topBoxY } = getLayout(ctx);
+  const t = getTheme(state);
+  const s = uiScale(ctx);
+  const btnW = Math.round(102 * s);
+  const btnH = Math.round(25 * s);
+  const btnX = topBoxX;
+  const btnY = topBoxY - btnH - 8;
 
   const hover = gc.mouseX >= btnX && gc.mouseX <= btnX + btnW &&
                 gc.mouseY >= btnY && gc.mouseY <= btnY + btnH;
 
-  ctx.fillStyle   = hover ? "#f0cc28" : "#d4b820";
-  ctx.fillRect(btnX, btnY, btnW, btnH);
-  ctx.strokeStyle = "#7a6400";
-  ctx.lineWidth   = 1.5;
-  ctx.strokeRect(btnX, btnY, btnW, btnH);
+  roundRect(ctx, btnX, btnY, btnW, btnH, 3);
+  ctx.fillStyle = hover ? t.seal : "rgba(176,137,47,0.16)";
+  ctx.fill();
+  ctx.strokeStyle = t.seal;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  ctx.fillStyle    = "#1a1200";
-  ctx.textAlign    = "center";
+  ctx.fillStyle = hover ? (state.darkMode ? "#161310" : "#FBF8EF") : t.seal;
+  ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.font         = `bold 12px ${displayFont}`;
-  ctx.fillText("CHEATS", btnX + btnW / 2, btnY + btnH / 2);
+  ctx.font = `bold ${Math.round(11 * s)}px ${monoFont}`;
+  withTracking(ctx, 1, () => ctx.fillText("ANSWER KEY", btnX + btnW / 2, btnY + btnH / 2));
 
   gc.hitAreas.push({
     x: btnX, y: btnY, w: btnW, h: btnH,
-    action: () => {
-      state.cheatsPopupOpen = !state.cheatsPopupOpen;
-      gc.render();
-    },
+    action: () => { state.cheatsPopupOpen = !state.cheatsPopupOpen; gc.render(); },
   });
 };
 
+// Proctor clock, top-right above the paper. Tier colour reflects elapsed time.
 export const drawExamTimer = (gc: GameContext) => {
-  const { ctx, state, displayFont } = gc;
-  const lvl = state.currentLevel;
-  const isMovement = false;   // 11–20 are now normal bespoke levels
-
-  // Position top-right above the play area (mirrored from cheats button on the left)
-  let rightEdge: number, btnY: number;
-  if (isMovement) {
-    const ml = getMovementLayout(ctx);
-    rightEdge = ml.gameFrameX + ml.gameFrameWidth;
-    btnY = ml.gameFrameY - 30;
-  } else {
-    const { topBoxX, topBoxY, topBoxWidth } = getLayout(ctx);
-    rightEdge = topBoxX + topBoxWidth;
-    btnY = topBoxY - 30;
-  }
+  const { ctx, state, monoFont } = gc;
+  const { topBoxX, topBoxY, topBoxWidth } = getLayout(ctx);
+  const t = getTheme(state);
+  const s = uiScale(ctx);
+  const btnW = Math.round(108 * s);
+  const btnH = Math.round(25 * s);
+  const btnX = topBoxX + topBoxWidth - btnW;
+  const btnY = topBoxY - btnH - 8;
 
   const elapsedMs = performance.now() - state.examStartTime;
   const totalSeconds = Math.floor(elapsedMs / 1000);
@@ -502,29 +795,23 @@ export const drawExamTimer = (gc: GameContext) => {
   const seconds = totalSeconds % 60;
   const label = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
-  // Color tiers: gold < 13 min, silver 13–16 min, bronze 16+ min
-  let timerColor: string;
-  if (minutes < 20) {
-    timerColor = "#d4b820"; // gold
-  } else if (minutes < 28) {
-    timerColor = "#a8b8c0"; // silver
-  } else {
-    timerColor = "#cd7f32"; // bronze
-  }
+  const tierColor = minutes < 20 ? t.seal : minutes < 28 ? "#9AA7AE" : "#B07840";
 
-  const btnW = 84;
-  const btnH = 24;
-  const btnX = rightEdge - btnW;
+  roundRect(ctx, btnX, btnY, btnW, btnH, 3);
+  ctx.fillStyle = state.darkMode ? "rgba(0,0,0,0.35)" : "rgba(251,248,239,0.9)";
+  ctx.fill();
+  ctx.strokeStyle = tierColor;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  ctx.fillStyle   = "rgba(0,0,0,0.55)";
-  ctx.fillRect(btnX, btnY, btnW, btnH);
-  ctx.strokeStyle = timerColor;
-  ctx.lineWidth   = 1.5;
-  ctx.strokeRect(btnX, btnY, btnW, btnH);
-
-  ctx.fillStyle    = timerColor;
-  ctx.textAlign    = "center";
+  ctx.fillStyle = t.fgDim;
+  ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.font         = `bold 13px ${displayFont}`;
-  ctx.fillText(label, btnX + btnW / 2, btnY + btnH / 2);
+  ctx.font = `${Math.round(8 * s)}px ${monoFont}`;
+  withTracking(ctx, 1, () => ctx.fillText("TIME", btnX + 9, btnY + btnH / 2));
+
+  ctx.fillStyle = tierColor;
+  ctx.textAlign = "right";
+  ctx.font = `bold ${Math.round(14 * s)}px ${monoFont}`;
+  ctx.fillText(label, btnX + btnW - 9, btnY + btnH / 2);
 };

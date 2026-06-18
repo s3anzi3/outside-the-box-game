@@ -1,6 +1,7 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
+import { drawChoice, wrong } from './lateralHelpers';
 
 export const drawLevel9 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
@@ -64,22 +65,7 @@ export const drawLevel9 = (gc: GameContext) => {
 
   for (let i = 0; i < options.length; i++) {
     const bx = btnStartX + i * (btnW + btnGap);
-
-    if (gc.levelBGLoaded) {
-      ctx.drawImage(gc.levelBGImg, 326, 132, 888, 810, bx, btnY, btnW, btnH);
-    } else {
-      ctx.strokeStyle = t.stroke;
-      ctx.lineWidth   = 2;
-      ctx.strokeRect(bx, btnY, btnW, btnH);
-    }
-
-    ctx.fillStyle    = "#1a1a1a";
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.font         = `bold 28px serif`;
-    ctx.fillText(options[i], bx + btnW / 2, btnY + btnH / 2);
-
-    gc.hitAreas.push({ x: bx, y: btnY, w: btnW, h: btnH, action: () => gc.loseLife() });
+    drawChoice(gc, options[i], bx, btnY, btnW, btnH, () => wrong(gc), { fontSize: 28 });
   }
 
   // Secret hit area: clicking the "Q.9" label drawn by drawLevelHUD advances the level
@@ -94,6 +80,7 @@ export const drawLevel9 = (gc: GameContext) => {
     h: 28,
     noCursor: true,
     action: () => {
+      gc.sounds.ui("chime");
       state.currentLevel  = 10;
       state.levelSubPhase = "";
       state.levelTimerEnd = 0;

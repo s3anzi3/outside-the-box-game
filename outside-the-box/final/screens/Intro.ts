@@ -1,5 +1,6 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
+import { drawButton, drawDocumentBox, uiScale } from '../renderer';
 
 // Pre-wrapped lines.  These are used both for the typing animation (via
 // resolveGuideLines() in main.ts) and for the actual on-screen layout.
@@ -26,45 +27,47 @@ export const INTRO_LINES: string[] = [
 ];
 
 export const drawIntro = (gc: GameContext) => {
-  const { ctx, state, displayFont, bodyFont } = gc;
+  const { ctx, state, monoFont, bodyFont } = gc;
   const w = ctx.canvas.width;
   const h = ctx.canvas.height;
   const t = getTheme(state);
+  const s = uiScale(ctx);
 
-  // ── Full-screen panel ────────────────────────────────────────────────────
-  const px = w * 0.05;
-  const py = h * 0.05;
+  // ── Full-screen briefing document ────────────────────────────────────────
+  const px = w * 0.08;
+  const py = h * 0.07;
   const pw = w - px * 2;
   const ph = h - py * 2;
 
-  ctx.fillStyle = state.darkMode ? 'rgba(8,12,22,0.97)' : 'rgba(245,242,232,0.97)';
-  ctx.fillRect(px, py, pw, ph);
-  ctx.strokeStyle = t.stroke;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(px, py, pw, ph);
+  drawDocumentBox(gc, px, py, pw, ph, { title: 'Office of the Chief Examiner' });
 
-  // ── Exam guide sprite (top-left of panel) ────────────────────────────────
-  const robotCX    = px + pw * 0.10;
-  const spriteSize = Math.min(pw * 0.07, 80);
+  // ── Examiner sprite (top-left) ───────────────────────────────────────────
+  const robotCX    = px + pw * 0.09;
+  const spriteSize = Math.min(pw * 0.07, 76);
   const spriteX    = robotCX - spriteSize / 2;
-  const spriteY    = py + ph * 0.10;
-
+  const spriteY    = py + ph * 0.12;
   if (gc.playerDownLoaded) {
     ctx.drawImage(gc.playerDownImg, spriteX, spriteY, spriteSize, spriteSize);
   }
-  ctx.fillStyle    = t.fgDim;
-  ctx.font         = `bold 11px ${displayFont}`;
+  ctx.fillStyle    = t.accent;
+  ctx.font         = `${Math.round(10 * s)}px ${monoFont}`;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'top';
-  ctx.fillText('EXAM  GUIDE', robotCX, spriteY + spriteSize + 6);
+  ctx.fillText('EXAMINER', robotCX, spriteY + spriteSize + 6);
 
-  // ── Speech header ────────────────────────────────────────────────────────
-  const speechX = px + pw * 0.20;
-  ctx.fillStyle    = t.fgDim;
-  ctx.font         = `bold 14px ${displayFont}`;
+  // ── Memo header ──────────────────────────────────────────────────────────
+  const speechX = px + pw * 0.19;
+  ctx.fillStyle    = t.fgMid;
+  ctx.font         = `${Math.round(13 * s)}px ${monoFont}`;
   ctx.textAlign    = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText('EXAM GUIDE  »', speechX, py + ph * 0.10);
+  ctx.fillText('MEMORANDUM   ·   RE: YOUR CERTIFICATION', speechX, py + ph * 0.115);
+  ctx.strokeStyle = t.hairline;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(speechX, py + ph * 0.155);
+  ctx.lineTo(px + pw - pw * 0.06, py + ph * 0.155);
+  ctx.stroke();
 
   // ── Typewriter body ──────────────────────────────────────────────────────
   const totalChars = INTRO_LINES.reduce((s, l) => s + l.length, 0);
@@ -94,58 +97,39 @@ export const drawIntro = (gc: GameContext) => {
     display[cursorLineIdx] += ' |';
   }
 
+  // Size lines to always fit between the header and the button row
+  const bodyTop    = py + ph * 0.19;
+  const bodyBottom = py + ph * 0.80;
+  const lineGap    = Math.min(30, (bodyBottom - bodyTop) / INTRO_LINES.length);
+  const fontPx     = Math.max(12, Math.min(20, Math.round(lineGap * 0.64)));
+  const textMaxW   = px + pw - speechX - pw * 0.06;
+
   ctx.fillStyle    = t.fg;
-  ctx.font         = `20px ${bodyFont}`;
+  ctx.font         = `${fontPx}px ${bodyFont}`;
   ctx.textAlign    = 'left';
   ctx.textBaseline = 'top';
-  const textY0  = py + ph * 0.18;
-  const lineGap = 30;
-  const textMaxW = px + pw - speechX - 30;
   for (let i = 0; i < display.length; i++) {
-    ctx.fillText(display[i], speechX, textY0 + i * lineGap, textMaxW);
+    ctx.fillText(display[i], speechX, bodyTop + i * lineGap, textMaxW);
   }
 
   // ── BEGIN button (only after typing finishes) ────────────────────────────
   if (!isTyping) {
-    const btnW = 240;
-    const btnH = 60;
+    const btnW = 260;
+    const btnH = 58;
     const btnX = w / 2 - btnW / 2;
-    const btnY = py + ph - btnH - h * 0.04;
-
-    const hover = gc.mouseX >= btnX && gc.mouseX <= btnX + btnW &&
-                  gc.mouseY >= btnY && gc.mouseY <= btnY + btnH;
-
-    if (hover) {
-      ctx.fillStyle = t.fg;
-      ctx.fillRect(btnX, btnY, btnW, btnH);
-    }
-    ctx.strokeStyle = t.stroke;
-    ctx.lineWidth   = 3;
-    ctx.strokeRect(btnX, btnY, btnW, btnH);
-
-    ctx.fillStyle    = hover ? (state.darkMode ? '#000' : '#fff') : t.fg;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 24px ${displayFont}`;
-    ctx.fillText('BEGIN', btnX + btnW / 2, btnY + btnH / 2);
-
-    gc.hitAreas.push({
-      x: btnX, y: btnY, w: btnW, h: btnH,
-      action: () => {
-        gc.sounds.stop('typing');
-        state.currentScreen = 'mainmenu';
-        gc.render();
-      },
-    });
+    const btnY = py + ph - btnH - h * 0.045;
+    drawButton(gc, 'BEGIN  →', btnX, btnY, btnW, btnH, () => {
+      gc.sounds.stop('typing');
+      state.currentScreen = 'mainmenu';
+      gc.render();
+    }, 22);
   } else {
-    // While typing — show a "click anywhere to skip" hint
     ctx.fillStyle    = t.fgDim;
-    ctx.font         = `12px ${bodyFont}`;
+    ctx.font         = `${Math.round(12 * s)}px ${monoFont}`;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('click anywhere to skip ahead', w / 2, py + ph - 22);
+    ctx.fillText('CLICK ANYWHERE TO SKIP AHEAD', w / 2, py + ph - 22);
 
-    // Full-screen click-to-skip hit area (no pointer cursor)
     gc.hitAreas.push({
       x: 0, y: 0, w, h,
       noCursor: true,
