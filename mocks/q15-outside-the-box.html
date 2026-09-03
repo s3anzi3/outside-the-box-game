@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.15 Outside the Box Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);
+    cursor:default; user-select:none;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  .pairs{position:absolute; left:22px; bottom:10px; font-family:var(--mono);
+    font-size:11px; letter-spacing:.12em; color:var(--fgDim); user-select:none;}
+
+  #flowCanvas{position:absolute; inset:0; width:100%; height:100%; z-index:2; cursor:default;}
+
+  .resetbtn{position:absolute; right:20px; bottom:8px; z-index:3;
+    width:110px; height:38px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:16px;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;}
+  .resetbtn:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:4; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%;}
+  .ans{background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;}
+  .ans:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+  .continue{width:200px; height:52px; font-size:21px; margin-top:6px;}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.15 · Outside the Box · connect-the-pairs redesign of the title level</h1>
+<p class="sub">Fully playable, v4. Lines are now real freehand pencil strokes, not grid paths: click a seal and the line follows your cursor like a pen (no button-holding needed, so it works on a touchpad; press-and-drag also works), and it completes the moment it reaches the matching seal. Clicking anywhere mid-stroke abandons the line. If your line bumps another line, or another color's seal, the stamp slams INCORRECT, you LOSE A HEART, and the stroke is thrown out. Red's seals sit flush against the left and right paper edges and blue's flush against the top and bottom, so whichever of the two is drawn first becomes an edge-to-edge wall: the second provably cannot be completed inside the paper, no gaps to squeeze through. The way out stays invisible: grab the pristine top-left corner and pull; it peels, then tears off, taking the Q.15 label with it, and from then on lines may leave the paper and route around the outside across the desk. The examiner gives NO hints: he states the rules once, reacts only after you rip the corner or draw on the desk, and otherwise stays silent. The discovery is entirely yours. RESET clears lines but never restores the corner or hearts.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl" id="tickTL"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum" id="qnum">Q.15</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="pairs" id="pairs">PAIRS CONNECTED: 0/4</div>
+    <button class="resetbtn" onclick="resetAll()">RESET</button>
+
+    <div class="winscreen" id="winscreen">
+      <div class="win-title">OUTSIDE.</div>
+      <div class="win-body">The paper was never the boundary. That is the entire point of this institution.</div>
+      <button class="ans continue" onclick="alert('Chime! → advances to Q.16')">CONTINUE&nbsp;&nbsp;→</button>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <canvas id="flowCanvas" width="1280" height="860"></canvas>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ══ Geometry (frame units, 1280x860) ══ */
+  const PAPER  = { x0:118, y0:171, x1:1162, y1:552 };   // usable paper (below header)
+  const OUTER  = { x0:55,  y0:100, x1:1225, y1:582 };   // desk limit once ripped
+  const CORNER = { x:115, y:122 };
+
+  const inPaper = p => p.x>=PAPER.x0 && p.x<=PAPER.x1 && p.y>=PAPER.y0 && p.y<=PAPER.y1;
+  const inOuter = p => p.x>=OUTER.x0 && p.x<=OUTER.x1 && p.y>=OUTER.y0 && p.y<=OUTER.y1;
+  const allowed = p => inPaper(p) || (ripped && inOuter(p));
+
+  /* ══ Pairs. Red's seals sit flush against the left/right paper edges and
+     blue's flush against the top/bottom edges: each seal center is closer to
+     its wall than SEAL_BLOCK_R, so nothing can squeeze between a seal and the
+     border. Whichever of red/blue is drawn first becomes an edge-to-edge wall
+     and the other is provably trapped inside (Jordan curve). Green and yellow
+     are warm-ups. ══ */
+  const COLORS = { green:'#3F8F55', yellow:'#D8A81F', red:'#C03A2E', blue:'#2E6BA8' };
+  const SEALS = {
+    green:  [{x:244,y:235},{x:316,y:307}],
+    yellow: [{x:964,y:451},{x:856,y:487}],
+    red:    [{x:126,y:379},{x:1154,y:379}],
+    blue:   [{x:640,y:185},{x:640,y:538}],
+  };
+  const SEAL_R = 12, START_R = 18, HIT_R = 12, SEAL_BLOCK_R = 22, STEP = 5;
+
+  const cv = document.getElementById('flowCanvas');
+  const ctx = cv.getContext('2d');
+  let paths = {}, done = {};
+  let stroke = null;             // {color, pts, t0, moved, clickMode}
+  let ripState = null;           // {x0,y0,d,follow}
+  let ripped = false, solved = false, ended = false, sputtered = false;
+  let lives = 3;
+
+  const BUMPS = [
+    "Watch your line, candidate. They must not touch.",
+    "Again. The lines. Must. Not. Touch.",
+    "Your penmanship is a hazard to others.",
+  ];
+  let bumpCount = 0;
+
+  function resetAll(){
+    if (solved || ended) return;
+    for (const k in COLORS){ paths[k] = []; done[k] = false; }
+    stroke = null;
+    updatePairs(); render();
+  }
+
+  const dist = (a,b)=>Math.hypot(a.x-b.x, a.y-b.y);
+
+  function sealAt(p, radius){
+    for (const col in SEALS)
+      for (let i=0;i<2;i++)
+        if (dist(p, SEALS[col][i]) <= radius) return { col, i };
+    return null;
+  }
+  function collides(p, activeColor){
+    for (const col in paths){
+      if (col === activeColor) continue;
+      for (const q of paths[col])
+        if (dist(p,q) < HIT_R) return true;
+    }
+    for (const col in SEALS){
+      if (col === activeColor) continue;
+      for (const s of SEALS[col])
+        if (dist(p,s) < SEAL_BLOCK_R) return true;
+    }
+    return false;
+  }
+
+  function evPoint(e){
+    const rect = cv.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) * (1280 / rect.width),
+      y: (e.clientY - rect.top ) * ( 860 / rect.height),
+    };
+  }
+
+  /* ══ Input: click-to-draw (touchpad friendly) or press-and-drag ══ */
+  cv.addEventListener('mousedown', e => {
+    if (solved || ended) return;
+    const pt = evPoint(e);
+
+    if (stroke && stroke.clickMode){
+      /* clicking while drawing: finish on the partner seal, abandon elsewhere */
+      const partner = SEALS[stroke.color][1 - stroke.startIdx];
+      if (dist(pt, partner) <= START_R) completeStroke();
+      else cancelStroke();
+      return;
+    }
+
+    if (!ripped){
+      const d = Math.hypot(pt.x - CORNER.x, pt.y - CORNER.y);
+      if (d < 70){ ripState = { x0:pt.x, y0:pt.y, d:0, t0:Date.now(), follow:false }; e.preventDefault(); return; }
+    }
+
+    const s = sealAt(pt, START_R);
+    if (s){
+      paths[s.col] = [ {...SEALS[s.col][s.i]} ];
+      done[s.col] = false;
+      stroke = { color:s.col, startIdx:s.i, t0:Date.now(), moved:0, clickMode:false };
+      updatePairs(); render();
+    }
+  });
+
+  document.addEventListener('mouseup', e => {
+    if (solved || ended) return;
+    if (ripState && !ripState.follow){
+      /* quick tap on the corner: keep peeling as the cursor moves, no hold needed */
+      if (Date.now() - ripState.t0 < 350 && ripState.d < 25) ripState.follow = true;
+      else if (!ripped){ ripState = null; render(); }
+      return;
+    }
+    if (stroke && !stroke.clickMode){
+      if (Date.now() - stroke.t0 < 350 && stroke.moved < 25){
+        stroke.clickMode = true;      // it was a click: keep drawing hands-free
+      } else {
+        cancelStroke();               // drag released short of the partner seal
+      }
+    }
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (solved || ended) return;
+    const pt = evPoint(e);
+
+    if (ripState){
+      ripState.d = Math.hypot(pt.x - ripState.x0, pt.y - ripState.y0);
+      if (ripState.d > 62){ doRip(); ripState = null; }
+      render();
+      return;
+    }
+    if (!stroke) return;
+
+    const p = paths[stroke.color];
+    let tip = p[p.length-1];
+    let guard = 0;
+    while (dist(tip, pt) > STEP && guard++ < 40){
+      const dx = pt.x - tip.x, dy = pt.y - tip.y;
+      const len = Math.hypot(dx,dy);
+      const next = { x: tip.x + dx/len*STEP, y: tip.y + dy/len*STEP };
+      if (!allowed(next)) break;
+      if (collides(next, stroke.color)){ bump(); return; }
+      p.push(next);
+      stroke.moved += STEP;
+      tip = next;
+      if (!sputtered && !inPaper(next)){
+        sputtered = true;
+        retype("And now you are drawing on the desk. ...I see no rule against it. Somehow.");
+      }
+      const partner = SEALS[stroke.color][1 - stroke.startIdx];
+      if (dist(next, partner) <= START_R){ p.push({...partner}); completeStroke(); return; }
+    }
+    render();
+  });
+
+  function cancelStroke(){
+    if (!stroke) return;
+    paths[stroke.color] = [];
+    stroke = null;
+    updatePairs(); render();
+  }
+  function completeStroke(){
+    done[stroke.color] = true;
+    stroke = null;
+    updatePairs(); render();
+    if (Object.keys(COLORS).every(k=>done[k])) win();
+  }
+  function bump(){
+    slam('INCORRECT', false);
+    retype(BUMPS[Math.min(bumpCount, BUMPS.length-1)]);
+    bumpCount++;
+    cancelStroke();
+    if (lives > 0){ lives--;
+      document.getElementById('heartRow').children[lives].classList.add('lost'); }
+    if (lives <= 0){
+      ended = true;
+      setTimeout(()=>alert('Out of attempts. GAME OVER overlay would appear here.'), 700);
+    }
+  }
+
+  function doRip(){
+    ripped = true;
+    document.getElementById('qnum').style.display = 'none';
+    document.getElementById('tickTL').style.display = 'none';
+    retype("CANDIDATE. That is Institute property. ...Was. It was Institute property.");
+    render();
+  }
+
+  /* ══ Render ══ */
+  const TEAR_POLY = [
+    [115,122],[196,122],[186,141],[193,158],[175,171],[184,193],[166,206],
+    [173,229],[152,241],[159,263],[139,273],[144,296],[124,307],[129,323],[115,331],
+  ];
+  function render(){
+    ctx.clearRect(0,0,1280,860);
+
+    if (!ripped && ripState && ripState.d > 8){
+      const f = Math.min(1, ripState.d / 62);
+      const w = 80*f, h = 100*f;
+      ctx.beginPath();
+      ctx.moveTo(CORNER.x, CORNER.y);
+      ctx.lineTo(CORNER.x + w, CORNER.y);
+      ctx.lineTo(CORNER.x, CORNER.y + h);
+      ctx.closePath();
+      ctx.fillStyle = '#F2EBDA';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(CORNER.x + w, CORNER.y);
+      ctx.lineTo(CORNER.x + w*0.30 + 10*f, CORNER.y + h*0.30 + 10*f);
+      ctx.lineTo(CORNER.x, CORNER.y + h);
+      ctx.closePath();
+      ctx.fillStyle = '#E7DFC8';
+      ctx.fill();
+      ctx.strokeStyle = '#26201A';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    if (ripped){
+      ctx.beginPath();
+      ctx.moveTo(TEAR_POLY[0][0], TEAR_POLY[0][1]);
+      for (let i=1;i<TEAR_POLY.length;i++) ctx.lineTo(TEAR_POLY[i][0], TEAR_POLY[i][1]);
+      ctx.closePath();
+      ctx.fillStyle = '#F2EBDA';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(TEAR_POLY[1][0], TEAR_POLY[1][1]);
+      for (let i=2;i<TEAR_POLY.length;i++) ctx.lineTo(TEAR_POLY[i][0], TEAR_POLY[i][1]);
+      ctx.strokeStyle = '#26201A';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(TEAR_POLY[1][0]+3, TEAR_POLY[1][1]+4);
+      for (let i=2;i<TEAR_POLY.length;i++) ctx.lineTo(TEAR_POLY[i][0]+3, TEAR_POLY[i][1]+3);
+      ctx.strokeStyle = 'rgba(203,191,159,.9)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+
+    /* pencil strokes */
+    for (const col in paths){
+      const p = paths[col];
+      if (!p || p.length < 2) continue;
+      ctx.strokeStyle = COLORS[col];
+      ctx.lineWidth = 8;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalAlpha = done[col] ? 1 : 0.85;
+      ctx.beginPath();
+      ctx.moveTo(p[0].x, p[0].y);
+      for (let i=1;i<p.length;i++) ctx.lineTo(p[i].x, p[i].y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    /* seals */
+    for (const col in SEALS){
+      for (const s of SEALS[col]){
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, SEAL_R, 0, Math.PI*2);
+        ctx.fillStyle = COLORS[col];
+        ctx.fill();
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = '#26201A';
+        ctx.stroke();
+        if (done[col]){
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, SEAL_R+6, 0, Math.PI*2);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = COLORS[col];
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function updatePairs(){
+    const n = Object.keys(COLORS).filter(k=>done[k]).length;
+    document.getElementById('pairs').textContent = 'PAIRS CONNECTED: ' + n + '/4';
+  }
+
+  function win(){
+    if (solved) return;
+    solved = true;
+    slam('CORRECT', true);
+    retype("...Around the outside. The paper simply was not the whole desk.");
+    setTimeout(()=>document.getElementById('winscreen').classList.add('show'), 900);
+  }
+
+  function slam(text, ok){
+    const st = document.getElementById('stamp');
+    st.className = 'stamp' + (ok ? ' pass' : ''); void st.offsetWidth; st.classList.add('show');
+    st.firstChild.textContent = text;
+  }
+
+  const el = document.getElementById('remarks');
+  let timer = null;
+  function retype(text){
+    if (timer) clearInterval(timer);
+    let ti = 0;
+    timer = setInterval(()=>{ ti++;
+      if (ti >= text.length){ clearInterval(timer); timer = null;
+        el.innerHTML = text + ' <span class="cursor">|</span>'; return; }
+      el.innerHTML = text.slice(0,ti) + '<span class="cursor">|</span>';
+    }, 22);
+  }
+  retype("Connect each pair of seals. One unbroken line apiece. Lines must not touch one another.");
+
+  resetAll();
+</script>
+</body>
+</html>

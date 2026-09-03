@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.10 The Maze Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  #mazeCanvas{position:absolute; inset:0; width:100%; height:100%; display:block;}
+
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:14px; background:var(--panel); z-index:4;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:44px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:20px; color:var(--fgMid);}
+
+  .ans{width:200px; height:48px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:20px;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer; margin-top:10px;}
+  .ans:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.10 · The Maze · faithful mock in the current theme</h1>
+<p class="sub">Fully playable. Steer the tiny dot with WASD or the arrow keys through a 17x13 maze generated fresh on every load: touch a wall and you are rewound about 1.5 seconds along your own path. A 45 second timer runs the whole time, when it expires you lose a heart and the timer resets, your position is untouched. Reach the glowing exit at the top edge to pass. The pause button in the paper header works: it freezes the timer and the dot. Theme restyles versus the real build: walls are ink on the exam-paper panel, the player dot is oxblood with a deep oxblood stroke instead of arcade blue, the exit glow is a pulsing pass green instead of bright arcade green, the timer bar is flat pass green flipping to danger red instead of a rainbow hue sweep, the wall-hit "oof" sound is stood in for by a brief red flash of the dot, and the controls hint is reworded and sits just above the bar. The entry triangle is unchanged from the real build. Nothing off-palette.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.10</div>
+      <div class="pause" id="pauseBtn" onclick="togglePause()"><i></i><i></i></div>
+    </div>
+    <div class="play">
+      <canvas id="mazeCanvas"></canvas>
+      <div class="winscreen" id="winscreen">
+        <div class="win-title">EXIT FOUND!</div>
+        <div class="win-body">You navigated the maze.</div>
+        <button class="ans" onclick="alert('Chime! → advances to Q.11')">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">CORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ── Maze dimensions (exactly as Level10.ts) ─────────────────────────────── */
+const ROOM_COLS = 17;
+const ROOM_ROWS = 13;
+const GRID_COLS = ROOM_COLS * 2 + 1;   // 35
+const GRID_ROWS = ROOM_ROWS * 2 + 1;   // 27
+
+const S_RC = Math.floor(ROOM_COLS / 2);  // 8
+const S_RR = ROOM_ROWS - 1;              // 12
+const START_GCOL = S_RC * 2 + 1;   // 17
+const START_GROW = S_RR * 2 + 1;   // 25
+const EXIT_GCOL  = S_RC * 2 + 1;   // 17
+
+const PLAYER_SPEED   = 7.5;
+const PLAYER_HALF    = 0.10;
+const LOOP_CHANCE    = 0.05;
+const TIMER_SECS     = 45;
+const HIST_LEN       = 180;
+const SETBACK_FRAMES = 90;
+
+/* ── Palette (locked theme) ──────────────────────────────────────────────── */
+const C = {
+  panel:'#FBF8EF', ink:'#1E1A15', fgDim:'#6E6150',
+  accent:'#7A2E2E', accentDeep:'#5A2222', hairline:'#CBBF9F',
+  pass:'#3E6B4F', danger:'#9A2B25',
+  mono:'"Courier New",Courier,monospace', display:'Georgia,"Times New Roman",Cambria,serif'
+};
+
+/* ── Maze generator: iterative DFS + sparse loop pass (exact port) ───────── */
+function generateMaze(){
+  const grid = Array.from({length:GRID_ROWS}, () => new Array(GRID_COLS).fill(1));
+
+  for (let r = 0; r < ROOM_ROWS; r++)
+    for (let c = 0; c < ROOM_COLS; c++)
+      grid[r*2+1][c*2+1] = 0;
+
+  const visited = Array.from({length:ROOM_ROWS}, () => new Array(ROOM_COLS).fill(false));
+  const stack = [[S_RR, S_RC]];
+  visited[S_RR][S_RC] = true;
+
+  while (stack.length > 0){
+    const [r, c] = stack[stack.length - 1];
+    const nbrs = [];
+    for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]){
+      const nr = r + dr, nc = c + dc;
+      if (nr >= 0 && nr < ROOM_ROWS && nc >= 0 && nc < ROOM_COLS && !visited[nr][nc])
+        nbrs.push([nr, nc, dr, dc]);
+    }
+    if (nbrs.length > 0){
+      const [nr, nc, dr, dc] = nbrs[Math.floor(Math.random() * nbrs.length)];
+      visited[nr][nc] = true;
+      grid[r*2+1+dr][c*2+1+dc] = 0;
+      stack.push([nr, nc]);
+    } else {
+      stack.pop();
+    }
+  }
+
+  // Sparse loop pass — 5% of passage walls opened
+  for (let r = 1; r < GRID_ROWS - 1; r++){
+    for (let c = 1; c < GRID_COLS - 1; c++){
+      if (grid[r][c] !== 1) continue;
+      const isPassage = (r % 2 === 0 && c % 2 === 1) || (r % 2 === 1 && c % 2 === 0);
+      if (isPassage && Math.random() < LOOP_CHANCE) grid[r][c] = 0;
+    }
+  }
+
+  // Exit door at top. Bottom edge intentionally sealed.
+  grid[0][EXIT_GCOL] = 0;
+  return grid;
+}
+
+function buildWalls(grid){
+  const walls = [];
+  for (let r = 0; r < GRID_ROWS; r++)
+    for (let c = 0; c < GRID_COLS; c++)
+      if (grid[r][c] === 1)
+        walls.push({cx:c + 0.5, cy:r + 0.5, hx:0.5, hy:0.5});
+  return walls;
+}
+
+function hitsWall(x, y, half, walls){
+  for (const w of walls){
+    if (Math.abs(x - w.cx) < half + w.hx && Math.abs(y - w.cy) < half + w.hy)
+      return true;
+  }
+  return false;
+}
+
+/* ── Game state ──────────────────────────────────────────────────────────── */
+const canvas = document.getElementById('mazeCanvas');
+const ctx    = canvas.getContext('2d');
+let W = 0, H = 0;
+
+const mazeGrid = generateMaze();
+const walls    = buildWalls(mazeGrid);
+const sx = START_GCOL + 0.5;
+const sy = START_GROW + 0.5;
+
+const player = {
+  x: sx, y: sy,
+  histX: new Float32Array(HIST_LEN).fill(sx),
+  histY: new Float32Array(HIST_LEN).fill(sy),
+  histIdx: 0
+};
+const keysDown = new Set();
+let lives      = 3;
+let won        = false;
+let gameEnded  = false;
+let animId     = 0;
+let lastTime   = 0;
+let timerEnd   = Date.now() + TIMER_SECS * 1000;
+let flashUntil = 0;   // brief visual flash on the dot after a wall hit
+let paused     = false;
+let pausedLeft = 0;   // ms remaining on the timer when paused
+
+/* ── Canvas sizing (fills the .play region, crisp on HiDPI) ──────────────── */
+function sizeCanvas(){
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const dpr  = window.devicePixelRatio || 1;
+  W = rect.width; H = rect.height;
+  canvas.width  = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Repaint immediately so a resize never blanks the paper while the RAF loop
+  // is stopped (paused / game over).
+  render();
+  if (paused) drawPauseOverlay();
+}
+window.addEventListener('resize', sizeCanvas);
+
+/* ── Input: window listeners, preventDefault on arrows ───────────────────── */
+window.addEventListener('keydown', e => {
+  if (e.key.startsWith('Arrow')) e.preventDefault();
+  keysDown.add(e.key);
+});
+window.addEventListener('keyup', e => keysDown.delete(e.key));
+
+/* ── Lives / hearts HUD ──────────────────────────────────────────────────── */
+function loseLife(){
+  if (gameEnded || won) return;
+  if (lives > 0){
+    lives--;
+    document.getElementById('heartRow').children[lives].classList.add('lost');
+  }
+  if (lives <= 0){
+    gameEnded = true;
+    cancelAnimationFrame(animId);
+    alert('Out of attempts. GAME OVER overlay would appear here.');
+  }
+}
+
+/* ── Player update (exact port of MazeWalkState.update) ──────────────────── */
+function updatePlayer(dt){
+  let vx = 0, vy = 0;
+  if (keysDown.has('ArrowLeft')  || keysDown.has('a') || keysDown.has('A')) vx = -1;
+  if (keysDown.has('ArrowRight') || keysDown.has('d') || keysDown.has('D')) vx =  1;
+  if (keysDown.has('ArrowUp')    || keysDown.has('w') || keysDown.has('W')) vy = -1;
+  if (keysDown.has('ArrowDown')  || keysDown.has('s') || keysDown.has('S')) vy =  1;
+  if (vx !== 0 && vy !== 0){ vx *= 0.7071; vy *= 0.7071; }
+
+  // Record current position in history before moving
+  const wi = player.histIdx % HIST_LEN;
+  player.histX[wi] = player.x;
+  player.histY[wi] = player.y;
+  player.histIdx++;
+
+  const spd = PLAYER_SPEED * dt;
+  player.x += vx * spd;
+  player.y += vy * spd;
+
+  // Collision → rewind progress by SETBACK_FRAMES (~1.5 s)
+  if (hitsWall(player.x, player.y, PLAYER_HALF, walls)){
+    const setback = Math.min(SETBACK_FRAMES, player.histIdx);
+    const ri = ((player.histIdx - setback) % HIST_LEN + HIST_LEN) % HIST_LEN;
+    player.x = player.histX[ri];
+    player.y = player.histY[ri];
+    // Safety net: if the rewind target is ALSO inside a wall, walk further back
+    // through history for a clear spot; failing that, snap to the start cell.
+    if (hitsWall(player.x, player.y, PLAYER_HALF, walls)){
+      let recovered = false;
+      for (let back = setback + 1; back <= Math.min(HIST_LEN, player.histIdx); back++){
+        const k = ((player.histIdx - back) % HIST_LEN + HIST_LEN) % HIST_LEN;
+        if (!hitsWall(player.histX[k], player.histY[k], PLAYER_HALF, walls)){
+          player.x = player.histX[k];
+          player.y = player.histY[k];
+          recovered = true;
+          break;
+        }
+      }
+      if (!recovered){ player.x = sx; player.y = sy; }
+    }
+    flashUntil = performance.now() + 260;   // no sound in mock, brief flash instead
+  }
+
+  // Win: reached top exit door
+  if (player.y < 0.9) win();
+}
+
+/* ── Pause: freezes the timer and the dot (the real build gates its RAF loop
+   on state.paused; the mock mirrors that) ───────────────────────────────── */
+function togglePause(){
+  if (won || gameEnded) return;
+  paused = !paused;
+  if (paused){
+    cancelAnimationFrame(animId);
+    pausedLeft = Math.max(0, timerEnd - Date.now());
+    drawPauseOverlay();
+  } else {
+    timerEnd = Date.now() + pausedLeft;
+    lastTime = 0;
+    animId = requestAnimationFrame(frame);
+  }
+}
+function drawPauseOverlay(){
+  ctx.fillStyle = 'rgba(251,248,239,0.78)';   // translucent panel ivory
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle    = C.ink;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font         = `bold 26px ${C.mono}`;
+  ctx.fillText('PAUSED', W / 2, H / 2 - 10);
+  ctx.fillStyle = C.fgDim;
+  ctx.font      = `12px ${C.mono}`;
+  ctx.fillText('CLICK THE PAUSE BUTTON TO RESUME', W / 2, H / 2 + 22);
+}
+
+/* ── Win flow: PASS stamp slam, then win screen replaces the play area ───── */
+function win(){
+  if (won) return;
+  won = true;
+  cancelAnimationFrame(animId);
+  const st = document.getElementById('stamp');
+  st.className = 'stamp pass'; void st.offsetWidth; st.classList.add('show');
+  setTimeout(() => document.getElementById('winscreen').classList.add('show'), 750);
+}
+
+/* ── Render ──────────────────────────────────────────────────────────────── */
+function render(){
+  const cellW = W / GRID_COLS;
+  const cellH = H / GRID_ROWS;
+
+  // Paper
+  ctx.fillStyle = C.panel;
+  ctx.fillRect(0, 0, W, H);
+
+  // Walls in ink
+  ctx.fillStyle = C.ink;
+  for (let r = 0; r < GRID_ROWS; r++)
+    for (let c = 0; c < GRID_COLS; c++)
+      if (mazeGrid[r][c] === 1)
+        ctx.fillRect(c * cellW, r * cellH, cellW + 0.5, cellH + 0.5);
+
+  // Exit glow: pulsing pass green (theme restyle)
+  const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 380);
+  ctx.fillStyle = `rgba(62, 107, 79, ${(0.5 + pulse * 0.45).toFixed(3)})`;
+  ctx.beginPath();
+  ctx.arc((EXIT_GCOL + 0.5) * cellW, 0.5 * cellH, cellW * 0.55, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Entry marker: small dim serif triangle at the start cell
+  ctx.fillStyle    = C.fgDim;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `bold ${Math.round(cellH * 1.1)}px ${C.display}`;
+  ctx.fillText('▲', (START_GCOL + 0.5) * cellW, (GRID_ROWS - 0.5) * cellH);
+
+  // Player dot: oxblood with accentDeep stroke (theme restyle); flash on hit
+  const flashing = performance.now() < flashUntil;
+  const px = player.x * cellW;
+  const py = player.y * cellH;
+  const pr = Math.max(2, cellW * PLAYER_HALF);
+  ctx.fillStyle   = flashing ? C.danger : C.accent;
+  ctx.strokeStyle = flashing ? C.danger : C.accentDeep;
+  ctx.lineWidth   = 1.5;
+  ctx.beginPath();
+  ctx.arc(px, py, flashing ? pr * 1.9 : pr, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Countdown bar: 1px hairline track, pass-green fill, danger under 33%
+  const remaining = Math.max(0, timerEnd - Date.now());
+  const progress  = remaining / (TIMER_SECS * 1000);
+  const barW = W * 0.38, barH = 5;
+  const barX = W / 2 - barW / 2;
+  const barY = H - 14;
+
+  ctx.strokeStyle = C.hairline;
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(barX, barY, barW, barH);
+
+  const secs    = Math.ceil(remaining / 1000);
+  const urgency = progress < 0.33;
+  ctx.fillStyle = urgency ? C.danger : C.pass;
+  ctx.fillRect(barX + 1, barY + 1, (barW - 2) * progress, barH - 2);
+
+  ctx.fillStyle    = urgency ? C.danger : C.fgDim;
+  ctx.font         = `bold 10px ${C.mono}`;
+  ctx.textAlign    = 'right';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${secs}s`, barX - 6, barY + barH / 2);
+
+  // Controls hint (mono, dim), just above the bar so it stays legible
+  ctx.fillStyle    = C.fgDim;
+  ctx.font         = `10px ${C.mono}`;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('WASD / ARROW KEYS. TOUCH A WALL AND YOU ARE SET BACK.', W / 2, barY - 8);
+}
+
+/* ── RAF loop (dt-based, exactly as Level10.ts) ──────────────────────────── */
+function frame(ts){
+  if (won || gameEnded || paused) return;
+
+  // 45-second countdown — fires independently of wall hits
+  if (Date.now() >= timerEnd){
+    timerEnd = Date.now() + TIMER_SECS * 1000;  // reset timer, do NOT move player
+    loseLife();
+    if (gameEnded) return;
+    render();
+    animId = requestAnimationFrame(frame);
+    return;
+  }
+
+  const dt = lastTime ? Math.min((ts - lastTime) / 1000, 0.05) : 0.016;
+  lastTime = ts;
+  updatePlayer(dt);
+  render();
+  if (!won && !gameEnded) animId = requestAnimationFrame(frame);
+}
+sizeCanvas();   // initial size + first paint
+animId = requestAnimationFrame(frame);
+
+/* ── Examiner remarks typewriter ─────────────────────────────────────────── */
+const FULL = "Navigate to the exit. The path is yours to find.";
+let ti = 0; const el = document.getElementById('remarks');
+const t = setInterval(() => { ti++;
+  if (ti >= FULL.length){ clearInterval(t); el.innerHTML = FULL + ' <span class="cursor">|</span>'; return; }
+  el.innerHTML = FULL.slice(0, ti) + '<span class="cursor">|</span>';
+}, 22);
+</script>
+</body>
+</html>

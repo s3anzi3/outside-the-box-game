@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · First-Load Experience Mock (current theme)</title>
+<style>
+  /* ── Theme tokens, copied verbatim from final/theme.ts (light mode, the default) ── */
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 30px; max-width:820px; line-height:1.5;}
+  .label{font-size:12px; letter-spacing:.16em; color:#8a8272; text-transform:uppercase; margin:38px 0 10px;}
+
+  /* ── Game viewport frame ── */
+  .frame{width:1150px; max-width:100%; height:680px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  /* ── Wordmark lockup ── */
+  .wordmark{text-align:center;}
+  .wm-eyebrow{font-family:var(--mono); font-size:12px; letter-spacing:.22em; color:var(--accent);}
+  .wm-title{font-family:var(--display); font-size:50px; color:var(--ink); margin-top:10px; font-weight:400;}
+  .wm-sub{font-family:var(--mono); font-size:11px; letter-spacing:.3em; color:var(--fgMid);
+    display:flex; align-items:center; justify-content:center; gap:14px; margin-top:10px;}
+  .wm-sub .rule{width:30px; height:1px; background:var(--hairline);}
+  .wm-sub .diamond{width:5px; height:5px; background:var(--seal); transform:rotate(45deg);}
+
+  /* ── SCREEN 1 · Loading ── */
+  .loading{display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0;}
+  .medallion-wrap{margin:52px 0 46px; perspective:600px;}
+  .medallion{width:96px; height:96px; border-radius:50%;
+    background:linear-gradient(135deg,#7d5f1f 0%, var(--seal) 50%, #ecd591 100%);
+    border:4px solid #6e5418; display:flex; align-items:center; justify-content:center;
+    font-family:var(--display); font-size:34px; color:#5a4410;
+    animation:spin 2.2s linear infinite; box-shadow:0 10px 26px rgba(60,45,20,.35);
+    position:relative;}
+  .medallion::before{content:""; position:absolute; inset:6px; border-radius:50%; border:1.5px solid #6e5418;}
+  @keyframes spin{0%{transform:rotateY(0)}100%{transform:rotateY(360deg)}}
+  .loading-status{font-family:var(--mono); font-size:13px; letter-spacing:.14em; color:var(--fgDim);}
+  .loadbar{width:340px; height:5px; background:var(--hairline); margin-top:30px; position:relative;}
+  .loadbar i{position:absolute; left:0; top:0; bottom:0; background:var(--seal); animation:load 3s ease-out infinite;}
+  @keyframes load{0%{width:4%}70%{width:86%}100%{width:100%}}
+
+  /* ── SCREEN 2 · Intro memo ── */
+  .docbox{position:absolute; left:8%; right:8%; top:7%; bottom:7%;
+    background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px;
+    box-shadow:0 8px 28px rgba(60,45,20,.22);}
+  .docbox::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .tick{position:absolute; width:12px; height:12px; border-color:var(--accent); border-style:solid; border-width:0;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+  .cartouche{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 13px; font-family:var(--mono); font-size:11px;
+    letter-spacing:.14em; color:var(--accent); white-space:nowrap;}
+  .examiner{position:absolute; left:5%; top:11%; width:9%; text-align:center;}
+  .examiner img{width:76px; image-rendering:pixelated;}
+  .examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:6px;}
+  .memo{position:absolute; left:19%; right:6%; top:10.5%;}
+  .memo-head{font-family:var(--mono); font-size:13px; color:var(--fgMid); letter-spacing:.02em;
+    padding-bottom:14px; border-bottom:1px solid var(--hairline);}
+  /* Body occupies the same band as the game (19%..80% of the doc height) and its
+     line height is derived from the line count so it can never reach the button row. */
+  .memo-body{position:absolute; left:19%; right:6%; top:19%; bottom:21%;
+    font-family:var(--body); color:var(--ink); white-space:pre-wrap; overflow:hidden;
+    font-size:14px; line-height:19.5px;}
+  .cursor{display:inline-block; animation:blink 1s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+  .skiphint{position:absolute; bottom:14px; width:100%; text-align:center;
+    font-family:var(--mono); font-size:12px; color:var(--fgDim); letter-spacing:.06em;}
+
+  /* ── The embossed button, matching drawButton() exactly ── */
+  .otb-btn{position:absolute; bottom:5.8%; left:50%; transform:translateX(-50%);
+    width:260px; height:58px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:5px;
+    font-family:var(--body); font-weight:bold; font-size:22px; letter-spacing:.03em;
+    box-shadow:0 3px 9px rgba(60,45,20,.22); cursor:pointer; display:none;}
+  .otb-btn:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);
+    box-shadow:0 4px 14px rgba(60,45,20,.22);}
+  .otb-btn:active{transform:translate(-50%,1px); box-shadow:0 1px 2px rgba(60,45,20,.22);}
+
+  .replay{margin-top:14px; background:#1c1a16; color:#cfc7b2; border:1px solid #3a362c;
+    border-radius:6px; padding:9px 20px; font-size:13px; cursor:pointer;}
+</style>
+</head>
+<body>
+
+<h1>First-Load Experience · faithful mock in the current theme</h1>
+<p class="sub">Exactly what a visitor sees at outside-the-box-game.web.app, rebuilt from final/renderer.ts and final/screens/Intro.ts: the loading screen, then the Chief Examiner's memo typing itself out, then the BEGIN button. Same palette, same fonts, same copy, same embossed buttons, real examiner sprite. Live states below (the memo types in real time; use replay to rewatch).</p>
+
+<div class="label">Screen 1 · Loading (wordmark, spinning medallion, progress)</div>
+<div class="frame">
+  <div class="loading">
+    <div class="wordmark">
+      <div class="wm-eyebrow">INSTITUTE OF LATERAL COGNITION</div>
+      <div class="wm-title">Outside-the-Box</div>
+      <div class="wm-sub"><span class="diamond"></span><span class="rule"></span>THINKING&nbsp;&nbsp;CERTIFICATION<span class="rule"></span><span class="diamond"></span></div>
+    </div>
+    <div class="medallion-wrap"><div class="medallion">OtB</div></div>
+    <div class="loading-status" id="loadTxt">PREPARING EXAMINATION.</div>
+    <div class="loadbar"><i></i></div>
+  </div>
+</div>
+
+<div class="label">Screen 2 · Intro memo (typewriter, then BEGIN)</div>
+<div class="frame">
+  <div class="docbox">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="cartouche">OFFICE OF THE CHIEF EXAMINER</div>
+    <div class="examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="memo">
+      <div class="memo-head">MEMORANDUM&nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp;RE: YOUR CERTIFICATION</div>
+    </div>
+    <div class="memo-body" id="body"></div>
+    <div class="skiphint" id="skiphint">CLICK ANYWHERE TO SKIP AHEAD</div>
+    <button class="otb-btn" id="begin">BEGIN&nbsp;&nbsp;→</button>
+  </div>
+</div>
+<button class="replay" onclick="startTyping()">↻ Replay typewriter</button>
+
+<script>
+  /* Loading dots, matching the 350ms cadence in drawLoadingScreen() */
+  setInterval(()=>{
+    const el=document.getElementById('loadTxt');
+    const n=1+(Math.floor(Date.now()/350)%3);
+    el.textContent='PREPARING EXAMINATION'+'.'.repeat(n);
+  },120);
+
+  /* INTRO_LINES copied verbatim from final/screens/Intro.ts */
+  const LINES=[
+    "Welcome, candidate.",
+    "",
+    "The world is drowning in AI slop.  It dulls minds and blurs the line",
+    "between those who can think for themselves and those who outsource",
+    "'2 + 2' to a chatbot.",
+    "",
+    "This rot has bled into the job market.  Every applicant calls themselves",
+    "a 'critical thinker' or a 'unique problem solver,' yet few can prove it —",
+    "they expect employers to take their word, as if their intellect rivals",
+    "Socrates himself.",
+    "",
+    "The Outside-the-Box exam clears that fog.  Pass it and you earn a",
+    "certificate — ranked Bronze, Silver, or Gold — that actually measures",
+    "how well you think.",
+    "",
+    "Wear it on every résumé.  Employers regard it as undeniable proof",
+    "you have a brain.",
+    "",
+    "Good luck.  Try not to embarrass yourself.",
+  ];
+  const FULL=LINES.join('\n');
+  let timer=null;
+  function startTyping(){
+    clearInterval(timer);
+    const body=document.getElementById('body');
+    const begin=document.getElementById('begin');
+    const hint=document.getElementById('skiphint');
+    begin.style.display='none'; hint.style.display='block';
+    let i=0;
+    timer=setInterval(()=>{
+      i+=2;
+      if(i>=FULL.length){
+        i=FULL.length; clearInterval(timer);
+        body.innerHTML=escapeHtml(FULL)+' <span class="cursor">|</span>';
+        hint.style.display='none'; begin.style.display='block';
+        return;
+      }
+      body.innerHTML=escapeHtml(FULL.slice(0,i))+'<span class="cursor">|</span>';
+    },24);
+  }
+  function skip(){ clearInterval(timer);
+    document.getElementById('body').innerHTML=escapeHtml(FULL)+' <span class="cursor">|</span>';
+    document.getElementById('skiphint').style.display='none';
+    document.getElementById('begin').style.display='block';
+  }
+  document.querySelectorAll('.frame')[1].addEventListener('click',e=>{
+    if(e.target.id!=='begin') skip();
+  });
+  function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+  startTyping();
+</script>
+</body>
+</html>

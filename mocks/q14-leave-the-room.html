@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.14 Leave The Room Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);
+    cursor:default; user-select:none;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  .prompt{position:absolute; left:0; right:0; top:8%; text-align:center;
+    font-family:var(--display); font-weight:bold; font-size:26px; color:var(--ink);}
+  .promptsub{position:absolute; left:0; right:0; top:19%; text-align:center;
+    font-family:var(--body); font-size:15px; color:var(--fgDim);}
+
+  .eyewrap{position:absolute; left:50%; top:27%; transform:translateX(-50%);
+    width:190px; height:120px;}
+  .eyewrap svg{width:100%; height:100%; overflow:visible;}
+  #lid{transform-origin:80px 8px; animation:blink 5.2s infinite;}
+  @keyframes blink{
+    0%, 90%, 100%{transform:scaleY(0);}
+    93%, 96%{transform:scaleY(1);}
+  }
+  .status{position:absolute; left:0; right:0; top:63%; text-align:center;
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--danger);
+    user-select:none;}
+  .status .dot{display:inline-block; width:7px; height:7px; border-radius:50%;
+    background:var(--danger); margin-right:7px; vertical-align:1px;
+    animation:pulse 1.4s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+
+  .answerrow{position:absolute; left:0; right:0; bottom:9%; display:flex; justify-content:center;}
+  .ans{width:190px; height:56px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:23px;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;}
+  .ans:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:4; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%;}
+  .continue{width:200px; height:52px; font-size:21px; margin-top:6px;}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blinkc 1.06s steps(1) infinite;}
+  @keyframes blinkc{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.14 · Leave The Room · proposed replacement for mirrored text</h1>
+<p class="sub">Fully playable. A proctor's eye inked on the exam paper follows your cursor everywhere, blinking now and then, with a pulsing PROCTOR STATUS: WATCHING readout beneath it. Clicking ANSWER while observed always slams INCORRECT and costs a heart, and the examiner's rebukes escalate: the third one lets slip "...in this window, anyway," which is the hint. The solve: actually leave. Switch tabs, click another window, or minimize for about four seconds; the game notices the window losing focus, and when you come back the paper has been stamped in your absence and the examiner is mid-meltdown. The trap only arms after you have interacted with the page, so switching back to this tab from elsewhere does not auto-win before you have even played. Tunables flagged for the port: the four second away threshold, and the same blur plus visibilitychange events work identically in the real canvas build.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.14</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="play">
+      <div class="prompt">Candidates may not be observed while answering.</div>
+      <div class="promptsub">Proceed when unobserved.</div>
+
+      <div class="eyewrap">
+        <svg viewBox="0 0 160 100">
+          <defs>
+            <clipPath id="eyeclip">
+              <path d="M 10 50 Q 80 -8 150 50 Q 80 108 10 50 Z"/>
+            </clipPath>
+          </defs>
+          <path d="M 10 50 Q 80 -8 150 50 Q 80 108 10 50 Z" fill="#F2EBDA"/>
+          <g clip-path="url(#eyeclip)">
+            <g id="pupilGrp">
+              <circle cx="80" cy="50" r="24" fill="#7A2E2E" stroke="#5A2222" stroke-width="2"/>
+              <circle cx="80" cy="50" r="11" fill="#1E1A15"/>
+              <circle cx="74" cy="44" r="3.5" fill="#F7F1E3"/>
+            </g>
+            <rect id="lid" x="0" y="8" width="160" height="84" fill="#FBF8EF"/>
+          </g>
+          <path d="M 10 50 Q 80 -8 150 50 Q 80 108 10 50 Z" fill="none" stroke="#26201A" stroke-width="3"/>
+          <path d="M 30 24 Q 80 -18 130 24" fill="none" stroke="#26201A" stroke-width="2" opacity=".55"/>
+        </svg>
+      </div>
+      <div class="status" id="status"><span class="dot"></span>PROCTOR STATUS: WATCHING</div>
+
+      <div class="answerrow"><button class="ans" id="answerBtn">ANSWER</button></div>
+
+      <div class="winscreen" id="winscreen">
+        <div class="win-title">UNOBSERVED.</div>
+        <div class="win-body">The proctor cannot watch an empty room. Your paper was stamped in your absence.</div>
+        <button class="ans continue" onclick="alert('Chime! → advances to Q.15')">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const AWAY_MS = 3800;          // how long the room must be empty
+  let armed = false;             // trap arms only after the player interacts
+  let awayAt = 0;
+  let lives = 3, wrongs = 0, solved = false, ended = false;
+
+  /* ── The proctor's eye follows the cursor ── */
+  const pupil = document.getElementById('pupilGrp');
+  const eyewrap = document.querySelector('.eyewrap');
+  document.addEventListener('mousemove', e => {
+    arm();
+    const r = eyewrap.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    let dx = e.clientX - cx, dy = e.clientY - cy;
+    const len = Math.hypot(dx, dy) || 1;
+    const k = Math.min(1, 15/len);
+    pupil.style.transform = `translate(${(dx*k).toFixed(1)}px, ${(dy*k*0.7).toFixed(1)}px)`;
+  });
+
+  function arm(){ armed = true; }
+  document.addEventListener('mousedown', arm);
+  document.addEventListener('keydown', arm);
+
+  /* ── Clicking ANSWER while watched: rebuke ladder, heart loss ── */
+  const LADDER = [
+    "I was watching. That does not count.",
+    "As long as I can see you, no answer counts.",
+    "You cannot escape observation in this room. ...In this window, anyway.",
+  ];
+  document.getElementById('answerBtn').addEventListener('click', () => {
+    if (solved || ended) return;
+    slam('INCORRECT', false);
+    retype(LADDER[Math.min(wrongs, LADDER.length - 1)]);
+    wrongs++;
+    if (lives > 0){ lives--;
+      document.getElementById('heartRow').children[lives].classList.add('lost'); }
+    if (lives <= 0){
+      ended = true;
+      setTimeout(() => alert('Out of attempts. GAME OVER overlay would appear here.'), 700);
+    }
+  });
+
+  /* ── The solve: leave the window ── */
+  function onLeave(){
+    if (!armed || solved || ended) return;
+    if (!awayAt) awayAt = Date.now();
+  }
+  function onReturn(){
+    if (!awayAt || solved || ended) return;
+    const away = Date.now() - awayAt;
+    awayAt = 0;
+    if (away >= AWAY_MS) win();
+    else retype("Back already? I never looked away.");
+  }
+  window.addEventListener('blur', onLeave);
+  window.addEventListener('focus', onReturn);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) onLeave(); else onReturn();
+  });
+
+  function win(){
+    solved = true;
+    document.getElementById('status').innerHTML = 'PROCTOR STATUS: CONFUSED';
+    slam('ANSWERED', true);
+    retype("...Where did you go. What happened. Who stamped this.");
+    setTimeout(() => document.getElementById('winscreen').classList.add('show'), 1000);
+  }
+
+  function slam(text, ok){
+    const st = document.getElementById('stamp');
+    st.className = 'stamp' + (ok ? ' pass' : ''); void st.offsetWidth; st.classList.add('show');
+    st.firstChild.textContent = text;
+  }
+
+  /* ── Examiner typewriter, retypable ── */
+  const el = document.getElementById('remarks');
+  let timer = null;
+  function retype(text){
+    if (timer) clearInterval(timer);
+    let ti = 0;
+    timer = setInterval(() => { ti++;
+      if (ti >= text.length){ clearInterval(timer); timer = null;
+        el.innerHTML = text + ' <span class="cursor">|</span>'; return; }
+      el.innerHTML = text.slice(0, ti) + '<span class="cursor">|</span>';
+    }, 22);
+  }
+  retype("Candidates may not be observed while answering. I will be watching. Every moment.");
+
+  /* idle nudge toward the hint if they stall */
+  setTimeout(() => {
+    if (!solved && !ended && wrongs < 3)
+      retype("Still here? You cannot escape observation in this room. ...In this window, anyway.");
+  }, 45000);
+</script>
+</body>
+</html>

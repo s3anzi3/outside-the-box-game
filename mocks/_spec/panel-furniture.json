@@ -1,0 +1,364 @@
+{
+ "slots": [
+  {
+   "q": 29,
+   "baselineCritique": "The stamp is the right furniture (unused) and the line about the verdict being the only wrong thing is good. Two problems. First, 'find the error on this page' over four true statements invites proofreading, which is the same reading-for-typos instinct Q33 runs on, so 29 and 33 become one joke (the error lives in the chrome, not the content) four slots apart. Second, a faded printed stamp is passive: you click a picture, exactly like Q9's label, with no physical act. It is fair and discoverable and works as a breather after the Q28 boss.",
+   "baselineFixes": "Make the four statements facts about the player's own run ('You froze Frodrick's paddle.' 'You dragged a loading bar to 100%.') so reading is a recap, not trivia bait. Angle the old stamp across one true statement so the stamp is visibly the error. No cursor change over it. After the first wrong click: 'Every sentence in ink is true. Something on this page is not ink.' Keep the stamp faded but never below 26px. If Q33 keeps its chrome-typo baseline, change one of the two.",
+   "alternatives": [
+    {
+     "name": "SELF-ASSESSMENT",
+     "pitch": "The paper reads 'Q.29 · SELF-ASSESSMENT. Statement: The candidate has answered Question 29 correctly. Grade this statement.' No answer buttons. Two physical rubber stamps sit on the desk margin to the right of the paper, drawn as wooden-handled stamps with the game's exact impression faces: one INCORRECT (red), one CORRECT (green). A small embossed SUBMIT FOR GRADING button costs a heart: 'The examiner is on break. Grade it yourself.' The honest instinct is that the statement is not yet true, so players drag INCORRECT onto it: it slams, a heart goes, and the examiner says 'Honesty noted. Standing reduced.' Drag CORRECT onto the statement and the impression lands, the statement becomes true because it has been stamped true, and the item passes. It is funny because the game hands you its own verdict tool and the only way to be right is to declare yourself right, which the Institute calls empowerment.",
+     "hintLadder": "Start: 'Grade the statement. The stamps are on the desk.' After 1: 'You marked yourself wrong. I have recorded that you agree with me.' After 2: 'There is a second stamp. It is green. Nobody uses it.' After 3: 'Stamp the statement CORRECT. It becomes true when you do. That is how grading works.'",
+     "winCopy": "SELF-CERTIFIED. The statement was false until you stamped it. Corporate calls this empowerment.",
+     "feasibility": "Mock: two absolutely positioned draggable divs with pointer events, drop test against the statement's bounding box, then render the impression with the existing .stamp styles at the drop point. Canvas: drawStamp already exists; add a drag state and hit test, draw the impression at the drop coordinates with a random 3 to 8 degree angle. No browser gotchas."
+    },
+    {
+     "name": "WET INK",
+     "pitch": "'Enter the reference code for this item.' A text box, a SUBMIT button, and no code anywhere on the paper. Footer: 'First attempt on this item is complimentary.' Whatever you type, the INCORRECT stamp slams as usual, but on this level it stays wet for 2.5 seconds and the code is printed around the inside of its red border in small mono ('REF 4471 · REF 4471 · REF 4471'). Read it while it dries, or pause while it is on screen (Q22 veterans get a reward: the pause holds the stamp). Type 4471, submit, CORRECT. The trap is that the stamp has always been the thing you look away from; here it is the only document that matters. The complimentary first attempt keeps it fair; later wrong submissions cost hearts.",
+     "hintLadder": "Start: 'The reference is printed on the verdict. First attempt is complimentary.' After 1: 'You looked away from the stamp. Everyone does. Look at it next time.' After 2: 'The number is inside the red border. Suspend the examination while it is showing if you must.' After 3: 'It is 4471. I am not supposed to say that.'",
+     "winCopy": "REFERENCED. The answer was on the stamp the whole time. You just kept flinching.",
+     "feasibility": "Mock: extend the slam keyframes to hold 2.5 s and add a rotated inner ring of text. Canvas: drawFxStamp gets a per-level duration and an optional ring-text option; store elapsed time rather than a timestamp so pause freezes it. Refund the first lost life on this level or gate wrong() behind an attempt counter. Keep the ring text at 12px mono minimum so it reads in dark mode."
+    }
+   ]
+  },
+  {
+   "q": 31,
+   "baselineCritique": "The lightbulb in the logo is the best unused piece of furniture and the 'toggle changes the hall, not the paper' misdirect is exactly the petty trap this game wants. Risks: the logo has never been interactive and sits outside the paper, so discovery leans entirely on the ladder and on the bulb reading as a bulb; a dark paper in light mode may read as a rendering bug rather than a room with the light off; in dark mode the unlit paper has less contrast against the hall and needs its own treatment. Fair, fresh, and a good Act IV opener.",
+   "baselineFixes": "Draw the paper 'unlit' as deep blue-black with a faint cone of light falling from the bulb's position so the eye is pulled upward. Draw the bulb visibly off (grey filament) with one slow blink after 15 seconds idle. When the player toggles DARK/LIGHT in the pause menu, remark: 'That changed the hall. It did not change the paper.' Cursor stays default over the bulb. On click, the bulb pops on with a soft flash and the instruction fades in.",
+   "alternatives": [
+    {
+     "name": "PEEL THE STICKER",
+     "pitch": "The paper reads 'The instruction for this item has been placed for safekeeping.' Four buttons A to D, all INCORRECT. The logo at the top has always been a sticker, so on this level its bottom-right corner is very slightly lifted with a hairline shadow under the curl. Drag the corner and the sticker peels back with a curl animation, revealing what was written on the wall underneath in oxblood marker: 'Q.31: PRESS THE THIRD BUTTON.' The pause menu's theme toggle does nothing useful here. The joke is that the game's own branding has been hiding an answer since Q1, and that the Institute stores instructions under its logo like a spare key under a mat.",
+     "hintLadder": "Start: 'Placed for safekeeping. Somewhere you would never look.' After 1: 'Not on the paper. Not in the hall. Higher.' After 2: 'The logo is a sticker. Stickers have corners.' After 3: 'Peel the bottom-right corner of the logo. Read the wall.'",
+     "winCopy": "UNSTUCK. The Institute keeps its instructions under the branding. Do not tell corporate.",
+     "feasibility": "Mock: the logo PNG in a div; a corner handle with pointer drag sets a clip-path polygon (or translates and rotates the image) to fake a peel, revealing a text div underneath. Canvas: drawLogo gets a per-level peel offset; draw the reveal text first, then the logo clipped by a diagonal path. Uses the logo, unused so far."
+    },
+    {
+     "name": "P.T.O.",
+     "pitch": "The front of the paper shows only 'Answer: [A] [B] [C] [D]' and the question line is blank. In the bottom-right margin, in tiny mono, is the oldest exam convention there is: 'P.T.O.' Grab the paper by its right edge and drag leftward: the sheet flips over with a 3D turn (shadow and corner ticks flip with it) and the back reads 'Q.31: PRESS THE THIRD BUTTON' with a fifth button printed on the reverse. Toggling dark and light in the pause menu is the Q25 veteran's trap and does nothing. The lateral idea is that the paper is two-sided, which every real exam paper is and no level has yet used. Distinct from Q37's slide: this is a flip.",
+     "hintLadder": "Start: 'The instruction is on this paper. Every word of it.' After 1: 'This side is not the whole paper.' After 2: 'Bottom right corner. Three letters. You have seen them on every exam you ever sat.' After 3: 'Please turn over. Drag the paper's edge.'",
+     "winCopy": "TURNED OVER. It said P.T.O. on the front. It always says P.T.O. on the front.",
+     "feasibility": "Mock: wrap the paper in a perspective container; drag distance maps to rotateY 0 to 180 with two backface-hidden faces. Canvas: draw the paper with a horizontal scale of cos(angle) and swap content when the angle passes 90 degrees. Make the full right margin strip the drag target."
+    }
+   ]
+  },
+  {
+   "q": 33,
+   "baselineCritique": "Moving the typo into the caption cartouche is the right instinct (unused furniture, and the border text is literally the paper, not the paragraph). But it is still spot-the-typo, and at 10px tracked mono uppercase EXAMINATOIN is close to unreadable, so fairness rests entirely on the ladder. It also duplicates Q29's baseline joke (the error is in the chrome) if both ship. Humour is dry and right.",
+   "baselineFixes": "Bump the cartouche to 13px on this level and use a misprint that reads at a glance ('· EXAMINATION PAPRE ·', or the correct words set in the wrong font). Faint hover underline on the cartouche only after two failures. After the first wrong click: 'The paragraph is fine. The paper is not.' Change Q29 so the two do not share a punchline.",
+   "alternatives": [
+    {
+     "name": "MISPLACED",
+     "pitch": "The paragraph on the paper is flawless and clicking any word costs a heart. The one wrong word is wrong because it is in the wrong place: the examiner's remarks read 'Quality control. One word on this page is wrong. Read it like it matters, ______ it does.' with an underlined gap. The paragraph contains the stray word 'because' where it makes no sense ('The Institute because issues certificates annually.'). Drag 'because' out of the paragraph and drop it into the gap in the examiner's remarks; the sentence closes up, his remark completes itself, CORRECT. Words are draggable but only the stray one is accepted. It is funny because you are proofreading the examiner, and the fix is handing him back his own word.",
+     "hintLadder": "Start: 'One word on this page is wrong. Read it like it matters, ______ it does.' After 1: 'Wrong is not the same as misspelled. Some words are simply not where they belong.' After 2: 'I seem to be missing one. Look at my remarks. Look at the gap.' After 3: 'The word because is in your paragraph. It is mine. Drag it down here.'",
+     "winCopy": "RETURNED. The word was fine. It was in the wrong paragraph. Corporate calls that a typo.",
+     "feasibility": "Mock: each word is a span; the stray one drags as a clone following the pointer; drop target is the gap span in the remarks box. Canvas: drawBottomPanel draws remarks with measured glyphs (Q3 already hit-tests them), so add a gap rectangle and a dragged-word overlay. The remarks as a drop target is new."
+    },
+    {
+     "name": "CHROME AUDIT",
+     "pitch": "'Quality control. Verify this page against the checklist.' No paragraph. The paper prints a five-line QC form about the interface itself: 'Logo present. Caption reads EXAMINATION PAPER. Corner ticks: 4. Hearts displayed: N (live count). Examiner present and awake.' Each line has PASS and FAIL. Four are true. One is false: the page has only three corner ticks, because the bottom-right tick is missing on this level (the corner was torn at Q15 and, per the remark, never grew back). Mark that line FAIL and the item passes; marking a true line FAIL costs a heart. The game asks you to inspect its own furniture, and the flaw is a scar from an earlier question.",
+     "hintLadder": "Start: 'Audit the page, not the paragraph. There is no paragraph.' After 1: 'Four lines are true. Check each claim against the actual page. Slowly.' After 2: 'Count the corners. The Institute has not repaired the paper since Question 15.' After 3: 'Corner ticks: 4 is false. There are three. Mark it FAIL.'",
+     "winCopy": "AUDITED. Three corners. The fourth went missing at Question 15 and nobody filed a report.",
+     "feasibility": "Mock: omit .tick.br and draw a faint torn edge; the checklist is a table with two radio-style buttons per row. Canvas: drawCornerTicks takes a mask for this level; the torn corner can reuse Q15's tear rendering. The hearts line reads the live count so it stays true whatever the player's standing."
+    }
+   ]
+  },
+  {
+   "q": 34,
+   "baselineCritique": "The hearts HUD is the most valuable unused furniture and the heart flying home is the best visual gag among the baselines. Fair, on brand, and the odd-one-out framing is only a disguise. Two risks: the difference between a printed heart and the HUD heart (fill, shadow, stroke) is subtle at 30px in a grid of 40, so this can become a squint test; and a missing HUD heart will panic players who think they lost one, especially if they already have and now see two empty slots.",
+   "baselineFixes": "Print the grid hearts in flat oxblood with a visible halftone or hatch so 'printed' is legible; give the real heart a slight idle pulse every 3 seconds; always take the rightmost HUD slot regardless of lives and label it 'on loan to Q.34' in mono under the row. If the player has one heart left, the loan is their last heart and the remark says so, with wrong clicks on printed hearts adding more printed hearts instead of costing a life. Play the heart-restore sound on the fly-home.",
+   "alternatives": [
+    {
+     "name": "THE FOURTH HEART",
+     "pitch": "'One of these does not belong with the others.' The paper shows a calm grid of 24 identical Institute seals and four buttons, all decoys. The thing that does not belong is in the HUD: CANDIDATE STANDING shows four hearts on this level, and the fourth is very slightly off (a shade bluer, a hair larger, no shadow). Veterans notice the count at once; everyone else gets there through the ladder. Click the interloper: it deflates with a small pfft, the HUD returns to three, the item passes. After 33 levels of protecting your hearts, the game hands you an extra and the correct move is to reject it.",
+     "hintLadder": "Start: 'One of these does not belong with the others. I did not say which these.' After 1: 'The grid is uniform. I checked. Look at what is not on the paper.' After 2: 'How many hearts do you have? How many should you have?' After 3: 'The fourth heart is not yours. Click it. It will not mind.'",
+     "winCopy": "AUDITED. You had three hearts. You have always had three hearts. Corporate would like the fourth back.",
+     "feasibility": "Mock: add a fourth .hp svg with a slightly different fill and no drop-shadow; click removes it with a scale-out. Canvas: the HUD draws hearts from state.lives; on this level draw one extra after the real ones with its own hit area. Shrink the row gap to 6px so four fit in the 14.5% column."
+    },
+    {
+     "name": "OUTSOURCED",
+     "pitch": "'One of these does not belong with the others.' The paper is filled with 30 embossed paper buttons, every one labelled A, all in the house style (paper fill, 2px stroke, radius 6, soft shadow, oxblood hover). One button in the field is a default operating-system button: flat grey, square corners, system font, blue focus ring on hover. It is the only one not made by the Institute and it is the answer. Clicking a house-style button costs a heart the first time and thereafter only a remark. It lands with anyone who has looked at the game for a minute: the design system is the puzzle, and corporate outsourced one button.",
+     "hintLadder": "Start: 'One of these does not belong. Every button on this page was issued by the Institute. Almost.' After 1: 'Look at the craftsmanship. We have standards. Someone did not meet them.' After 2: 'Paper fill, two pixel stroke, rounded corners. One of them is grey and square.' After 3: 'The grey one. Corporate outsourced it. Click it.'",
+     "winCopy": "DECOMMISSIONED. Thirty buttons in the house style and one from a vendor. You found the vendor.",
+     "feasibility": "Mock: a CSS grid of .ans buttons plus one native button with styling reset (appearance:auto). Canvas: drawButton for 29 and a bespoke flat rect with a system-looking font for the impostor. Keep the impostor off the first row so it is not spotted in zero seconds. Cheap."
+    }
+   ]
+  },
+  {
+   "q": 35,
+   "baselineCritique": "Making the examiner sprite the signal source is the right twist and uses all four facing sprites, which have only ever been idle flavour. But it is still Simon: watch, memorise, repeat, three rounds. Q22 already does memory under pressure, and with Q34 (HUD), Q41 (drag to examiner) and Q43 (click examiner) the bottom panel becomes the whole of Acts IV and V. At 50px the UP and DOWN sprites are hard to tell apart quickly. Fair and buildable, not lateral.",
+   "baselineFixes": "Enlarge the sprite to 80px during the sequence (he steps onto the paper's edge) and hold each pose 600 ms with the small step offset the idle animation already uses. Label the four panels with the sprite faces, not arrows, so the mapping is explicit. Add one lateral wrinkle: on round three he turns his back (UP) and stays there; remark 'I am not repeating that one.' and the panels flash the pattern themselves if the player waits five seconds, rewarding patience like Q17. Let pause freeze him mid-sequence and have him complain.",
+   "alternatives": [
+    {
+     "name": "INSTITUTIONAL SIMON",
+     "pitch": "'Watch. Then repeat.' The four Simon panels are gone. The sequence plays on the game's own chrome: the logo glows, the Q.35 label glows, the pause control glows, the examiner sprite glows, the hearts glow, each with a soft pulse. You repeat by clicking those actual pieces of furniture in order. The trap is that none of them have ever been clickable except pause (and Q9's label once): players hunt the paper for buttons while the interface waits. On this level the pause control does not pause while an answer round is open; the examiner explains he has disabled the suspension control for the item and asks you not to tell corporate. Rounds of 3, 4, 5. The whole screen becomes the instrument, and 'attention to detail' now means attention to the frame.",
+     "hintLadder": "Start: 'Corporate insists on measuring attention to detail. Watch what lights up. Then touch it, in order.' After 1: 'The paper is not the instrument. Look at everything that glowed.' After 2: 'The logo. The item number. The pause control. Me. Your hearts. All of them accept a click today.' After 3: 'Click the pieces in the order they lit. The pause control will not pause. I disabled it.'",
+     "winCopy": "ATTENTIVE. You played the examination like an instrument. Corporate is measuring that too.",
+     "feasibility": "Mock: each chrome element gets a .glow class toggled on a timer and a click handler; suppress the pause handler during input rounds. Canvas: a per-level list of hit areas for logo, Q label, pause rect, sprite rect and heart row; drawLevelHUD pushes the pause hit area, so the level pushes its own on top after it. Glow is a shadowBlur pass per element."
+    },
+    {
+     "name": "YOUR TURN FIRST",
+     "pitch": "'A simple test of focus.' Four panels on the paper, labelled YOU FIRST. You tap any three panels; the examiner repeats your sequence back with his sprite turning to face each panel (LEFT, UP, RIGHT, DOWN) with the small step offset from his idle glance. Round one he is perfect. Round two, perfect. Round three he gets the last panel wrong, faces away, and two verdict buttons appear: EXAMINER CORRECT and EXAMINER INCORRECT. The polite instinct is to let it go: CORRECT costs a heart ('Kind. Wrong.'). Mark him INCORRECT and the item is forfeited in your favour. The joke is the role swap and the petty admission that the grader can fail.",
+     "hintLadder": "Start: 'You first. Set a pattern. I will repeat it. Corporate wants to see me do it too.' After 1: 'You marked me right. I was not right. Rewatch the last panel.' After 2: 'The verdict is yours. Be honest. It is a novelty around here.' After 3: 'Mark the examiner INCORRECT. Yes, that button.'",
+     "winCopy": "FORFEITED IN YOUR FAVOUR. The examiner failed a test of focus. He would like this not to be minuted.",
+     "feasibility": "Mock: a state machine of player input then timed playback; sprite swaps via src changes. Canvas: gc.guideCharDir and guideCharOffsetX/Y already exist for the idle glance, so playback simply drives them. If Q29 SELF-ASSESSMENT is chosen, prefer INSTITUTIONAL SIMON here to avoid two 'you hold the verdict' beats."
+    }
+   ]
+  },
+  {
+   "q": 37,
+   "baselineCritique": "Sliding the paper is the last big unused physical move for the sheet and the ANSWER KEY beneath is a superb institutional joke (the game even has a real gold ANSWER KEY tab for the cheat name). Concern: grabbing the paper by its margin has no visual cue, and a count-the-squares figure with no 14 button will read as a bug to some players rather than a wink. It also joins Q15 and the Q31 ideas as another 'something under or behind the sheet' level, so Act IV texture gets samey. Fair once cued, and tactile.",
+   "baselineFixes": "Let a second sheet peek out 6px at the bottom-right with 'ANSWER KEY' legible on the exposed corner; deepen the drop shadow as the top sheet moves; make the key list absurd answers for other items ('Q.36: 54 (recommended)', 'Q.29: see stamp') so reading it is a reward. Put the 14 button on the key sheet. Change the question to 'The answer to this item is 14. Submit it.' so the riddle is not the puzzle.",
+   "alternatives": [
+    {
+     "name": "THE ONLY NUMBER FIELD",
+     "pitch": "The paper reads 'The answer to this item is 14. Submit it.' Four buttons: 9, 12, 16, 20. No 14, no text field, and a footer: 'Corporate printed the wrong buttons. Corporate has been informed.' Every button costs a heart. The solution is the one numeric control on the entire examination: the SOUND slider in the pause menu. Set it to 14% (drag; the scroll wheel moves it in 5% steps so it will not land) and press RESUME; the paper reads 'Answer received via the only numeric input available.' and passes, and the previous volume is put back. The game's most ignored control becomes the answer sheet.",
+     "hintLadder": "Start: 'The answer is 14. Submit it. Corporate printed the wrong buttons.' After 1: 'There is exactly one control on this examination that accepts a number. It is not on the paper.' After 2: 'Suspend the examination. Look at the percentage.' After 3: 'Set SOUND to 14 percent. Then resume. I will put your volume back.'",
+     "winCopy": "SUBMITTED AT 14 PERCENT. The only numeric field in the building was the volume. Your sound has been restored. You are welcome.",
+     "feasibility": "Mock: build the pause overlay with a working slider and readout; on RESUME check the value. Canvas: on resume read gc.sounds.getMasterVolume(), accept 0.13 to 0.15, then restore the stored volume. Nothing depends on hearing anything. Do not ship alongside Q38 RESUME or Q39 ISSUED TO THE INVIGILATOR; one pause-menu reveal per act."
+    },
+    {
+     "name": "TRIM MARKS",
+     "pitch": "Same paper: 'The answer to this item is 14. Submit it.' with buttons 9, 12, 16, 20, and the right edge of the row visibly cut off: half a fifth button is clipped by the paper's edge. The corner ticks are crop marks, and crop marks set the trim. Drag the top-right or bottom-right tick outward and the paper grows past its old edge, revealing the fifth button, 14, that was trimmed off in printing. Click it. The page was cropped to save ink and the answer was outside the box in the most literal typographic sense. Different from Q15: nothing tears, the paper simply gets bigger.",
+     "hintLadder": "Start: 'The answer is 14. Submit it. Something on this row looks cut off.' After 1: 'Corporate trimmed the page. The fifth button did not survive.' After 2: 'The little marks in the corners are crop marks. They set the trim.' After 3: 'Drag a right-hand corner tick outward. The page grows. The 14 is there.'",
+     "winCopy": "UNTRIMMED. The fifth button was printed. It was just outside the trim. Corporate saves on paper.",
+     "feasibility": "Mock: the paper is a positioned div with overflow hidden; dragging a tick element adjusts its width, revealing content positioned past the old edge. Canvas: drawGameplayFrame takes a width override for this level and the level clips its content to the current paper rect. Examiner panel and logo do not move. Cheap."
+    }
+   ]
+  },
+  {
+   "q": 38,
+   "baselineCritique": "The right mouse button is unused and 'Not that one. The other one.' is perfect. Discoverability is the weak point: many players never right-click a canvas, trackpad users may not know two-finger tap, and contextmenu must be suppressed or the browser menu breaks the moment. As a ten-second calm level it is fine, but a one-button level that fails on the obvious click sits close to Q40 in shape, and left-click failures should not drain hearts for an input-discovery problem.",
+   "baselineFixes": "Charge one heart for the first left click only; further left clicks produce escalating remarks. Suppress contextmenu on the whole canvas. Draw the button with a faint two-tone split (left half worn, right half pristine) and have it depress on its right side when right-clicked. Ladder reaches 'Your mouse has two buttons.' by the second failure and mentions ctrl-click and two-finger tap by the third.",
+   "alternatives": [
+    {
+     "name": "RESUME",
+     "pitch": "'Press the button.' One large button on the paper. Press it: INCORRECT, 'Not that one. The other one.' There is exactly one other button on the paper and it has been there since Q1: the pause control in the header. Press it and the Examination Suspended box opens with a new line under the title: 'Q.38 will be marked complete upon resumption.' Press RESUME. CORRECT. The pause menu's most boring button, the one that undoes the menu, is the answer, and the exam counts a resumption as an act of will.",
+     "hintLadder": "Start: 'Press the button.' After 1: 'Not that one. The other one. There are only two on this page.' After 2: 'The other one is in the header. It has two bars on it.' After 3: 'Suspend the examination. Then resume it. That button counts.'",
+     "winCopy": "RESUMED. The other button was the one that gets you out of the menu. Nobody thinks of it as a button.",
+     "feasibility": "Mock: pause overlay with RESUME wired to the win. Canvas: PauseOverlay adds a per-level note line and RESUME checks state.currentLevel === 38 to set the win phase. No risk to game state. Do not pair with Q37 THE ONLY NUMBER FIELD in the same build."
+    },
+    {
+     "name": "PLUNGER",
+     "pitch": "'Press the button.' The button is a physical plunger: a round cap over a visible 40px housing with a shadow. Click it: it clicks, nothing happens, INCORRECT, 'You clicked it. Press it.' Hold the cap and drag it downward into its housing; the shadow shrinks, the cap seats with a thunk, CORRECT. Pressing means moving it down, not tapping it. Cheap, and it reads instantly once you see the housing.",
+     "hintLadder": "Start: 'Press the button. Firmly.' After 1: 'That was a click. A click is not a press.' After 2: 'It has a housing. It is meant to go down into it.' After 3: 'Hold the cap and drag it down until it seats.'",
+     "winCopy": "PRESSED. All the way down. That is what the word means.",
+     "feasibility": "Mock: pointerdown on the cap, pointermove maps vertical delta to translateY clamped 0 to 40px, release above 36px wins. Canvas: same with a drag state; housing is a darker rounded rect behind the cap. Drag is well used (Q11, Q13, Q32), so if the build wants novelty prefer RESUME."
+    }
+   ]
+  },
+  {
+   "q": 39,
+   "baselineCritique": "The tab title is unused and 'the instruction is displayed above' is a wonderful literal misdirect. Feasibility is the concern: it only works when the game runs in its own tab with a visible title (no iframe, no fullscreen, no PWA, no mobile Safari). Fairness: many players never read a tab title, so the ladder must say 'above the page' outright. It also stacks with the Q31 baseline as a second look-above-the-paper level in Act IV.",
+   "baselineFixes": "Set the favicon to a bold B as redundancy. Show the title in caps with diamonds and no scrolling (scrolling titles truncate). Detect fullscreen or iframe and, in that case, print the instruction in the paper's footer after the second failure. Ladder: 'Above the paper. Above the logo. Above the page.' by failure two.",
+   "alternatives": [
+    {
+     "name": "ISSUED TO THE INVIGILATOR",
+     "pitch": "'The instruction for this question has been issued to the invigilator.' Four blank buttons A to D, all INCORRECT. The pause menu has carried a small text box labelled INVIGILATOR OVERRIDE since the first level and nobody has ever typed in it. On this level its placeholder no longer reads 'Override Key'; it reads 'Q.39: PRESS D'. Read it, resume, press D. A cheat box in a pause menu is the most official channel the Institute has, and the instruction was waiting behind a control everyone assumed was for someone else.",
+     "hintLadder": "Start: 'Issued to the invigilator. The invigilator has a box.' After 1: 'Not on the paper. The invigilator's box is in the suspension screen.' After 2: 'Pause. Bottom left. The override field has something written in it.' After 3: 'It says PRESS D. Press D.'",
+     "winCopy": "OVERRIDDEN. The invigilator's box was the instruction all along. It has been used exactly once.",
+     "feasibility": "Mock: the pause overlay with the override field's placeholder swapped. Canvas: PauseOverlay reads the placeholder from a per-level lookup. Zero risk. Do not pair with Q37 or Q38 pause-menu alternatives in the same build."
+    },
+    {
+     "name": "YOU DID NOT READ IT",
+     "pitch": "The instruction for Q39 was displayed on the previous win screen: Q38's completion screen subtitle reads 'Next item: press C. This will not be repeated.' above the CONTINUE button everyone hammers. Q39's paper says 'The instruction for this question was displayed. Four buttons.' with a mono footnote '(see previous screen)'. The win screen is furniture too and nobody reads it. Players arriving from level select never saw Q38's screen, so the ladder gives the answer outright by failure two; the point is the sting, not the difficulty.",
+     "hintLadder": "Start: 'The instruction for this question was displayed. I said it before you pressed CONTINUE.' After 1: 'Everyone presses CONTINUE without reading. It was on that screen.' After 2: 'Fine. It said press C.' After 3: 'C. The third one.'",
+     "winCopy": "READ. Eventually. Next time look at the completion screen before you leave it.",
+     "feasibility": "Mock: fake a Q38 win screen first, then the Q39 paper. Canvas: drawWinScreen for level 38 carries the subtitle; nothing else changes. The cheapest option in this set and a fine calm swap if the tab-title baseline is dropped."
+    }
+   ]
+  },
+  {
+   "q": 41,
+   "baselineCritique": "Handing a card to the examiner is the right kind of physical exam-world act, and 'Clicking is not handing in' plus 'Received. Content unverified.' is the voice at its best. Concerns: the drop target is a 50px sprite in a panel that has never accepted a drop; drag is already the most-used input; and the examiner is the target of three baselines (35, 41, 43), which flattens the surprise. Any-card-works is right for an Act V opener.",
+   "baselineFixes": "When a drag starts, the divider between examiner and remarks becomes a labelled IN TRAY slot and the sprite turns to face the card (LEFT or RIGHT) as it moves. Fan the cards like a hand of paper. After two failed clicks: 'Any card. I am not reading it.' Accept a drop anywhere on the examiner's third of the panel, not just the sprite.",
+   "alternatives": [
+    {
+     "name": "REPLY",
+     "pitch": "The paper is blank except 'Reply to the examiner.' No buttons, no field. The examiner's remarks read 'State your answer. I am listening. |' and the caret at the end of his text, which has blinked after every remark for forty levels, is now a live text cursor. Click the remarks box and type anything; the letters appear inside the examiner's remarks as if he is taking dictation; press Enter; he replies 'Received. I have written it down as my own.' CORRECT. The trap is hunting the paper for an input while the only text cursor on screen sits in the grader's mouth. Content is irrelevant; the reply is the answer.",
+     "hintLadder": "Start: 'State your answer. I am listening. |' After 1: 'There is nothing on the paper to press. Look at where the cursor is.' After 2: 'My remarks have a blinking line at the end. It is a cursor. It has always been a cursor.' After 3: 'Click my remarks. Type anything. Press Enter.'",
+     "winCopy": "DICTATED. Your answer is now part of the examiner's remarks. He will claim it was his.",
+     "feasibility": "Mock: a hidden input focused on clicking the remarks, echoing typed text after the remark. Canvas: window keydown already routes nameInput and pauseCheatInput; add a level41Input path drawn after the guide text. Q27 used the keyboard too, so if the build wants no repeated input prefer UNDER THE STAMP."
+    },
+    {
+     "name": "UNDER THE STAMP",
+     "pitch": "The paper reads 'Q.41 · PRE-APPROVED. Corporate has approved this item in advance to reduce candidate stress. Press CONTINUE.' A CONTINUE button sits in the middle. The green CORRECT stamp slams down, lands squarely on the button, and stays there, wet. Clicking the stamp wobbles it: 'It is wet. Do not smudge it.' Beside it a smaller REQUEST NEW STAMP button costs a heart: a second stamp slams on top of the first. Drag the stamp off the button (it smears a little and leaves a ghost) and press CONTINUE. Act V opener as a breather, with the game's own verdict physically in the way.",
+     "hintLadder": "Start: 'Pre-approved. Press CONTINUE. Mind the stamp.' After 1: 'Requesting another stamp gives you another stamp. On top.' After 2: 'The stamp is an object. Objects move.' After 3: 'Drag the stamp off the button. Then press the button.'",
+     "winCopy": "CONTINUED. The approval was real. It was just sitting on the button.",
+     "feasibility": "Mock: the .stamp element becomes draggable after its slam; the button beneath has pointer-events none until the stamp is clear. Canvas: draw the stamp with drawStamp at a draggable position and suppress the CONTINUE hit area while they overlap. Uses the stamp, so avoid pairing with a stamp-based Q29."
+    }
+   ]
+  },
+  {
+   "q": 42,
+   "baselineCritique": "Self-referential and honest, and the escalation (the answer grows each time it re-asks) is a real joke. But it is four buttons with a guessable first answer; the lateral content lives in the failure path, not the success path. The Q49 tie-in holds for most players, but a replay from level select must reset the count or Q49 drifts. Acceptable as a calm Act V beat.",
+   "baselineFixes": "Make the re-ask physical: each wrong answer prints the question again lower on the page with the old copy stamped INCORRECT, so the stack itself is the count. Reset the count on level entry. Change the Q49 clue to 'how many times Q.42 had to ask before you answered.' Add a 4 button after the third ask so the set stays honest.",
+   "alternatives": [
+    {
+     "name": "ENTRY FEE",
+     "pitch": "On entering, the paper says 'This item costs one heart to open.' and one heart lifts out of CANDIDATE STANDING, flies to a small printed box on the paper labelled FEE, and sits there. Question: 'How many hearts has this item cost you?' Buttons 0, 1, 2, 3. The instinct to overthink (it is a trick, so 0; it will cost more, so 2) is the trap. The answer is 1, read straight off the fee box. On the win screen the heart flies home: 'Fee refunded. Corporate's idea.' Q49's clue becomes 'how many hearts Q.42 charged you.' A game that charges admission to a question about its admission fee.",
+     "hintLadder": "Start: 'One heart deducted. How many has this item cost you? Read the box.' After 1: 'Do not overthink it. The fee is in the box on the paper. Count it.' After 2: 'One heart is on the paper. One.' After 3: 'Press 1. You will get it back.'",
+     "winCopy": "ONE. The fee is refunded. Corporate is trialling admission charges for questions.",
+     "feasibility": "Mock: animate a heart svg from the HUD to the paper on load and back on win. Canvas: decrement the drawn heart count only (not state.lives) and draw the heart on the paper; if the player has one heart left, the HUD shows zero with the label ON THE PAPER so it is not read as game over. Answer stays 1 for Q49."
+    },
+    {
+     "name": "HOW MANY BUTTONS",
+     "pitch": "'How many buttons are on this page?' Four things that look like buttons, labelled 0, 1, 2, 3. Three are pictures: flat ink, no shadow, no hover, printed slightly askew with a tiny 'fig.' caption. One is a real embossed paper button with full hover and press. It is the 1. The page answers itself: only one button exists. Clicking a picture costs nothing the first time ('That is a drawing of a button.') and a heart thereafter. Q49 clue: 'how many real buttons Q.42 had.' Calm, cheap, and it teaches the eye to tell chrome from content, which Act V then exploits.",
+     "hintLadder": "Start: 'How many buttons are on this page? Look closely before you count.' After 1: 'That was a drawing. Drawings do not count. Count what responds.' After 2: 'Move your cursor over each one. Only one changes.' After 3: 'One button. Press the 1. It is the only one that can be pressed.'",
+     "winCopy": "ONE. Three were pictures. The page counted itself.",
+     "feasibility": "Mock: three .ans-styled divs with box-shadow none and no hover, plus one real .ans. Canvas: drawButton for the 1, flat rects with text for the others. Trivial. If Q34 THE WANDERING HEART is kept (real versus printed hearts), prefer ENTRY FEE here."
+    }
+   ]
+  },
+  {
+   "q": 43,
+   "baselineCritique": "A sleeping examiner and a blank 'Await instructions.' is a very good deadpan image, and clicking the sprite is a real unused affordance. Q17 trained players to wait, so waiting-does-nothing is a good inversion. Concerns: Zzz on a 50px sprite needs a clear bubble; the payoff (a CONTINUE button appears) is small for Act V; and it is the third baseline hung on the examiner sprite.",
+   "baselineFixes": "After waking, have him turn his back (UP) and put the CONTINUE button in the bottom panel where his remarks were, so the resolution also uses furniture. No cursor change over the sprite. After 20 seconds the Zzz grow and the hearts label changes to CANDIDATE ALSO ASLEEP. Add stakes: a RING FOR SERVICE button that costs a heart and wakes nobody.",
+   "alternatives": [
+    {
+     "name": "REPORT WHAT YOU RECEIVED",
+     "pitch": "'Await instructions.' The examiner is awake and silent; the remarks are blank. On the paper, a form: 'INSTRUCTION RECEIVED:' with a text field and a SUBMIT button. Nothing ever arrives. Typing anything ('none', 'nothing', 'no instruction') is INCORRECT: 'You received the word nothing? No. You received nothing.' Submitting the field empty is CORRECT, because that is exactly what you received. The trap is the deep human need to put something in a text box. Calm, honest, and the first time the exam rewards an empty submission.",
+     "hintLadder": "Start: 'Await instructions. When you have received them, report what you received.' After 1: 'You reported a word. No word was issued. Report accurately.' After 2: 'What did you actually receive? Enter precisely that.' After 3: 'Nothing arrived. Submit the box with nothing in it.'",
+     "winCopy": "ACCURATE. You received nothing and you reported nothing. That is the first accurate report today.",
+     "feasibility": "Mock: a text input and submit; win if value.trim() is empty. Canvas: reuse the nameInput keyboard path with a level flag; SUBMIT checks emptiness. Uses text-input emptiness, which is unused. No pause menu involved."
+    },
+    {
+     "name": "CLICK TO SKIP",
+     "pitch": "'Await instructions.' The examiner's remarks begin typing the instruction at one character every 2.5 seconds: 'P... r... e... s...' The full line is 46 characters. A SKIP button on the paper costs a heart: 'That skips the item. Not the dialogue.' The typewriter has run at speed for 42 levels and nobody has needed to hurry it; on this level clicking anywhere on the remarks text finishes the line instantly, the way every game lets you skip dialogue. The line reads 'Press B. Thank you for your patience.' The examiner is mildly hurt: 'You skipped my dialogue. Everyone does.'",
+     "hintLadder": "Start (typing): 'P' After 1 (SKIP pressed): 'That skips the item. Not the dialogue. The dialogue is down here.' After 2: 'You could wait. Or you could do what you do in every other game when text is slow.' After 3: 'Click my remarks. It finishes the sentence.'",
+     "winCopy": "SKIPPED. The instruction was worth waiting for. You will never know.",
+     "feasibility": "Mock: a per-character interval of 2500 ms; click on the remarks sets the full string. Canvas: the typewriter in main.ts advances guideReveal every 22 ms with no skip affordance; this level needs a slow-rate flag and a hit area on the remarks that sets guideReveal to totalChars. Cheap, no state risk."
+    }
+   ]
+  },
+  {
+   "q": 44,
+   "baselineCritique": "The confession is the right meta move: the crimes are things the player actually did at Q8, Q20 and Q21, and ME as a suspect is a good joke. But it is still a four-button whodunit, the narrator-did-it shape is recognisable, and Q30 and Q46 already do recall-what-you-did callbacks. Fair and cheap, light for Act V.",
+   "baselineFixes": "Make the evidence literal furniture: exhibits drawn as the actual UI states (the frozen red paddle, the Q20 OVERRIDE button bagged in a plastic evidence sleeve, the Q8 stranger's screen). Show the Q1 name on the ME card. Have the case file say 'The culprit currently holds N hearts' with N the live count and no other suspect matching. Win stamp reads CONFESSED instead of CORRECT.",
+   "alternatives": [
+    {
+     "name": "SIGN THE CONFESSION",
+     "pitch": "The case file is the baseline crime (the paddle, the override, the child) with three suspects ADA, BEN, CLEO as buttons; all three cost a heart because their alibis are printed on their cards. There is no ME button. At the bottom of the page is a form line: 'I confess. SIGNED: ______________' with a dotted rule. Click the line and the name entered at Q1 writes itself in oxblood ink with a pen scratch, dated today. CORRECT, stamped CONFESSED. You accuse yourself by signing rather than pressing, and the game's own record of your name does the accusing. Foreshadows Q50 without spending it: here the name is written for you; there you must type it.",
+     "hintLadder": "Start: 'Name the culprit. Three suspects have alibis. A fourth does not.' After 1: 'That one was in a meeting. Read the cards.' After 2: 'The paddle was frozen from your seat. The form at the bottom is for the person in your seat.' After 3: 'Click the signature line. Confess.'",
+     "winCopy": "CONFESSED. Signed in your own name. The Institute has kept it since Question 1.",
+     "feasibility": "Mock: the signature is an SVG path revealed with stroke-dashoffset in a script face with a serif fallback. Canvas: draw state.playerName in italic serif with a clip-reveal over 600 ms. Uses game history (the name) as furniture. Cheap."
+    },
+    {
+     "name": "THE SUSPECT IS PRESENT",
+     "pitch": "Same case, three suspect cards with alibis and an empty fourth card labelled 'PLACE THE SUSPECT HERE' with a dotted silhouette. Clicking cards costs a heart. The fourth suspect is the person holding the mouse, so the way to present them is to put the cursor in the box and hold it still for three seconds; a small progress ring fills, the card prints IDENTIFIED with your Q1 name, and the item closes. Clicking inside the box resets the ring: 'Do not struggle.' A lineup that identifies you by where your hand is, using a dwell timer, an input the exam has never used.",
+     "hintLadder": "Start: 'Name the culprit. Present the suspect.' After 1: 'That suspect has an alibi. The fourth card is empty for a reason.' After 2: 'The fourth suspect is holding the mouse. Put them in the box.' After 3: 'Rest the cursor in the empty card. Hold still. Do not click.'",
+     "winCopy": "IDENTIFIED. The suspect held still for three seconds. Longest they have held still all exam.",
+     "feasibility": "Mock: pointermove sets a hover flag; a requestAnimationFrame timer fills the ring while hovered; click resets. Canvas: gc.mouseX and mouseY are tracked already; the level keeps a dwell start timestamp and needs a 60 ms re-render interval while hovering (the exam tick is once a second). Touch devices cannot dwell; note it."
+    }
+   ]
+  },
+  {
+   "q": 47,
+   "baselineCritique": "The ruler is a good exam-world object and the double bluff (the lines really are unequal) is the game's kind of pettiness. It stays a which-is-longer question, but measuring makes it tactile. Fairness rests on the difference being clearly measurable (a few px is not; 12 to 14 px with mm ticks is) and on the ruler snapping so the reading is unambiguous. It is another drag-a-tool level after Q7's eraser.",
+   "baselineFixes": "Ruler with a live readout when its zero end is within 6px of a line's endpoint ('142 mm'), fins on the same side to deepen the illusion, top line 14px longer. SAME, when clicked, quotes 'Don't trust your eyes' back at the player from the Q12 and Q47 remarks. Keep the win line; it is good.",
+   "alternatives": [
+    {
+     "name": "CHANGE THE FACTS",
+     "pitch": "The classic Müller-Lyer, two lines with fins, buttons TOP, BOTTOM and SAME. This time the lines really are equal and SAME is right, except the SAME button is greyed with a mono note: 'SAME (unavailable in your region)'. Clicking it costs a heart. TOP and BOTTOM cost a heart while the lines are equal. Each line's endpoints have small handles like the Q15 connectors. Drag the top line's endpoint outward until it is visibly longer, then press TOP. CORRECT. If the truthful answer is not on the form, you change the facts to match the form, which corporate does every quarter and the examiner says so.",
+     "hintLadder": "Start: 'Which line is longer? SAME is unavailable in your region.' After 1: 'They are equal and you cannot say so. That is the situation.' After 2: 'Nothing on this page is fixed. Not even the question.' After 3: 'Grab the end of the top line. Make it longer. Then say it is.'",
+     "winCopy": "AMENDED. You changed the facts to fit the buttons. Corporate does this every quarter.",
+     "feasibility": "Mock: endpoint handles with pointer drag updating an SVG line; TOP wins when the top line exceeds the bottom by 20px or more. Canvas: same with hit areas at the endpoints. Trivial and robust on every device."
+    },
+    {
+     "name": "THE ROOM",
+     "pitch": "Two lines, TOP, BOTTOM, SAME. The top line is a fixed 400px; the bottom line is 34 percent of the window width, so at 1280 wide it is 435px and BOTTOM is true, wider still on a big monitor, shorter in a narrow window. A mono readout under each line shows its live length. SAME is correct only when they match within 3px, which means resizing the browser window (or using browser zoom, which also changes the canvas width) until the room makes them equal. One answer depends on the room and one does not, and the Institute grades the room.",
+     "hintLadder": "Start: 'Which line is longer? One of them depends on where you are sitting.' After 1: 'Read the numbers. One is fixed. One is not.' After 2: 'The bottom line is measured against the room. Change the room.' After 3: 'Resize the window, or zoom the browser, until the numbers match. Then press SAME.'",
+     "winCopy": "SAME. At this exact window size. Do not move.",
+     "feasibility": "Mock: vw units for the bottom line and a resize listener for the readout. Canvas: main.ts already resizes canvases on window resize and layout is width-relative, so the level reads ctx.canvas.width. Gotchas: maximised or fullscreen players must un-maximise or use ctrl+minus; touch devices cannot; add a fallback where after the third failure the examiner nudges the top line himself ('I moved it. Do not tell anyone.')."
+    }
+   ]
+  }
+ ],
+ "quirks": [
+  {
+   "q": 21,
+   "quirk": "While the player holds Frodrick's paddle frozen, the examiner sprite turns RIGHT toward the paddle and the remark reads 'I see nothing.' The hearts label reads CANDIDATE STANDING · UNSUPERVISED for the duration of the hold. Two conditionals on the existing mouse-hold state."
+  },
+  {
+   "q": 22,
+   "quirk": "If the player pauses while the number is flashing, the pause overlay's document title reads 'Examination Suspended (convenient)' and, on resume, the examiner's remark becomes 'Did you catch that?? You paused. I saw.' No mechanic change; one title string and one remark swap."
+  },
+  {
+   "q": 23,
+   "quirk": "For CASE FILE #7 the paper's caption cartouche reads '· CONFIDENTIAL ·' instead of EXAMINATION PAPER, and the win stamp text is 'CASE CLOSED' in green (triggerStamp already takes arbitrary text). Two string swaps."
+  },
+  {
+   "q": 24,
+   "quirk": "Each decoy button, once clicked, gets a small pencil tick and the word TRIED in the corner and stays that way. After the third decoy the examiner says 'Corporate added those buttons. I add nothing.' Cheap state per button."
+  },
+  {
+   "q": 25,
+   "quirk": "Every mode toggle turns the examiner sprite UP for 400 ms as if reaching for a light switch, then back DOWN. In dark mode his caption under the sprite reads EXAMINER (UNLIT). Reuses guideCharDir."
+  },
+  {
+   "q": 26,
+   "quirk": "The cookie crumbles progressively and the examiner comments at 25, 50, 75 and 99 (already planned). Add: at click 99 the hearts label briefly reads CANDIDATE CHEWING, and the win stamp reads CONSUMED in green."
+  },
+  {
+   "q": 27,
+   "quirk": "When the first keyboard letter is typed, the examiner turns UP (his back to you) and the caret in his remarks blinks twice as fast, as if pretending not to notice. On win: 'I heard the keys. Everyone hears the keys.'"
+  },
+  {
+   "q": 28,
+   "quirk": "When the player is at one heart during the boss, the HUD label reads CANDIDATE STANDING (BARELY). On death the INCORRECT stamp reads TERMINATED. The boss's three phase colours use the fountain-pen ink palette (green #3F8F55, yellow #D8A81F, red #C03A2E) so the fight stays inside the theme."
+  },
+  {
+   "q": 30,
+   "quirk": "The typewriter starts typing 'The answer is BLU' then visibly backspaces three characters and continues 'Were you listening? Corporate says I am not allowed to say it twice.' A tiny backspace mode on the typewriter, nothing else."
+  },
+  {
+   "q": 32,
+   "quirk": "When the knob reaches 11, the printed 'MAX 10' label re-letters itself to 'MAX 11 (revised)' with a strike through the 10, and the examiner says 'I will update the label.' One extra text state."
+  },
+  {
+   "q": 36,
+   "quirk": "When the player selects 56, the RECOMMENDED tag physically slides from 54 to 56 and gains a small '(revised)'. The examiner: 'It was always 56. The tag is decorative.' One animated position."
+  },
+  {
+   "q": 40,
+   "quirk": "During HOLD TO REBOOT the whole chrome reboots with the exam: the logo's lightbulb goes out, the hearts turn hollow, the caption cartouche reads '· REBOOTING ·' and the examiner sprite blinks between facings, all restoring on completion. A few conditionals keyed on the hold progress."
+  },
+  {
+   "q": 45,
+   "quirk": "The cornered SUBMIT button relabels to OK OK FINE (already planned). Add: the examiner sprite turns LEFT or RIGHT to follow the fleeing button, and the remark keeps a running count: 'Escapes: 7.' Reuses guideCharDir and one counter."
+  },
+  {
+   "q": 46,
+   "quirk": "Hovering the DRAGGED IT option shows the grab-hand cursor, and the win screen subtitle draws a tiny Q11 loading bar sitting at 100% with the words 'Still 100%. You're welcome.' A cursor style and one mini bar."
+  },
+  {
+   "q": 48,
+   "quirk": "After the CHEAT button wins, the win stamp reads CHEATED in green, and the pause menu's INVIGILATOR OVERRIDE placeholder reads 'CHEAT (approved)' for the rest of the run. Two strings and one persisted flag."
+  },
+  {
+   "q": 49,
+   "quirk": "As each dial passes its correct digit the examiner sprite faces that dial (LEFT, DOWN, RIGHT) for a beat, and when all three read 6 · 1 · 2 the caption cartouche changes to '· COMBINATION ·' before SUBMIT is pressed. Reuses guideCharDir and one string."
+  },
+  {
+   "q": 50,
+   "quirk": "On the certificate the gold medallion is the game's own CORRECT stamp rendered in seal gold, and a line under the tier reads 'STANDING AT COMPLETION' with the player's remaining hearts printed as small ink hearts. The examiner's last remark: 'Certified. Corporate would like to remind you this is not a real certificate.'"
+  }
+ ],
+ "wildcards": [
+  {
+   "name": "APPEAL",
+   "pitch": "A plain question ('7 + 6 = ?', buttons 12, 13, 14, 15). Press 13 and the INCORRECT stamp slams and a heart goes; the examiner says 'Hm. That looked right to me too.' On this level the stamp does not fade: it lingers on the paper, wet. Clicking the stamp itself contests the verdict: an APPEAL tab folds out, 'Contested. Reviewed. Overturned.', the heart flies back, the stamp is re-inked CORRECT in green, and the item passes. The game admits its own error and the player learns that the verdict is an object that can be argued with. The forced heart loss is refunded, so it is fair, and it makes the stamp interactive on the player's own answer rather than a previous candidate's.",
+   "suggestedSlot": 29
+  },
+  {
+   "name": "SECOND OPINION",
+   "pitch": "Four answer cards. Clicking any card once is free and prints 'One opinion. I need a second.' Clicking a different card: 'That is a different opinion. I asked for a second one.' and a heart. Double-clicking the same card: 'Second opinion matches. Accepted.' CORRECT. Any card works. It is the double-click, an input the exam has never used, framed as institutional process, and it reads immediately once the examiner asks for a second opinion from the same source. Ten-second calm level.",
+   "suggestedSlot": 38
+  },
+  {
+   "name": "GHOST CONTINUE",
+   "pitch": "The level opens on a blank paper: 'Await instructions.' Nothing arrives, no buttons, the examiner is silent. But the previous item's win screen never fully cleared: its CONTINUE → button is still faintly on screen at exactly the position it always sits, drawn at 30 percent opacity like a burn-in ghost, and it still works. Press it and the item is marked complete: 'Corporate never cleared the last screen. Use it. That is the instruction.' A decoy REFRESH button on the paper costs a heart and makes the ghost fainter. It weaponizes the win screen itself and rewards players who have memorised where CONTINUE lives.",
+   "suggestedSlot": 43
+  }
+ ]
+}

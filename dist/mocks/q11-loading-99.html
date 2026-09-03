@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.11 Loading… 99% Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  .ans{width:150px; height:58px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:25px;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;}
+  .ans:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+
+  /* ---- Q11 play area ---- */
+  .heading{position:absolute; left:0; right:0; top:10%; text-align:center;
+    font-family:var(--display); font-weight:bold; font-size:26px; color:var(--ink);}
+  .status{position:absolute; left:0; right:0; top:24%; text-align:center;
+    font-family:var(--body); font-size:15px; color:var(--fgDim);}
+  /* cursor stays default over the bar: the drag must be discovered, not advertised */
+  .barzone{position:absolute; left:50%; top:40%; transform:translateX(-50%);
+    width:66%; height:26px; cursor:default;}
+  .track{position:absolute; inset:0; background:var(--hairline); border:2px solid var(--stroke);}
+  .fill{position:absolute; left:0; top:0; bottom:0; width:0%; background:var(--pass);}
+  .handle{position:absolute; left:0; top:-8px; width:14px; height:42px; margin-left:-7px;
+    background:var(--ink); border:2px solid var(--stroke); z-index:2; pointer-events:none;
+    display:flex; align-items:center; justify-content:center; gap:3px;}
+  .handle i{width:1px; height:32px; background:var(--hairline);}
+  .handle.gold{background:var(--seal);}
+  .pct{position:absolute; left:0; right:0; top:53%; text-align:center;
+    font-family:var(--display); font-weight:bold; font-size:30px; color:var(--ink);}
+  .retry{position:absolute; left:50%; top:71%; transform:translateX(-50%);
+    width:150px; height:52px; font-size:20px;
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .6s ease, visibility .6s;}
+  .retry.on{opacity:1; visibility:visible; pointer-events:auto;}
+
+  .winscreen{position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:18px; text-align:center;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:17px; color:var(--fgMid);}
+  .continue{width:200px; height:56px; font-size:21px;}
+</style>
+</head>
+<body>
+
+<h1>Q.11 · Loading… 99% · faithful mock in the current theme</h1>
+<p class="sub">Fully playable. The exam "compiles your results": the bar loads with a believable, stuttering rhythm, then freezes at 99% forever. Waiting does nothing, ever. About three seconds after it sticks, an embossed RETRY button fades in: clicking it slams INCORRECT, costs a heart, and starts the load over from 0%. Flagging RETRY as a proposed addition: the level's header comment describes it, but the shipped code never draws the button. The real answer is to grab the handle at the edge of the fill (it turns antique gold once the bar is stuck) and drag the last 1% across the line yourself. The green 100% stamp on completion is a mock-only flourish, the real level cuts straight to the win screen. Note: Q.46 later quizzes the player on how they beat this level, so the drag mechanic must stay memorable.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.11</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="play" id="play">
+      <div class="heading" id="heading">Compiling your results.</div>
+      <div class="status" id="status">Initializing…</div>
+      <div class="barzone" id="barzone">
+        <div class="track" id="track"><div class="fill" id="fillEl"></div></div>
+        <div class="handle" id="handle"><i></i><i></i></div>
+      </div>
+      <div class="pct" id="pct">0%</div>
+      <button class="ans retry" id="retryBtn" onclick="retry()">RETRY</button>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ---- Level11.ts curve, verbatim ---- */
+  const CURVE=[
+    [0,0],[300,41],[650,41],[1150,63],[1400,63],
+    [1850,76],[2150,84],[2300,84],[2800,92],[3500,97],[4300,99],
+  ];
+  const STUCK_PCT=0.99, WIN_AT=0.997;
+  const FREEZE_MS=CURVE[CURVE.length-1][0];   // 4300
+  const RETRY_DELAY=3000;                     // trap button appears ~3s after freeze
+
+  const curveFill=(elapsed)=>{
+    if(elapsed<=CURVE[0][0]) return CURVE[0][1]/100;
+    for(let i=0;i<CURVE.length-1;i++){
+      const [t0,v0]=CURVE[i], [t1,v1]=CURVE[i+1];
+      if(elapsed>=t0 && elapsed<=t1){
+        const f=t1===t0?1:(elapsed-t0)/(t1-t0);
+        return (v0+(v1-v0)*f)/100;
+      }
+    }
+    return STUCK_PCT;   // held at 99% forever
+  };
+  const statusFor=(pct)=>{
+    if(pct<0.40) return 'Initializing…';
+    if(pct<0.64) return 'Verifying your answers…';
+    if(pct<0.80) return 'Calculating your percentile…';
+    if(pct<0.97) return 'Finalizing your certificate…';
+    return 'Almost there…';
+  };
+
+  let fill=0, grabbed=false, start=Date.now();
+  let lives=3, won=false, over=false, mouseHeld=false;
+
+  const headingEl=document.getElementById('heading');
+  const statusEl=document.getElementById('status');
+  const trackEl=document.getElementById('track');
+  const fillEl=document.getElementById('fillEl');
+  const handleEl=document.getElementById('handle');
+  const pctEl=document.getElementById('pct');
+  const retryBtn=document.getElementById('retryBtn');
+  const playEl=document.getElementById('play');
+
+  /* ---- drag: band is 30px past each end, 22px above/below; grabbing kills auto-load for good ---- */
+  function tryGrab(e){
+    if(won||over||!mouseHeld) return;
+    const r=trackEl.getBoundingClientRect();
+    if(e.clientY>=r.top-22 && e.clientY<=r.bottom+22 &&
+       e.clientX>=r.left-30 && e.clientX<=r.right+30){
+      grabbed=true;
+      fill=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+      e.preventDefault();
+    }
+  }
+  document.addEventListener('mousedown',e=>{ mouseHeld=true; tryGrab(e); });
+  document.addEventListener('mousemove',e=>{
+    // If the button was released outside the window, mouseup never fired —
+    // trust e.buttons over our own flag so a hover can never drag.
+    if(!(e.buttons&1)){ mouseHeld=false; return; }
+    tryGrab(e);
+  });
+  document.addEventListener('mouseup',()=>{ mouseHeld=false; });
+
+  /* ---- render loop ---- */
+  function tick(){
+    if(won||over) return;
+    const now=Date.now(), elapsed=now-start;
+    if(!grabbed) fill=curveFill(elapsed);
+
+    if(fill>=WIN_AT){ win(); return; }
+
+    const stuck=!grabbed && elapsed>FREEZE_MS+200;
+    const dots='.'.repeat(1+(Math.floor(now/400)%3));
+    headingEl.textContent='Compiling your results'+dots;
+    statusEl.textContent=grabbed?'Finishing up…':statusFor(fill);
+    fillEl.style.width=(fill*100)+'%';
+    handleEl.style.left=(fill*100)+'%';
+    handleEl.classList.toggle('gold', stuck||grabbed);
+    pctEl.textContent=Math.round(fill*100)+'%';
+
+    retryBtn.classList.toggle('on', !grabbed && elapsed>=FREEZE_MS+RETRY_DELAY);
+
+    requestAnimationFrame(tick);
+  }
+
+  /* ---- THE TRAP: retry slams INCORRECT, costs a heart, restarts the load ---- */
+  function retry(){
+    if(won||over) return;
+    slam('INCORRECT', false);
+    if(lives>0){ lives--;
+      document.getElementById('heartRow').children[lives].classList.add('lost'); }
+    if(lives===0){
+      over=true;
+      retryBtn.classList.remove('on');
+      setTimeout(()=>alert("Out of attempts. GAME OVER overlay would appear here."),700);
+      return;
+    }
+    fill=0; start=Date.now();
+    retryBtn.classList.remove('on');
+  }
+
+  function win(){
+    won=true;
+    fillEl.style.width='100%';
+    handleEl.style.left='100%';
+    handleEl.classList.add('gold');
+    pctEl.textContent='100%';
+    statusEl.textContent='Finishing up…';
+    headingEl.textContent='Compiling your results...';
+    retryBtn.classList.remove('on');
+    slam('100%', true);
+    setTimeout(()=>{
+      const st=document.getElementById('stamp');
+      st.className='stamp';
+      playEl.innerHTML=
+        '<div class="winscreen">'+
+          '<div class="win-title">DONE.</div>'+
+          '<div class="win-body">Turns out the last 1% was always yours to finish.</div>'+
+          '<button class="ans continue" onclick="alert(\'Chime! → advances to Q.12\')">CONTINUE</button>'+
+        '</div>';
+    },1100);
+  }
+
+  function slam(text, ok){
+    const st=document.getElementById('stamp');
+    st.className='stamp'+(ok?' pass':''); void st.offsetWidth; st.classList.add('show');
+    st.firstChild.textContent=text;
+  }
+
+  requestAnimationFrame(tick);
+
+  /* ---- examiner typewriter ---- */
+  const FULL="Give it a minute, maybe.";
+  let ti=0; const el=document.getElementById('remarks');
+  const t=setInterval(()=>{ ti++;
+    if(ti>=FULL.length){ clearInterval(t); el.innerHTML=FULL+' <span class="cursor">|</span>'; return; }
+    el.innerHTML=FULL.slice(0,ti)+'<span class="cursor">|</span>';
+  },22);
+</script>
+</body>
+</html>

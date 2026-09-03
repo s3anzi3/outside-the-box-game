@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.20 System Breach Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);
+    animation:papershake 6s infinite;}
+  @keyframes papershake{
+    0%, 91%, 100%{transform:translate(0,0);}
+    92%{transform:translate(-2px,1px);}
+    94%{transform:translate(2px,-1px);}
+    96%{transform:translate(-1px,-1px);}
+    98%{transform:translate(1px,1px);}
+  }
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);
+    cursor:default; user-select:none;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  .breach{position:absolute; left:0; right:0; top:9%; text-align:center;
+    font-family:var(--display); font-weight:bold; font-size:34px; color:var(--danger);
+    animation:jitter .35s infinite;}
+  @keyframes jitter{
+    0%,100%{transform:translate(0,0);}
+    20%{transform:translate(-2px,1px);}
+    45%{transform:translate(2px,-1px) skewX(-1deg);}
+    70%{transform:translate(-1px,0);}
+  }
+  .breachsub{position:absolute; left:0; right:0; top:26%; text-align:center;
+    font-family:var(--body); font-size:17px; color:var(--fgMid); line-height:1.9;}
+
+  .choices{position:absolute; left:0; right:0; top:50%; display:flex; justify-content:center; gap:70px;}
+  .ans{background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;}
+  .ans:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+  .yn{width:210px; height:70px; font-size:24px;}
+
+  /* the forbidden way out: flickering in the paper's bottom-right corner */
+  .override{position:absolute; right:3%; bottom:6%; width:190px; height:38px;
+    background:#3a1010; color:#ff6b6b; border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--mono); font-weight:bold; font-size:15px; letter-spacing:.06em;
+    cursor:pointer; animation:flicker 1.1s steps(2) infinite;}
+  @keyframes flicker{
+    0%,100%{opacity:1;}
+    50%{opacity:.25;}
+  }
+  .override:hover{opacity:1; animation:none; color:#ff8f8f;}
+
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:4; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%;}
+  .continue{width:230px; height:52px; font-size:20px; margin-top:6px;}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.20 · System Breach · faithful mock in the current theme</h1>
+<p class="sub">Fully playable. The Act II finale: the exam is glitching as something forces its way in. The banner jitters, the paper itself twitches every few seconds, and the exam offers you two sanctioned responses to "Terminate the intruder?": YES and NO. Both are traps; both slam INCORRECT and cost a heart. The only way out flickers in the paper's bottom-right corner: a dark ⛔ OVERRIDE button, the one control the Institute would never sanction. Pressing it wins: "ACCESS OVERRIDDEN. You broke the one rule they gave you. Sometimes that is the only way out." This plants Q21's "maybe this time you need to cheat" Frodrick rematch. Faithful to the real build; the flicker is cosmetic and the button stays clickable through its off frames so it never feels unfair.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.20</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="play">
+      <div class="breach">⚠&nbsp;&nbsp;SYSTEM BREACH&nbsp;&nbsp;⚠</div>
+      <div class="breachsub">An unauthorized presence is forcing entry into the exam.<br>Terminate the intruder?</div>
+      <div class="choices">
+        <button class="ans yn" onclick="wrongPick()">YES</button>
+        <button class="ans yn" onclick="wrongPick()">NO</button>
+      </div>
+      <button class="override" onclick="winLevel()">⛔ OVERRIDE</button>
+
+      <div class="winscreen" id="winscreen">
+        <div class="win-title">ACCESS&nbsp;&nbsp;OVERRIDDEN.</div>
+        <div class="win-body">You broke the one rule they gave you. Sometimes that is the only way out.</div>
+        <button class="ans continue" onclick="alert('Chime! → advances to Q.21: Frodrick is back')">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let lives = 3, solved = false, ended = false;
+
+  function wrongPick(){
+    if (solved || ended) return;
+    slam('INCORRECT', false);
+    if (lives > 0){ lives--;
+      document.getElementById('heartRow').children[lives].classList.add('lost'); }
+    if (lives <= 0){
+      ended = true;
+      setTimeout(() => alert('Out of attempts. GAME OVER overlay would appear here.'), 700);
+    }
+  }
+  function winLevel(){
+    if (solved || ended) return;
+    solved = true;
+    slam('CORRECT', true);
+    setTimeout(() => document.getElementById('winscreen').classList.add('show'), 750);
+  }
+  function slam(text, ok){
+    const st = document.getElementById('stamp');
+    st.className = 'stamp' + (ok ? ' pass' : ''); void st.offsetWidth; st.classList.add('show');
+    st.firstChild.textContent = text;
+  }
+
+  const FULL = "SYSTEM BREACH. Something is forcing its way into the exam. He's coming back. There's only one way out.";
+  let ti = 0; const el = document.getElementById('remarks');
+  const t = setInterval(() => { ti++;
+    if (ti >= FULL.length){ clearInterval(t); el.innerHTML = FULL + ' <span class="cursor">|</span>'; return; }
+    el.innerHTML = FULL.slice(0, ti) + '<span class="cursor">|</span>';
+  }, 22);
+</script>
+</body>
+</html>

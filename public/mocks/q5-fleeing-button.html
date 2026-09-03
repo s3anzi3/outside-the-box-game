@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.5 Fleeing Button Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  /* Paper extended upward: a 46px header band keeps Q label + pause strictly
+     above the play area on every level */
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .paper::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); pointer-events:none;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  /* ── Fleeing button ── */
+  .fleebtn{position:absolute; width:240px; height:49px; border-radius:6px; cursor:pointer;
+    font-family:var(--body); font-weight:bold; font-size:19px;
+    background:var(--panel); color:var(--ink); border:2px solid var(--stroke);
+    box-shadow:0 3px 9px rgba(60,45,20,.2); user-select:none;}
+  .fleebtn.hot{background:var(--danger); color:#F7F1E3; border-color:#7a2420;}
+
+  /* ── Hidden dot — hairline colour, no cursor change ── */
+  .dot{position:absolute; left:87%; top:76%; width:10px; height:10px; margin:-5px 0 0 -5px;
+    border-radius:50%; background:var(--hairline);}
+  .dothit{position:absolute; left:87%; top:76%; width:36px; height:36px; margin:-18px 0 0 -18px;
+    cursor:default;}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.5 · The Fleeing Button · faithful mock in the current theme</h1>
+<p class="sub">Fully playable with Level5.ts physics: the button repels from your cursor with velocity, damping and wall bounces, and if you ever corner it, hovering flips it red reading DON'T CLICK. Clicking it costs a heart. The real answer is a tiny hairline-colored dot sitting quietly in the lower right of the paper, and the cursor gives you no hint over it.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper" id="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.5</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="play" id="play">
+      <div class="dot"></div>
+      <div class="dothit" onclick="winDot()"></div>
+      <button class="fleebtn" id="btn" onclick="miss()">CLICK ME</button>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Physics constants transcribed from Level5.ts */
+  const BTN_W=240, BTN_H=49, FLEE_R=260, FORCE=2800, DAMP=0.72, PAD=16;
+  let lives=3, solved=false;
+  const paper=document.getElementById('play');
+  const btn=document.getElementById('btn');
+  let px=0, py=0;           /* button position within paper */
+  let vx=0, vy=0;
+  let mx=-9999, my=-9999;   /* mouse position within paper */
+
+  function initPos(){
+    px = paper.clientWidth*0.5 - BTN_W/2;
+    py = paper.clientHeight*0.42 - BTN_H/2;
+  }
+  initPos();
+
+  paper.addEventListener('mousemove',e=>{
+    const r=paper.getBoundingClientRect();
+    mx=e.clientX-r.left; my=e.clientY-r.top;
+  });
+  paper.addEventListener('mouseleave',()=>{ mx=-9999; my=-9999; });
+
+  function tick(){
+    const dt=1/60;
+    const cxb=px+BTN_W/2, cyb=py+BTN_H/2;
+    const dx=mx-cxb, dy=my-cyb;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist<FLEE_R && dist>1){
+      const mag=FORCE*Math.pow((FLEE_R-dist)/FLEE_R,1.5)*dt;
+      vx-=(dx/dist)*mag; vy-=(dy/dist)*mag;
+    }
+    vx*=DAMP; vy*=DAMP;
+    px+=vx*dt; py+=vy*dt;
+    const minX=PAD, maxX=paper.clientWidth-PAD-BTN_W;
+    const minY=PAD, maxY=paper.clientHeight-PAD-BTN_H;
+    if(px<minX){px=minX; vx=Math.abs(vx)*0.4;}
+    if(px>maxX){px=maxX; vx=-Math.abs(vx)*0.4;}
+    if(py<minY){py=minY; vy=Math.abs(vy)*0.4;}
+    if(py>maxY){py=maxY; vy=-Math.abs(vy)*0.4;}
+    btn.style.left=px+'px'; btn.style.top=py+'px';
+    const hov = mx>=px && mx<=px+BTN_W && my>=py && my<=py+BTN_H;
+    btn.className='fleebtn'+(hov?' hot':'');
+    btn.textContent = hov ? "DON'T CLICK" : "CLICK ME";
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  function slam(text, ok){
+    const st=document.getElementById('stamp');
+    st.className='stamp'+(ok?' pass':''); void st.offsetWidth; st.classList.add('show');
+    st.firstChild.textContent=text;
+  }
+  function miss(){
+    if(solved) return;
+    slam('INCORRECT', false);
+    if(lives>0){ lives--;
+      document.getElementById('heartRow').children[lives].classList.add('lost'); }
+  }
+  function winDot(){
+    if(solved) return;
+    solved=true; slam('CORRECT', true);
+    setTimeout(()=>alert('Chime! → advances to Q.6 (Pong vs Frodrick)'),400);
+  }
+
+  const FULL="I don't know if THAT button wants to be clicked";
+  let i=0; const el=document.getElementById('remarks');
+  const t=setInterval(()=>{ i++;
+    if(i>=FULL.length){ clearInterval(t); el.innerHTML=FULL+' <span class="cursor">|</span>'; return; }
+    el.innerHTML=FULL.slice(0,i)+'<span class="cursor">|</span>';
+  },22);
+</script>
+</body>
+</html>

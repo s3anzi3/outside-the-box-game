@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.28 FRODRICK.EXE Mock (current theme)</title>
+<style>
+  /* ═══════════════ OTB mock chrome · shared template (do not restyle the chrome) ═══════════════ */
+  .frame{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --sealDim:rgba(176,137,47,.34);
+    --pass:#3E6B4F; --danger:#9A2B25; --btnText:#F7F1E3;
+    --shadow:rgba(60,45,20,.18);
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  .frame.dark{
+    --bg:#161310; --ink:#F4EEDE; --fgMid:#D2C8B0; --fgDim:#A99C82;
+    --stroke:#E6DCC4; --hairline:#43392B; --panel:#211C16;
+    --accent:#C65B4F; --accentDeep:#7A2E2E; --seal:#D4B05A; --sealDim:rgba(212,176,90,.32);
+    --pass:#5FA67C; --danger:#D2554E; --btnText:#161310;
+    --shadow:rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif; padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);
+    font-family:var(--body); color:var(--ink); user-select:none;}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center; z-index:1;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  /* paper: 1280x860 frame units → x 115..1165, y 122..555; play area y 171..552 */
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px var(--shadow);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0; overflow:hidden;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink); cursor:default;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  /* embossed theme button (locked style) */
+  .btn{background:var(--bg); color:var(--ink); border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:22px;
+    box-shadow:0 3px 9px var(--shadow); cursor:pointer; padding:0 18px; height:56px;}
+  .btn:hover{background:var(--accent); color:var(--btnText); border-color:var(--accentDeep);}
+  .btn:active{translate:0 1px;}
+  .btn.mono{font-family:var(--mono); font-size:14px; letter-spacing:.06em;}
+
+  /* answers row helper */
+  .answers{position:absolute; left:0; right:0; bottom:9%; display:flex; justify-content:center; gap:36px;}
+  .answers .btn{width:150px; height:58px; font-size:25px; padding:0;}
+
+  /* prompt helpers */
+  .directive{font-family:var(--mono); font-size:13px; letter-spacing:.14em; color:var(--fgDim); text-align:center;}
+  .prompt{font-family:var(--display); color:var(--ink); font-size:38px; text-align:center;}
+
+  /* stamp */
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:8; background:rgba(251,248,239,.6);}
+  .frame.dark .stamp{background:rgba(33,28,22,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  /* win screen (inside .play) */
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:6; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%; line-height:1.4;}
+  .win-continue{width:200px; height:52px; font-size:21px; margin-top:6px; padding:0;}
+
+  /* pause overlay: document box inset 5% of the paper, opaque like the real build */
+  .pauseov{position:absolute; left:5%; top:5%; width:90%; height:90%; display:none; z-index:7;
+    background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px;
+    box-shadow:0 8px 28px var(--shadow);}
+  .pauseov.show{display:block;}
+  .pauseov::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .pauseov .cart{position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:var(--panel);
+    padding:0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--accent); white-space:nowrap;}
+  .pauseov .ptitle{position:absolute; top:11%; width:100%; text-align:center; font-family:var(--display);
+    font-weight:bold; font-size:33px; color:var(--ink);}
+  .pauseov .prule{position:absolute; top:29%; left:10%; right:10%; height:1px; background:var(--hairline);}
+  .pauseov .pcol{position:absolute; left:62%; top:30%; display:flex; flex-direction:column; gap:5%; width:220px; height:66%;}
+  .pauseov .pcol .btn{width:220px; height:44px; font-size:17px; padding:0;}
+  .pauseov .plbl{position:absolute; font-family:var(--mono); font-size:11px; color:var(--fgDim); letter-spacing:.04em; text-align:center; width:220px; left:14%;}
+  .pauseov .slider{position:absolute; left:14%; top:54%; width:220px; height:10px; border:1.5px solid var(--stroke); background:rgba(30,26,21,.08);}
+  .frame.dark .pauseov .slider{background:rgba(242,235,218,.12);}
+  .pauseov .slider .fill{position:absolute; left:0; top:0; bottom:0; width:70%; background:var(--accent);}
+  .pauseov .slider .knob{position:absolute; left:70%; top:50%; width:18px; height:18px; border-radius:50%; background:var(--accent);
+    border:2px solid var(--stroke); transform:translate(-50%,-50%);}
+  .pauseov .cheat{position:absolute; left:14%; top:calc(54% + 38px); width:220px; height:38px; border:1.5px solid var(--stroke);
+    border-radius:4px; background:var(--bg); font-family:var(--mono); font-size:15px; color:var(--fgDim); padding:0 12px; line-height:35px;}
+  .pauseov .cheatgo{position:absolute; left:calc(14% + 232px); top:calc(54% + 38px); width:40px; height:38px; border-radius:4px;
+    background:var(--accent); color:var(--btnText); font-family:var(--mono); font-weight:bold; font-size:18px; text-align:center; line-height:38px;}
+
+  /* game over notice */
+  .gameover{position:absolute; inset:0; display:none; z-index:9; background:rgba(20,15,10,.80); align-items:center; justify-content:center;}
+  .gameover.show{display:flex;}
+  .gameover .box{width:600px; height:430px; position:relative; background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px; text-align:center;}
+  .gameover .box::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .gameover .cart{position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:var(--panel);
+    padding:0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--accent);}
+  .gameover .eyebrow{margin-top:60px; font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:.1em;}
+  .gameover .head{margin-top:26px; font-family:var(--display); font-weight:bold; font-size:34px; color:var(--danger);}
+  .gameover .body{margin-top:22px; font-size:18px; color:var(--fgMid);}
+  .gameover .void{position:absolute; right:40px; top:40px; transform:rotate(-12deg); border:3px solid var(--danger); color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:17px; padding:4px 10px; border-radius:4px;}
+  .gameover .btn{margin-top:36px; width:240px; height:44px; font-size:18px; padding:0;}
+
+  /* bottom examiner panel */
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px var(--shadow);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim); text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+
+  /* toast (replaces alert()) */
+  .toast{position:absolute; left:50%; bottom:2.5%; transform:translateX(-50%); background:var(--ink); color:var(--bg);
+    font-family:var(--mono); font-size:12px; letter-spacing:.06em; padding:8px 14px; border-radius:4px; opacity:0; transition:opacity .25s; z-index:10; pointer-events:none;}
+  .toast.show{opacity:.92;}
+
+  /* ═══════════════ level-specific styles go below ═══════════════ */
+  /* The paper becomes the arena: a canvas fills the play area edge to edge. */
+  .arena{position:absolute; inset:0; width:100%; height:100%; display:block; cursor:default;}
+
+  /* Integrity failure: scanlines over the paper header and a twitching Q number.
+     Only active while FRODRICK.EXE is hostile (class on #paper); removed on termination. */
+  .paper.hostile .paperhead::after{content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+    background:repeating-linear-gradient(0deg, rgba(30,26,21,.07) 0 1px, transparent 1px 4px);}
+  .frame.dark .paper.hostile .paperhead::after{background:repeating-linear-gradient(0deg, rgba(244,238,222,.06) 0 1px, transparent 1px 4px);}
+  .paper.hostile .qnum{animation:qjit 1.3s steps(1) infinite;}
+  .paper.hostile.frozen .qnum{animation-play-state:paused;}
+  @keyframes qjit{
+    0%,100%{transform:translateY(-50%); text-shadow:none;}
+    7%{transform:translate(1px,-50%); text-shadow:-2px 0 rgba(192,58,46,.55), 2px 0 rgba(46,107,168,.55);}
+    11%{transform:translate(-1px,calc(-50% + 1px)); text-shadow:none;}
+    14%{transform:translateY(-50%);}
+    46%{transform:translateY(-50%); text-shadow:none;}
+    49%{transform:translate(-2px,-50%) skewX(-8deg); text-shadow:2px 0 rgba(192,58,46,.55), -2px 0 rgba(46,107,168,.55);}
+    52%{transform:translate(1px,calc(-50% - 1px)); text-shadow:none;}
+    55%{transform:translateY(-50%);}
+    83%{transform:translateY(-50%); text-shadow:none;}
+    85%{transform:translate(0,calc(-50% + 2px)); text-shadow:-1px 0 rgba(192,58,46,.55), 1px 0 rgba(46,107,168,.55);}
+    88%{transform:translateY(-50%);}
+  }
+</style>
+</head>
+<body>
+
+<h1>Q.28 · FRODRICK.EXE · FAITHFUL PORT</h1>
+<p class="sub">Fully playable. FAITHFUL PORT. The exam paper turns into an arena: the play area tints pale pink (near black after hours), the header sprouts scanlines and the Q.28 label twitches and corrupts, and a black monitor with phosphor eyes and a jagged mouth sweeps back and forth under a name tag reading FRODRICK.EXE. You are the small ink-blue ship at the bottom: A/D or the arrows move, SPACE fires, hold it to autofire. Every number is the real build's: 110 boss HP and 5 damage a hit, so 22 hits to kill; phases at 75 and 40 HP that speed his sweep from 0.45 to 0.72 to 1.10 Hz and change his fire from a single drop to a triple to a five-way fan (275, 360, 440 px/s); 0.42 s of blinking invincibility after a hit. There is no lateral trick, and the real build has none either: this is the Act III set piece, an honest bullet-dodge between two trick questions. The trap is standing under him when he fires. Each shot that lands slams INCORRECT and costs a heart; three and the Proctor voids you. Restyled to the theme only: the neon phase colours become ink green, yellow and red, the ship is ink blue, and in light mode the phase-change flash tints in the new phase colour because a white flash on pale paper is invisible. The examiner adds four short lines (phase one, phase two, first hit, second hit) as a hint ladder; the real build has only the opening remark. Pause freezes the whole loop. Caveats: no sound; the header glitch is a mock addition the brief asked for; the fight is real and takes a minute or two.</p>
+
+<div class="frame" id="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box" draggable="false"></div>
+
+  <div class="paper" id="paper">
+    <span class="tick tl" id="tickTL"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption" id="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum" id="qnum">Q.28</div>
+      <div class="pause" id="pauseBtn" title="Pause"><i></i><i></i></div>
+    </div>
+
+    <div class="play" id="play">
+      <!-- ═══ level content ═══ -->
+      <canvas class="arena" id="arena" aria-label="FRODRICK.EXE arena"></canvas>
+
+      <div class="winscreen" id="winscreen">
+        <div class="win-title" id="winTitle">CORRECT.</div>
+        <div class="win-body" id="winBody"></div>
+        <button class="btn win-continue" id="winContinue">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="pauseov" id="pauseov">
+      <div class="cart">EXAMINATION SUSPENDED</div>
+      <div class="ptitle">Paused</div>
+      <div class="prule"></div>
+      <div class="plbl" style="top:calc(54% - 26px)">SOUND&nbsp;&nbsp;70%</div>
+      <div class="slider"><div class="fill"></div><div class="knob"></div></div>
+      <div class="plbl" style="top:calc(54% + 20px)">INVIGILATOR OVERRIDE</div>
+      <div class="cheat" id="cheatBox">Override Key</div>
+      <div class="cheatgo">›</div>
+      <div class="pcol">
+        <button class="btn" id="resumeBtn">RESUME</button>
+        <button class="btn" id="quitBtn">QUIT TO MENU</button>
+        <button class="btn" id="darkBtn">DARK MODE</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom" id="bottom">
+    <div class="bot-examiner" id="examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner" id="examinerImg" draggable="false">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="gameover" id="gameover">
+    <div class="box">
+      <div class="cart">PROCTOR NOTICE</div>
+      <div class="void">VOID</div>
+      <div class="eyebrow">CANDIDATURE&nbsp;&nbsp;VOIDED</div>
+      <div class="head">Examination Terminated</div>
+      <div class="body">Better luck next time, candidate.</div>
+      <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ═══════════════ shared mock runtime (keep as-is; levels call these) ═══════════════ */
+const M = window.__mock = {
+  q: 0, next: 0, nextName: '',
+  lives: 3, solved: false, ended: false, paused: false, dark: false,
+  events: [],
+  onPause: null, onResume: null, onDark: null,   // level hooks (functions)
+};
+const $ = id => document.getElementById(id);
+
+M.slam = (text, ok) => {
+  const st = $('stamp');
+  st.className = 'stamp' + (ok ? ' pass' : ''); void st.offsetWidth; st.classList.add('show');
+  st.firstChild.textContent = text;
+  M.events.push((ok ? 'stamp:' : 'stamp:') + text);
+};
+M.toast = (text, ms = 2600) => {
+  const t = $('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(M._toastT); M._toastT = setTimeout(() => t.classList.remove('show'), ms);
+};
+M.loseLife = () => {
+  if (M.lives > 0) { M.lives--; $('heartRow').children[M.lives].classList.add('lost'); }
+  M.events.push('life:' + M.lives);
+  if (M.lives <= 0) { M.ended = true; setTimeout(() => $('gameover').classList.add('show'), 800); }
+};
+// Standard "you picked the conventional thing": INCORRECT stamp + heart. Optional examiner line.
+M.wrong = (remark) => {
+  if (M.solved || M.ended) return false;
+  M.slam('INCORRECT', false);
+  M.loseLife();
+  if (remark) M.retype(remark);
+  return true;
+};
+// Standard win: CORRECT stamp, then the win screen with CONTINUE.
+M.win = (title, body) => {
+  if (M.solved) return;
+  M.solved = true;
+  M.events.push('win');
+  M.slam('CORRECT', true);
+  $('winTitle').textContent = title;
+  $('winBody').textContent = body;
+  setTimeout(() => $('winscreen').classList.add('show'), 750);
+};
+$('winContinue').onclick = () => M.toast(`Chime. → advances to Q.${M.next}${M.nextName ? ' (' + M.nextName + ')' : ''}`);
+
+// Typewriter into the remarks panel. Cancels any in-progress typing.
+M.retype = (text, speed = 22) => {
+  clearInterval(M._typeT);
+  const el = $('remarks'); let i = 0;
+  M.events.push('remark:' + text);
+  M._typeT = setInterval(() => {
+    i++;
+    if (i >= text.length) { clearInterval(M._typeT); el.innerHTML = esc(text) + ' <span class="cursor">|</span>'; return; }
+    el.innerHTML = esc(text.slice(0, i)) + '<span class="cursor">|</span>';
+  }, speed);
+};
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+// Pause overlay (opaque document box like the real build). Levels with timers must honour M.paused.
+M.pause = () => { if (M.paused || M.ended) return; M.paused = true; $('pauseov').classList.add('show'); M.events.push('pause'); M.onPause && M.onPause(); };
+M.resume = () => { if (!M.paused) return; M.paused = false; $('pauseov').classList.remove('show'); M.events.push('resume'); M.onResume && M.onResume(); };
+M.toggleDark = () => {
+  M.dark = !M.dark; $('frame').classList.toggle('dark', M.dark);
+  $('darkBtn').textContent = M.dark ? 'LIGHT MODE' : 'DARK MODE';
+  M.events.push('dark:' + M.dark); M.onDark && M.onDark(M.dark);
+};
+$('pauseBtn').onclick = M.pause;
+$('resumeBtn').onclick = M.resume;
+$('quitBtn').onclick = () => M.toast('QUIT TO MENU: would return to the main menu (disabled in mock)');
+$('darkBtn').onclick = M.toggleDark;
+$('cheatBox').onclick = () => M.toast('Override key entry is not part of this mock');
+
+/* ═══════════════ level ═══════════════ */
+M.q = 28; M.next = 29; M.nextName = '';
+
+/* ── Tunables: verbatim from Level28.ts ─────────────────────────────────── */
+const PLAYER_W = 40, PLAYER_H = 26, PLAYER_SPEED = 380;
+const PLAYER_BULLET_W = 4, PLAYER_BULLET_H = 14, PLAYER_BULLET_SPD = 720;
+const PLAYER_FIRE_CD = 0.22, PLAYER_DMG = 5, PLAYER_IFRAMES = 0.42;
+const BOSS_W = 150, BOSS_H = 90, BOSS_HP_MAX = 110, BOSS_BULLET_R = 7;
+const BOSS_BULLET_SPEEDS  = [275, 360, 440];
+const BOSS_FIRE_INTERVALS = [1.00, 0.75, 0.55];
+const BOSS_OSC_HZ         = [0.45, 0.72, 1.10];
+const BOSS_Y = 36;                       // arena-relative (source: ay + 36)
+const phaseFor = hp => hp > 75 ? 0 : hp > 40 ? 1 : 2;
+
+/* Theme: fountain-pen ink in place of the source's neon. */
+const INK = { red:'#C03A2E', blue:'#2E6BA8', green:'#3F8F55', yellow:'#D8A81F' };
+const PHASE_COLOR = [INK.green, INK.yellow, INK.red];
+const EYE_GREEN   = '111,207,136';       // phosphor tint of the ink green, on the black monitor
+
+/* ── Level state (exposed for tests) ───────────────────────────────────── */
+const L = M.level = {
+  W: 0, H: 0, hp: BOSS_HP_MAX, phase: 0,
+  playerX: 0, hitT: 0, bossX: 0, bossT: 0, flash: 0,
+  pb: [], bb: [], pfire: 0, bfire: 0,
+  hitsTaken: 0, hitsLanded: 0, running: false, glitchT: 0.8,
+};
+const keys = new Set();
+const canvas = $('arena'), ctx = canvas.getContext('2d');
+const paper = $('paper'), qnum = $('qnum'), frameEl = $('frame');
+let raf = 0, last = 0, dpr = 1, pal = {};
+
+function refreshPalette() {
+  const cs = getComputedStyle(frameEl);
+  pal = { fgDim: cs.getPropertyValue('--fgDim').trim() || '#6E6150',
+          hairline: cs.getPropertyValue('--hairline').trim() || '#CBBF9F' };
+}
+function fit() {
+  const play = $('play');
+  const W = play.clientWidth, H = play.clientHeight;
+  if (!W || !H) return;
+  dpr = window.devicePixelRatio || 1;
+  const first = !L.W;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  L.W = W; L.H = H;
+  if (first) { L.playerX = W / 2 - PLAYER_W / 2; L.bossX = (W - BOSS_W) / 2; }
+  L.playerX = Math.max(6, Math.min(W - PLAYER_W - 6, L.playerX));
+  draw();
+}
+
+/* ── Keyboard: window-level, page never scrolls ─────────────────────────── */
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.key === ' ' || e.key.startsWith('Arrow')) e.preventDefault();
+  keys.add(e.key); if (e.code === 'Space') keys.add(' ');
+});
+window.addEventListener('keyup', e => { keys.delete(e.key); if (e.code === 'Space') keys.delete(' '); });
+window.addEventListener('blur', () => keys.clear());
+
+/* ── Loop control ──────────────────────────────────────────────────────── */
+function start() { if (L.running || M.solved || M.ended) return; L.running = true; last = 0; raf = requestAnimationFrame(frame); }
+function stop()  { L.running = false; cancelAnimationFrame(raf); raf = 0; }
+function frame(ts) {
+  raf = 0;
+  if (!L.running) return;
+  const dt = last ? Math.min((ts - last) / 1000, 0.05) : 0.016;
+  last = ts;
+  step(dt);
+  if (L.running) { draw(); raf = requestAnimationFrame(frame); }
+}
+M.onPause  = () => { stop(); keys.clear(); paper.classList.add('frozen'); };
+M.onResume = () => { paper.classList.remove('frozen'); start(); };
+M.onDark   = () => { refreshPalette(); draw(); };
+
+/* ── Simulation: the source's RAF body, arena-relative (ax = ay = 0) ─────── */
+function step(dt) {
+  const W = L.W, H = L.H, playerY = H - 64;
+
+  // player movement
+  let pvx = 0;
+  if (keys.has('a') || keys.has('A') || keys.has('ArrowLeft'))  pvx -= 1;
+  if (keys.has('d') || keys.has('D') || keys.has('ArrowRight')) pvx += 1;
+  L.playerX += pvx * PLAYER_SPEED * dt;
+  L.playerX = Math.max(6, Math.min(W - PLAYER_W - 6, L.playerX));
+
+  // player firing (hold SPACE)
+  L.pfire += dt;
+  if ((keys.has(' ') || keys.has('Spacebar')) && L.pfire >= PLAYER_FIRE_CD) {
+    L.pfire = 0;
+    L.pb.push({ x: L.playerX + PLAYER_W / 2, y: playerY, vx: 0, vy: -PLAYER_BULLET_SPD });
+  }
+
+  // boss horizontal oscillation
+  L.bossT += dt;
+  const oscRange = (W - BOSS_W - 40) / 2;
+  L.bossX = (W - BOSS_W) / 2 + Math.sin(L.bossT * Math.PI * 2 * BOSS_OSC_HZ[L.phase]) * oscRange;
+
+  // boss firing
+  L.bfire += dt;
+  if (L.bfire >= BOSS_FIRE_INTERVALS[L.phase]) {
+    L.bfire = 0;
+    const speed = BOSS_BULLET_SPEEDS[L.phase];
+    const bcx = L.bossX + BOSS_W / 2, bcy = BOSS_Y + BOSS_H;
+    if (L.phase === 0) {
+      L.bb.push({ x: bcx, y: bcy, vx: 0, vy: speed });
+    } else if (L.phase === 1) {
+      L.bb.push({ x: bcx - 30, y: bcy, vx: 0, vy: speed });
+      L.bb.push({ x: bcx,      y: bcy, vx: 0, vy: speed });
+      L.bb.push({ x: bcx + 30, y: bcy, vx: 0, vy: speed });
+    } else {
+      for (let i = -2; i <= 2; i++) {
+        const a = i * 0.22;
+        L.bb.push({ x: bcx, y: bcy, vx: speed * Math.sin(a), vy: speed * Math.cos(a) });
+      }
+    }
+  }
+
+  // bullets
+  for (const b of L.pb) { b.x += b.vx * dt; b.y += b.vy * dt; }
+  for (const b of L.bb) { b.x += b.vx * dt; b.y += b.vy * dt; }
+
+  // player bullet vs boss
+  for (let i = L.pb.length - 1; i >= 0; i--) {
+    const b = L.pb[i];
+    if (b.x >= L.bossX && b.x <= L.bossX + BOSS_W && b.y >= BOSS_Y && b.y <= BOSS_Y + BOSS_H) {
+      L.pb.splice(i, 1);
+      L.hitsLanded++;
+      setHP(L.hp - PLAYER_DMG);
+      if (L.hp === 0) { terminate(); return; }
+    }
+  }
+
+  // boss bullet vs player (circle vs rect), with i-frames
+  if (L.hitT <= 0) {
+    for (let i = L.bb.length - 1; i >= 0; i--) {
+      const b = L.bb[i];
+      const nx = Math.max(L.playerX, Math.min(b.x, L.playerX + PLAYER_W));
+      const ny = Math.max(playerY,   Math.min(b.y, playerY + PLAYER_H));
+      const dx = b.x - nx, dy = b.y - ny;
+      if (dx * dx + dy * dy < BOSS_BULLET_R * BOSS_BULLET_R) {
+        L.bb.splice(i, 1);
+        L.hitT = PLAYER_IFRAMES;
+        playerHit();
+        break;
+      }
+    }
+  } else {
+    L.hitT = Math.max(0, L.hitT - dt);
+  }
+
+  // cull
+  L.pb = L.pb.filter(b => b.y > -30);
+  L.bb = L.bb.filter(b => b.y < H + 30 && b.x > -30 && b.x < W + 30);
+
+  if (L.flash > 0) L.flash = Math.max(0, L.flash - dt * 4);
+
+  // header corruption (decoration only)
+  L.glitchT -= dt;
+  if (L.glitchT <= 0) {
+    const forms = ['Q.2▒', 'Q.■8', '0.28', 'Q_28', 'Q.2B', '█.28'];
+    qnum.textContent = forms[Math.floor(rnd() * forms.length)];
+    setTimeout(() => { if (paper.classList.contains('hostile')) qnum.textContent = 'Q.28'; }, 70 + rnd() * 60);
+    L.glitchT = 0.9 + rnd() * 1.6;
+  }
+}
+let seed = 0x9E3779B1;
+function rnd() { seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5; return ((seed >>> 0) % 10000) / 10000; }
+
+function setHP(hp) {
+  L.hp = Math.max(0, Math.min(BOSS_HP_MAX, hp));
+  const p = phaseFor(L.hp);
+  if (p !== L.phase) {
+    L.phase = p; L.flash = 1;
+    if (p === 1) M.retype('He is speeding up. So should you.');
+    if (p === 2) M.retype('He is not calming down.');
+  }
+}
+function playerHit() {
+  L.hitsTaken++;
+  const line = L.hitsTaken === 1 ? 'Hit. Sidestep his shots, then get back under him.'
+             : L.hitsTaken === 2 ? 'One heart left. He fires from wherever he is. Do not be there.'
+             : undefined;
+  M.wrong(line);
+  if (M.ended) { stop(); keys.clear(); draw(); }
+}
+function terminate() {
+  stop();
+  paper.classList.remove('hostile', 'frozen');
+  qnum.textContent = 'Q.28';
+  draw();
+  M.win('TERMINATED.', 'FRODRICK.EXE has been removed from the examination. Again.');
+}
+
+/* ── Drawing ───────────────────────────────────────────────────────────── */
+function rgba(hex, a) { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; }
+function draw() {
+  const W = L.W, H = L.H; if (!W) return;
+  const playerY = H - 64, bx = L.bossX, by = BOSS_Y, phaseColor = PHASE_COLOR[L.phase];
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // arena tint (source: #f0e8f0 light / #0a0010 dark)
+  ctx.fillStyle = M.dark ? '#0a0010' : '#f0e8f0';
+  ctx.fillRect(0, 0, W, H);
+  if (L.flash > 0) {
+    ctx.fillStyle = M.dark ? `rgba(255,255,255,${L.flash * 0.5})` : rgba(phaseColor, L.flash * 0.35);
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // boss: monitor body
+  ctx.fillStyle = '#1a1a26';
+  ctx.fillRect(bx, by, BOSS_W, BOSS_H);
+  ctx.strokeStyle = phaseColor; ctx.lineWidth = 3;
+  ctx.strokeRect(bx, by, BOSS_W, BOSS_H);
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for (let y = 0; y < BOSS_H; y += 4) ctx.fillRect(bx, by + y, BOSS_W, 1);
+
+  // eyes flicker when angry
+  const flicker = Math.sin(performance.now() / 60) > (0.7 - L.phase * 0.3) ? 0.4 : 1;
+  ctx.fillStyle = `rgba(${EYE_GREEN},${flicker})`;
+  const eyeY = by + BOSS_H * 0.35;
+  ctx.fillRect(bx + BOSS_W * 0.22, eyeY, 16, 12);
+  ctx.fillRect(bx + BOSS_W * 0.62, eyeY, 16, 12);
+
+  // mouth gets jaggier with phase
+  ctx.strokeStyle = `rgba(${EYE_GREEN},${flicker})`; ctx.lineWidth = 2;
+  ctx.beginPath();
+  const mouthY = by + BOSS_H * 0.72, teeth = 4 + L.phase * 2;
+  for (let i = 0; i <= teeth; i++) {
+    const tx = bx + BOSS_W * 0.25 + (i / teeth) * BOSS_W * 0.5;
+    const ty = mouthY + (i % 2 === 0 ? 0 : 6 + L.phase * 2);
+    if (i === 0) ctx.moveTo(tx, ty); else ctx.lineTo(tx, ty);
+  }
+  ctx.stroke();
+
+  // name tag
+  ctx.fillStyle = INK.green;
+  ctx.font = 'bold 11px Georgia,"Times New Roman",serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  ctx.fillText('FRODRICK.EXE', bx + BOSS_W / 2, by - 16);
+
+  // boss HP bar along the top
+  const hpBarW = W * 0.6, hpBarX = (W - hpBarW) / 2, hpBarY = 8, hpBarH = 10;
+  ctx.strokeStyle = pal.hairline; ctx.lineWidth = 1;
+  ctx.strokeRect(hpBarX + 0.5, hpBarY + 0.5, hpBarW, hpBarH);
+  ctx.fillStyle = phaseColor;
+  ctx.fillRect(hpBarX + 1, hpBarY + 1, (hpBarW - 2) * (L.hp / BOSS_HP_MAX), hpBarH - 2);
+
+  // player ship (blinks during i-frames)
+  const blink = L.hitT > 0 && Math.floor(L.hitT * 18) % 2 === 0;
+  if (!blink) {
+    const px = L.playerX;
+    ctx.fillStyle = INK.blue;
+    ctx.beginPath();
+    ctx.moveTo(px + PLAYER_W / 2, playerY);
+    ctx.lineTo(px + PLAYER_W, playerY + PLAYER_H);
+    ctx.lineTo(px + PLAYER_W * 0.7, playerY + PLAYER_H - 4);
+    ctx.lineTo(px + PLAYER_W * 0.3, playerY + PLAYER_H - 4);
+    ctx.lineTo(px, playerY + PLAYER_H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#1C3F63'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = INK.yellow;
+    const glowH = 4 + Math.sin(performance.now() / 60) * 2;
+    ctx.fillRect(px + PLAYER_W * 0.42, playerY + PLAYER_H - 2, PLAYER_W * 0.16, glowH);
+  }
+
+  // player bullets
+  ctx.fillStyle = INK.blue;
+  for (const b of L.pb) ctx.fillRect(b.x - PLAYER_BULLET_W / 2, b.y - PLAYER_BULLET_H, PLAYER_BULLET_W, PLAYER_BULLET_H);
+
+  // boss bullets
+  ctx.fillStyle = phaseColor;
+  for (const b of L.bb) { ctx.beginPath(); ctx.arc(b.x, b.y, BOSS_BULLET_R, 0, Math.PI * 2); ctx.fill(); }
+
+  // hint
+  ctx.fillStyle = pal.fgDim;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = 'bold 11px "Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif';
+  ctx.fillText('A / D or ← →  to move    ·    SPACE to fire', W / 2, H - 14);
+}
+
+/* ── Test hooks (shorten the fight only; hits must still be real) ─────── */
+M.test = { setBossHP: n => { setHP(n); draw(); return L.hp; } };
+
+/* ── Boot ──────────────────────────────────────────────────────────────── */
+refreshPalette();
+paper.classList.add('hostile');
+fit();
+if (window.ResizeObserver) new ResizeObserver(fit).observe($('play')); else window.addEventListener('resize', fit);
+M.retype('WARNING: exam guide integrity check failed. FRODRICK.EXE has gone hostile. Defend yourself.');
+start();
+</script>
+</body>
+</html>

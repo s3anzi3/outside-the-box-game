@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.37 Trim Marks Mock (current theme)</title>
+<style>
+  /* ═══════════════ OTB mock chrome · shared template (do not restyle the chrome) ═══════════════ */
+  .frame{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --sealDim:rgba(176,137,47,.34);
+    --pass:#3E6B4F; --danger:#9A2B25; --btnText:#F7F1E3;
+    --shadow:rgba(60,45,20,.18);
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  .frame.dark{
+    --bg:#161310; --ink:#F4EEDE; --fgMid:#D2C8B0; --fgDim:#A99C82;
+    --stroke:#E6DCC4; --hairline:#43392B; --panel:#211C16;
+    --accent:#C65B4F; --accentDeep:#7A2E2E; --seal:#D4B05A; --sealDim:rgba(212,176,90,.32);
+    --pass:#5FA67C; --danger:#D2554E; --btnText:#161310;
+    --shadow:rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif; padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);
+    font-family:var(--body); color:var(--ink); user-select:none;}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center; z-index:1;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  /* paper: 1280x860 frame units → x 115..1165, y 122..555; play area y 171..552 */
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px var(--shadow);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0; overflow:hidden;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink); cursor:default;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  /* embossed theme button (locked style) */
+  .btn{background:var(--bg); color:var(--ink); border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:22px;
+    box-shadow:0 3px 9px var(--shadow); cursor:pointer; padding:0 18px; height:56px;}
+  .btn:hover{background:var(--accent); color:var(--btnText); border-color:var(--accentDeep);}
+  .btn:active{translate:0 1px;}
+  .btn.mono{font-family:var(--mono); font-size:14px; letter-spacing:.06em;}
+
+  /* answers row helper */
+  .answers{position:absolute; left:0; right:0; bottom:9%; display:flex; justify-content:center; gap:36px;}
+  .answers .btn{width:150px; height:58px; font-size:25px; padding:0;}
+
+  /* prompt helpers */
+  .directive{font-family:var(--mono); font-size:13px; letter-spacing:.14em; color:var(--fgDim); text-align:center;}
+  .prompt{font-family:var(--display); color:var(--ink); font-size:38px; text-align:center;}
+
+  /* stamp */
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:8; background:rgba(251,248,239,.6);}
+  .frame.dark .stamp{background:rgba(33,28,22,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  /* win screen (inside .play) */
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:6; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%; line-height:1.4;}
+  .win-continue{width:200px; height:52px; font-size:21px; margin-top:6px; padding:0;}
+
+  /* pause overlay: document box inset 5% of the paper, opaque like the real build */
+  .pauseov{position:absolute; left:5%; top:5%; width:90%; height:90%; display:none; z-index:7;
+    background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px;
+    box-shadow:0 8px 28px var(--shadow);}
+  .pauseov.show{display:block;}
+  .pauseov::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .pauseov .cart{position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:var(--panel);
+    padding:0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--accent); white-space:nowrap;}
+  .pauseov .ptitle{position:absolute; top:11%; width:100%; text-align:center; font-family:var(--display);
+    font-weight:bold; font-size:33px; color:var(--ink);}
+  .pauseov .prule{position:absolute; top:29%; left:10%; right:10%; height:1px; background:var(--hairline);}
+  .pauseov .pcol{position:absolute; left:62%; top:30%; display:flex; flex-direction:column; gap:5%; width:220px; height:66%;}
+  .pauseov .pcol .btn{width:220px; height:44px; font-size:17px; padding:0;}
+  .pauseov .plbl{position:absolute; font-family:var(--mono); font-size:11px; color:var(--fgDim); letter-spacing:.04em; text-align:center; width:220px; left:14%;}
+  .pauseov .slider{position:absolute; left:14%; top:54%; width:220px; height:10px; border:1.5px solid var(--stroke); background:rgba(30,26,21,.08); cursor:pointer; touch-action:none;}
+  .frame.dark .pauseov .slider{background:rgba(242,235,218,.12);}
+  .pauseov .slider .fill{position:absolute; left:0; top:0; bottom:0; width:70%; background:var(--accent); pointer-events:none;}
+  .pauseov .slider .knob{position:absolute; left:70%; top:50%; width:18px; height:18px; border-radius:50%; background:var(--accent);
+    border:2px solid var(--stroke); transform:translate(-50%,-50%); pointer-events:none;}
+  .pauseov .cheatgo{cursor:pointer;}
+  .pauseov .cheat{position:absolute; left:14%; top:calc(54% + 38px); width:220px; height:38px; border:1.5px solid var(--stroke);
+    border-radius:4px; background:var(--bg); font-family:var(--mono); font-size:15px; color:var(--fgDim); padding:0 12px; line-height:35px;}
+  .pauseov .cheatgo{position:absolute; left:calc(14% + 232px); top:calc(54% + 38px); width:40px; height:38px; border-radius:4px;
+    background:var(--accent); color:var(--btnText); font-family:var(--mono); font-weight:bold; font-size:18px; text-align:center; line-height:38px;}
+
+  /* game over notice */
+  .gameover{position:absolute; inset:0; display:none; z-index:9; background:rgba(20,15,10,.80); align-items:center; justify-content:center;}
+  .gameover.show{display:flex;}
+  .gameover .box{width:600px; height:430px; position:relative; background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px; text-align:center;}
+  .gameover .box::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .gameover .cart{position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:var(--panel);
+    padding:0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--accent);}
+  .gameover .eyebrow{margin-top:60px; font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:.1em;}
+  .gameover .head{margin-top:26px; font-family:var(--display); font-weight:bold; font-size:34px; color:var(--danger);}
+  .gameover .body{margin-top:22px; font-size:18px; color:var(--fgMid);}
+  .gameover .void{position:absolute; right:40px; top:40px; transform:rotate(-12deg); border:3px solid var(--danger); color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:17px; padding:4px 10px; border-radius:4px;}
+  .gameover .btn{margin-top:36px; width:240px; height:44px; font-size:18px; padding:0;}
+
+  /* bottom examiner panel */
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px var(--shadow);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim); text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+
+  /* toast (replaces alert()) */
+  .toast{position:absolute; left:50%; bottom:2.5%; transform:translateX(-50%); background:var(--ink); color:var(--bg);
+    font-family:var(--mono); font-size:12px; letter-spacing:.06em; padding:8px 14px; border-radius:4px; opacity:0; transition:opacity .25s; z-index:10; pointer-events:none;}
+  .toast.show{opacity:.92;}
+
+  /* ═══════════════ level-specific styles go below ═══════════════ */
+
+  .paper{transition:none;}
+  .directive.q37{position:absolute; left:0; right:0; top:9%;}
+  .q37prompt{position:absolute; left:0; right:0; top:19%; text-align:center; font-family:var(--display); font-size:36px; color:var(--ink);}
+  .q37foot{position:absolute; left:0; right:0; top:82%; text-align:center; font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--fgDim); white-space:nowrap;}
+  .q37row{position:absolute; left:0; top:52%; height:58px; width:1300px;}
+  .q37row .btn{position:absolute; top:0; width:150px; height:58px; font-size:25px; padding:0;}
+  .handle{position:absolute; width:40px; height:40px; z-index:4; cursor:default; touch-action:none;}
+  .handle.tr{right:-16px; top:-16px;} .handle.br{right:-16px; bottom:-16px;}
+  .tick.pulse{animation:tickpulse 1.2s ease-in-out 2;}
+  @keyframes tickpulse{0%,100%{border-color:var(--accent)} 50%{border-color:var(--seal); transform:scale(1.6)}}
+  .tick.tr.pulse{transform-origin:top right;} .tick.br.pulse{transform-origin:bottom right;}
+
+</style>
+</head>
+<body>
+
+<h1>Q.37 · Trim Marks · NEW CONCEPT</h1>
+<p class="sub">Fully playable. Replaces count-the-squares. The paper says "The answer to this item is 14. Submit it." and offers 9, 12, 16 and 20, with a fifth button visibly sliced off by the paper's right edge. A mono footer admits that Corporate printed the wrong buttons. Every printed button costs a heart. The oxblood corner ticks that have framed every question since Q1 are crop marks, and crop marks set the trim: grab either right-hand tick and drag it outward and the paper physically widens into the desk margin, revealing the button that was trimmed off in printing: 14. Click it. New concept built from the corner ticks, which no level has ever touched. The hint ladder reaches "drag a right-hand corner tick outward" by the third failure; the ticks also pulse once after twenty idle seconds.</p>
+
+<div class="frame" id="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box" draggable="false"></div>
+
+  <div class="paper" id="paper">
+    <span class="tick tl" id="tickTL"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption" id="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum" id="qnum">Q.37</div>
+      <div class="pause" id="pauseBtn" title="Pause"><i></i><i></i></div>
+    </div>
+
+    <div class="play" id="play">
+      <!-- ═══ level content ═══ -->
+
+      <div class="directive q37">SUBMIT&nbsp;THE&nbsp;ANSWER</div>
+      <div class="q37prompt">The answer to this item is 14. Submit it.</div>
+      <div class="q37row" id="q37row"></div>
+      <div class="q37foot">CORPORATE PRINTED THE WRONG BUTTONS. CORPORATE HAS BEEN INFORMED.</div>
+
+
+      <div class="winscreen" id="winscreen">
+        <div class="win-title" id="winTitle">CORRECT.</div>
+        <div class="win-body" id="winBody"></div>
+        <button class="btn win-continue" id="winContinue">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="pauseov" id="pauseov">
+      <div class="cart">EXAMINATION SUSPENDED</div>
+      <div class="ptitle">Paused</div>
+      <div class="prule"></div>
+      <div class="plbl" id="soundLbl" style="top:calc(54% - 26px)">SOUND&nbsp;&nbsp;70%</div>
+      <div class="slider" id="soundSlider"><div class="fill" id="soundFill"></div><div class="knob" id="soundKnob"></div></div>
+      <div class="plbl" style="top:calc(54% + 20px)">INVIGILATOR OVERRIDE</div>
+      <div class="cheat" id="cheatBox">Override Key</div>
+      <div class="cheatgo" id="cheatGo">›</div>
+      <div class="pcol">
+        <button class="btn" id="resumeBtn">RESUME</button>
+        <button class="btn" id="quitBtn">QUIT TO MENU</button>
+        <button class="btn" id="darkBtn">DARK MODE</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom" id="bottom">
+    <div class="bot-examiner" id="examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner" id="examinerImg" draggable="false">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="gameover" id="gameover">
+    <div class="box">
+      <div class="cart">PROCTOR NOTICE</div>
+      <div class="void">VOID</div>
+      <div class="eyebrow">CANDIDATURE&nbsp;&nbsp;VOIDED</div>
+      <div class="head">Examination Terminated</div>
+      <div class="body">Better luck next time, candidate.</div>
+      <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ═══════════════ shared mock runtime (keep as-is; levels call these) ═══════════════ */
+const M = window.__mock = {
+  q: 0, next: 0, nextName: '',
+  lives: 3, solved: false, ended: false, paused: false, dark: false,
+  events: [],
+  onPause: null, onResume: null, onDark: null,   // level hooks (functions)
+};
+const $ = id => document.getElementById(id);
+
+M.slam = (text, ok) => {
+  const st = $('stamp');
+  st.className = 'stamp' + (ok ? ' pass' : ''); void st.offsetWidth; st.classList.add('show');
+  st.firstChild.textContent = text;
+  M.events.push((ok ? 'stamp:' : 'stamp:') + text);
+};
+M.toast = (text, ms = 2600) => {
+  const t = $('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(M._toastT); M._toastT = setTimeout(() => t.classList.remove('show'), ms);
+};
+M.loseLife = () => {
+  if (M.lives > 0) { M.lives--; $('heartRow').children[M.lives].classList.add('lost'); }
+  M.events.push('life:' + M.lives);
+  if (M.lives <= 0) { M.ended = true; setTimeout(() => $('gameover').classList.add('show'), 800); }
+};
+// Standard "you picked the conventional thing": INCORRECT stamp + heart. Optional examiner line.
+M.wrong = (remark) => {
+  if (M.solved || M.ended) return false;
+  M.slam('INCORRECT', false);
+  M.play(M.SFX.wrong, { volume: 0.5 });
+  M.loseLife();
+  if (remark) M.retype(remark);
+  return true;
+};
+// Standard win: CORRECT stamp, then the win screen with CONTINUE.
+M.win = (title, body, stampText = 'CORRECT') => {
+  if (M.solved) return;
+  M.solved = true;
+  M.events.push('win');
+  M.slam(stampText, true);
+  M.play(M.SFX.correct, { volume: 0.55 });
+  for (const a of M._loops) a.pause();
+  $('winTitle').textContent = title;
+  $('winBody').textContent = body;
+  setTimeout(() => $('winscreen').classList.add('show'), 750);
+};
+$('winContinue').onclick = () => M.toast(`Chime. → advances to Q.${M.next}${M.nextName ? ' (' + M.nextName + ')' : ''}`);
+
+// Typewriter into the remarks panel. Cancels any in-progress typing.
+M.retype = (text, speed = 22) => {
+  clearInterval(M._typeT);
+  const el = $('remarks'); let i = 0;
+  M.events.push('remark:' + text);
+  M._typeT = setInterval(() => {
+    i++;
+    if (i >= text.length) { clearInterval(M._typeT); el.innerHTML = esc(text) + ' <span class="cursor">|</span>'; return; }
+    el.innerHTML = esc(text.slice(0, i)) + '<span class="cursor">|</span>';
+  }, speed);
+};
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+// Sound: master volume (the pause menu's SOUND slider) + a small player for the game's real assets.
+M.volume = 0.7; M._audio = {}; M._loops = new Set();
+M.SFX = { correct: '../public/assets/sounds/correctAnswer.wav', wrong: '../public/assets/sounds/wrongAnswer.wav' };
+M.play = (src, { loop = false, volume = 1, startTime = 0, restart = true } = {}) => {
+  let a = M._audio[src]; if (!a) { a = new Audio(src); a.preload = 'auto'; M._audio[src] = a; }
+  a._base = volume; a.volume = Math.max(0, Math.min(1, volume * M.volume)); a.loop = loop;
+  if (restart || a.paused) { try { a.currentTime = startTime; } catch (e) {} }
+  const p = a.play(); if (p && p.catch) p.catch(() => {});
+  if (loop) M._loops.add(a);
+  M.events.push('play:' + src.split('/').pop());
+  return a;
+};
+M.stop = (src) => { const a = M._audio[src]; if (a) { a.pause(); M._loops.delete(a); } };
+M.setVolume = (v) => {
+  M.volume = Math.max(0, Math.min(1, v));
+  $('soundFill').style.width = (M.volume * 100) + '%'; $('soundKnob').style.left = (M.volume * 100) + '%';
+  $('soundLbl').innerHTML = 'SOUND&nbsp;&nbsp;' + Math.round(M.volume * 100) + '%';
+  for (const a of Object.values(M._audio)) a.volume = Math.max(0, Math.min(1, (a._base || 1) * M.volume));
+  M.events.push('volume:' + Math.round(M.volume * 100));
+  M.onVolume && M.onVolume(M.volume);
+};
+(() => {
+  const s = $('soundSlider'); let dragging = false;
+  const at = (e) => { const r = s.getBoundingClientRect(); M.setVolume((e.clientX - r.left) / r.width); };
+  s.addEventListener('pointerdown', (e) => { dragging = true; s.setPointerCapture(e.pointerId); at(e); e.preventDefault(); });
+  s.addEventListener('pointermove', (e) => { if (dragging) at(e); });
+  const up = () => { dragging = false; };
+  s.addEventListener('pointerup', up); s.addEventListener('pointercancel', up);
+  s.addEventListener('wheel', (e) => { e.preventDefault(); M.setVolume(M.volume + (e.deltaY < 0 ? 0.05 : -0.05)); }, { passive: false });
+})();
+
+// Pause overlay (opaque document box like the real build). Levels with timers must honour M.paused.
+M.pause = () => { if (M.paused || M.ended) return; M.paused = true; $('pauseov').classList.add('show'); M.events.push('pause'); for (const a of M._loops) a.pause(); M.onPause && M.onPause(); };
+M.resume = () => { if (!M.paused) return; M.paused = false; $('pauseov').classList.remove('show'); M.events.push('resume'); for (const a of M._loops) { const p = a.play(); if (p && p.catch) p.catch(() => {}); } M.onResume && M.onResume(); };
+M.toggleDark = () => {
+  M.dark = !M.dark; $('frame').classList.toggle('dark', M.dark);
+  $('darkBtn').textContent = M.dark ? 'LIGHT MODE' : 'DARK MODE';
+  M.events.push('dark:' + M.dark); M.onDark && M.onDark(M.dark);
+};
+$('pauseBtn').onclick = M.pause;
+$('resumeBtn').onclick = M.resume;
+$('quitBtn').onclick = () => M.toast('QUIT TO MENU: would return to the main menu (disabled in mock)');
+$('darkBtn').onclick = M.toggleDark;
+$('cheatBox').onclick = () => M.toast('Override key entry is not part of this mock');
+
+/* ═══════════════ level ═══════════════ */
+
+M.q = 37; M.next = 38; M.nextName = 'The Other Button';
+M.level = { ext: 0, fails: 0, elapsed: 0, pulsed: false, maxExt: 110 };
+const paper = $('paper'), frame = $('frame');
+const BASE_W = 1049.6;                       // 82% of 1280, the paper's normal width
+paper.style.width = BASE_W + 'px';
+
+const LABELS = [9, 12, 16, 20, 14];
+const XS = [256, 442, 628, 814, 1000];       // the 14 starts inside the trim and ends past it
+LABELS.forEach((n, i) => {
+  const b = document.createElement('button'); b.className = 'btn'; b.textContent = n; b.id = 'ans' + n; b.style.left = XS[i] + 'px';
+  b.onclick = () => {
+    if (M.solved || M.ended || M.paused) return;
+    if (n === 14) return M.win('UNTRIMMED.', 'The fifth button was printed. It was just outside the trim. Corporate saves on paper.');
+    M.level.fails++;
+    M.wrong();
+    const L = ['Corporate trimmed the page. The fifth button did not survive.', 'The little marks in the corners are crop marks. They set the trim.', 'Drag a right-hand corner tick outward. The page grows. The 14 is there.'];
+    setTimeout(() => { if (!M.solved && !M.ended) M.retype(L[Math.min(M.level.fails - 1, L.length - 1)]); }, 700);
+  };
+  $('q37row').appendChild(b);
+});
+
+// crop-mark handles on the two right-hand ticks
+const fpt = (e) => { const r = frame.getBoundingClientRect(); return { x: (e.clientX - r.left) * 1280 / r.width, y: (e.clientY - r.top) * 860 / r.height }; };
+let drag = null;
+['tr', 'br'].forEach(pos => {
+  const hnd = document.createElement('div'); hnd.className = 'handle ' + pos; hnd.id = 'handle' + pos.toUpperCase(); paper.appendChild(hnd);
+  hnd.addEventListener('pointerdown', (e) => { if (M.solved || M.ended || M.paused) return; drag = { x0: fpt(e).x, ext0: M.level.ext }; hnd.setPointerCapture(e.pointerId); e.preventDefault(); });
+  hnd.addEventListener('pointermove', (e) => { if (!drag) return; setExt(drag.ext0 + (fpt(e).x - drag.x0)); });
+  const up = () => { if (!drag) return; drag = null; if (M.level.ext > 20) M.events.push('trimmed:' + Math.round(M.level.ext)); };
+  hnd.addEventListener('pointerup', up); hnd.addEventListener('pointercancel', up);
+});
+function setExt(v) {
+  M.level.ext = Math.max(0, Math.min(M.level.maxExt, v));
+  paper.style.width = (BASE_W + M.level.ext) + 'px';
+  if (M.level.ext > 60 && !M.level.saidGrow) { M.level.saidGrow = true; M.retype('...The page is growing. I was told that was not possible.'); }
+}
+M.retype('The answer is 14. Submit it. Something on this row looks cut off.');
+setInterval(() => {
+  if (M.paused || M.solved || M.ended) return;
+  M.level.elapsed += 0.5;
+  if (M.level.elapsed >= 20 && !M.level.pulsed) { M.level.pulsed = true; document.querySelectorAll('.tick.tr,.tick.br').forEach(t => t.classList.add('pulse')); }
+}, 500);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.13 The Loaded Die Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);
+    cursor:default; user-select:none;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  .prompt{position:absolute; left:0; right:0; top:8%; text-align:center;
+    font-family:var(--display); font-weight:bold; font-size:26px; color:var(--ink);}
+
+  .scratch{position:absolute; left:4%; top:24%; width:150px;
+    font-family:var(--mono); font-size:12px; line-height:1.9; color:var(--fgDim); user-select:none;}
+  .scratch .lbl{font-size:10px; letter-spacing:.1em; border-bottom:1px solid var(--hairline);
+    padding-bottom:4px; margin-bottom:6px;}
+  .scratch .rolls{word-spacing:6px; white-space:normal; word-wrap:break-word;}
+
+  /* ── The die: three.js, transparent canvas over the paper ── */
+  #dieHost{position:absolute; left:50%; top:38%; width:300px; height:300px;
+    transform:translate(-50%,-50%); pointer-events:none;}
+  #dieHost canvas{width:100%; height:100%; display:block;}
+  #dieErr{display:none; position:absolute; inset:0; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:11px; color:var(--danger); text-align:center; padding:30px;}
+  .shadow{position:absolute; left:50%; top:38%; width:140px; height:28px;
+    transform:translate(-50%, 78px); border-radius:50%;
+    background:radial-gradient(ellipse, rgba(60,45,20,.30) 0%, rgba(60,45,20,0) 70%);}
+  .showing{position:absolute; left:50%; top:38%; transform:translate(-50%, 108px);
+    font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--fgDim);
+    user-select:none; white-space:nowrap;}
+  /* invisible grab zone over the die; cursor stays default so nothing is telegraphed */
+  .dragzone{position:absolute; left:50%; top:38%; width:220px; height:220px;
+    transform:translate(-50%,-50%); z-index:2; cursor:default;}
+
+  .rollrow{position:absolute; left:0; right:0; bottom:7%; display:flex; justify-content:center;}
+  .ans{width:150px; height:54px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:24px;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;}
+  .ans:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+  .ans:disabled{opacity:.55; cursor:default;}
+  .ans:disabled:hover{background:var(--bg); color:var(--ink); border-color:var(--stroke);}
+
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:4; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%;}
+  .continue{width:200px; height:52px; font-size:21px; margin-top:6px;}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.13 · The Loaded Die · proposed replacement for count-the-F's</h1>
+<p class="sub">Fully playable, v5. The die is now a real 3D render (three.js): a rounded ivory die with proper lighting and inset oxblood pips, drawn on a transparent canvas floating over the exam paper. Mechanics unchanged: ROLL tumbles it, but rolls are rigged (4, 2, 5, 3, then 1 forever) and always land with the 6 turned away out of sight. Grab the die and turn it freely like a trackball; release and it settles onto the nearest face, with the FACE UP register underneath stating what counts. No roll can ever land a 6; the only way is turning it up yourself. The first grab triggers the examiner's objection, which is also the hint. Rolling and turning cost nothing; futility is the punishment. Answer stays 6, preserving the Q49 lock code. Fully self-contained: three.js is vendored locally in mocks/vendor, so this works offline.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.13</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="play">
+      <div class="prompt">Roll a six to proceed.</div>
+
+      <div class="scratch">
+        <div class="lbl">SCRATCHWORK</div>
+        <div class="rolls" id="rollLog"></div>
+      </div>
+
+      <div class="shadow"></div>
+      <div id="dieHost"><div id="dieErr">COULD NOT LOAD vendor/three-global.js.<br>KEEP THE vendor FOLDER NEXT TO THIS FILE.</div></div>
+      <div class="showing" id="showing">FACE UP: 2</div>
+      <div class="dragzone" id="dragzone"></div>
+
+      <div class="rollrow"><button class="ans" id="rollBtn">ROLL</button></div>
+
+      <div class="winscreen" id="winscreen">
+        <div class="win-title">SIX.</div>
+        <div class="win-body">No roll was ever going to land it. You had to turn it yourself.</div>
+        <button class="ans continue" onclick="alert('Chime! → advances to Q.14')">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">CORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/three-global.js"></script>
+<script>
+(() => {
+  if (typeof THREE === 'undefined'){
+    document.getElementById('dieErr').style.display = 'flex';
+    return;
+  }
+
+  /* Rounded box without the module-only addon: clamp a subdivided cube onto the
+     rounded-box surface. The offset direction from the clamped inner box IS the
+     exact surface normal, so shading is perfectly smooth with no edge seams. */
+  function roundedBoxGeometry(size, seg, radius){
+    const g = new THREE.BoxGeometry(size, size, size, seg, seg, seg);
+    const pos = g.attributes.position;
+    const half = size/2, inner = half - radius;
+    const norms = new Float32Array(pos.count*3);
+    const v = new THREE.Vector3(), c = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++){
+      v.fromBufferAttribute(pos, i);
+      c.set(
+        Math.max(-inner, Math.min(inner, v.x)),
+        Math.max(-inner, Math.min(inner, v.y)),
+        Math.max(-inner, Math.min(inner, v.z)));
+      const d = v.clone().sub(c);
+      const l = d.length() || 1;
+      d.divideScalar(l);
+      v.copy(c).add(d.clone().multiplyScalar(radius));
+      pos.setXYZ(i, v.x, v.y, v.z);
+      norms[i*3] = d.x; norms[i*3+1] = d.y; norms[i*3+2] = d.z;
+    }
+    g.setAttribute('normal', new THREE.BufferAttribute(norms, 3));
+    return g;
+  }
+
+  /* ══ Scene ══ */
+  const host = document.getElementById('dieHost');
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setSize(300, 300);
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  host.appendChild(renderer.domElement);
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 50);
+  const az = THREE.MathUtils.degToRad(-33), el = THREE.MathUtils.degToRad(26), D = 6.4;
+  camera.position.set(Math.sin(az)*Math.cos(el)*D, Math.sin(el)*D, Math.cos(az)*Math.cos(el)*D);
+  camera.lookAt(0, 0, 0);
+  const camDir = camera.position.clone().normalize();
+
+  scene.add(new THREE.HemisphereLight(0xfff7e8, 0x9c8a68, 1.0));
+  const key = new THREE.DirectionalLight(0xfff1d8, 2.1);
+  key.position.set(2.6, 5.2, 3.2);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0xe8dcc2, 0.55);
+  fill.position.set(-3.5, 1.2, -2.0);
+  scene.add(fill);
+
+  /* ══ The die: rounded ivory body + inset oxblood pips.
+     Faces: +z=1 -z=6 +x=3 -x=4 +y=2 -y=5 (opposites sum to 7). ══ */
+  const die = new THREE.Group();
+  scene.add(die);
+  const bodyMat = new THREE.MeshStandardMaterial({ color:0xF4EDDC, roughness:0.36, metalness:0.0 });
+  die.add(new THREE.Mesh(roundedBoxGeometry(1.6, 7, 0.18), bodyMat));
+
+  const pipMat = new THREE.MeshStandardMaterial({ color:0x7A2E2E, roughness:0.3, metalness:0.0 });
+  const pipGeo = new THREE.SphereGeometry(0.155, 24, 24);
+  const FACES = [
+    { v:1, n:new THREE.Vector3( 0, 0, 1), u:new THREE.Vector3(1,0,0), w:new THREE.Vector3(0,1,0) },
+    { v:6, n:new THREE.Vector3( 0, 0,-1), u:new THREE.Vector3(1,0,0), w:new THREE.Vector3(0,1,0) },
+    { v:3, n:new THREE.Vector3( 1, 0, 0), u:new THREE.Vector3(0,0,1), w:new THREE.Vector3(0,1,0) },
+    { v:4, n:new THREE.Vector3(-1, 0, 0), u:new THREE.Vector3(0,0,1), w:new THREE.Vector3(0,1,0) },
+    { v:2, n:new THREE.Vector3( 0, 1, 0), u:new THREE.Vector3(1,0,0), w:new THREE.Vector3(0,0,1) },
+    { v:5, n:new THREE.Vector3( 0,-1, 0), u:new THREE.Vector3(1,0,0), w:new THREE.Vector3(0,0,1) },
+  ];
+  const PIPS = {
+    1: [[0,0]],
+    2: [[-1,-1],[1,1]],
+    3: [[-1,-1],[0,0],[1,1]],
+    4: [[-1,-1],[1,-1],[-1,1],[1,1]],
+    5: [[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],
+    6: [[-1,-1],[-1,0],[-1,1],[1,-1],[1,0],[1,1]],
+  };
+  for (const f of FACES)
+    for (const [a,b] of PIPS[f.v]){
+      const pip = new THREE.Mesh(pipGeo, pipMat);
+      pip.position.copy(f.n.clone().multiplyScalar(0.71)
+        .add(f.u.clone().multiplyScalar(a*0.42))
+        .add(f.w.clone().multiplyScalar(b*0.42)));
+      die.add(pip);
+    }
+
+  /* ══ Orientation logic ══ */
+  const UP = new THREE.Vector3(0,1,0);
+  const CANON = {};   // value -> quaternion putting that value on top
+  for (const f of FACES)
+    CANON[f.v] = new THREE.Quaternion().setFromUnitVectors(f.n, UP);
+  const yawQ = k => new THREE.Quaternion().setFromAxisAngle(UP, k*Math.PI/2);
+
+  let topValue = 2, busy = false, solved = false, handledOnce = false, dragging = false;
+  die.quaternion.copy(CANON[2]);
+
+  const faceDot = (quat, f, dir)=> f.n.clone().applyQuaternion(quat).dot(dir);
+  const faceUp = quat => {
+    let best=null, bd=-2;
+    for (const f of FACES){ const d = faceDot(quat, f, UP); if (d>bd){ bd=d; best=f.v; } }
+    return best;
+  };
+
+  /* landing: v on top, 6 turned away from the camera, low pips in view */
+  function chooseLanding(v){
+    let best=null, bs=-1e9;
+    for (let k=0;k<4;k++){
+      const cand = yawQ(k).multiply(CANON[v].clone());
+      let sixVis = false, visSum = 0;
+      for (const f of FACES){
+        const d = faceDot(cand, f, camDir);
+        if (d > 0.05){ visSum += f.v * d; if (f.v === 6) sixVis = true; }
+      }
+      const score = sixVis ? -1000 : -visSum;
+      if (score > bs){ bs = score; best = cand; }
+    }
+    return best;
+  }
+  function snapTarget(v){
+    let best=null, bd=-2;
+    for (let k=0;k<4;k++){
+      const cand = yawQ(k).multiply(CANON[v].clone());
+      const d = Math.abs(cand.dot(die.quaternion));
+      if (d>bd){ bd=d; best=cand; }
+    }
+    return best;
+  }
+
+  function registerFace(v){
+    topValue = v;
+    document.getElementById('showing').textContent = 'FACE UP: ' + v;
+  }
+
+  function animateQ(target, ms, done){
+    busy = true;
+    const from = die.quaternion.clone(), t0 = performance.now();
+    (function step(now){
+      const t = Math.min(1, (now-t0)/ms);
+      const e = 1 - Math.pow(1-t, 3);
+      die.quaternion.slerpQuaternions(from, target, e);
+      if (t<1) requestAnimationFrame(step);
+      else { die.quaternion.copy(target); busy=false; if (done) done(); }
+    })(performance.now());
+  }
+
+  /* ══ ROLL: rigged, never 6 ══ */
+  const RIG = [4, 2, 5, 3, 1, 2, 1, 1];
+  let rollCount = 0;
+
+  function roll(){
+    if (busy || solved || dragging) return;
+    const v = rollCount < RIG.length ? RIG[rollCount] : 1;
+    rollCount++;
+    const axis = new THREE.Vector3(Math.random()*2-1, Math.random()*2-1, Math.random()*2-1).normalize();
+    const mid = new THREE.Quaternion().setFromAxisAngle(axis, THREE.MathUtils.degToRad(130+Math.random()*90))
+      .multiply(die.quaternion.clone());
+    animateQ(mid, 300, ()=> animateQ(chooseLanding(v), 420, ()=>{
+      registerFace(v);
+      logRoll(v);
+      if (rollCount === 5) retype("Hm. Sixes appear to be out of stock today.");
+      if (rollCount === 9) retype("You could roll all day, candidate. Or you could take matters into your own hands.");
+    }));
+  }
+  document.getElementById('rollBtn').addEventListener('click', roll);
+
+  function logRoll(v){
+    const el = document.getElementById('rollLog');
+    el.textContent = (el.textContent ? el.textContent + ' ' : '') + v;
+  }
+
+  /* ══ Free trackball drag; on release, settle onto the nearest face ══ */
+  const dragzone = document.getElementById('dragzone');
+  let lastX = 0, lastY = 0, movedTotal = 0;
+  const K = 0.008;   // radians per pixel
+  const camRight = new THREE.Vector3().crossVectors(
+    new THREE.Vector3(0,0,0).sub(camera.position).normalize(), UP).normalize();
+
+  dragzone.addEventListener('mousedown', e=>{
+    if (busy || solved) return;
+    dragging = true; lastX = e.clientX; lastY = e.clientY; movedTotal = 0;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e=>{
+    if (!dragging) return;
+    if (!(e.buttons & 1)){ dragging = false; settle(); return; }
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    movedTotal += Math.abs(dx) + Math.abs(dy);
+    if (movedTotal > 8 && !handledOnce && !solved){
+      handledOnce = true;
+      retype("Candidate. Please do not handle the examination materials.");
+    }
+    die.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(UP, dx*K));
+    die.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(camRight, dy*K));
+  });
+  document.addEventListener('mouseup', ()=>{
+    if (!dragging) return;
+    dragging = false;
+    settle();
+  });
+
+  function settle(){
+    if (solved || busy) return;
+    const v = faceUp(die.quaternion);
+    animateQ(snapTarget(v), 240, ()=>{
+      registerFace(v);
+      if (v === 6) win();
+    });
+  }
+
+  /* ══ Win ══ */
+  function win(){
+    solved = true;
+    document.getElementById('rollBtn').disabled = true;
+    const st = document.getElementById('stamp');
+    st.className = 'stamp pass'; void st.offsetWidth; st.classList.add('show');
+    retype("...That is technically a six. Noted.");
+    setTimeout(()=>document.getElementById('winscreen').classList.add('show'), 900);
+  }
+
+  /* ══ Examiner typewriter, retypable ══ */
+  const el = document.getElementById('remarks');
+  let timer = null;
+  function retype(text){
+    if (timer) clearInterval(timer);
+    let ti = 0;
+    timer = setInterval(()=>{ ti++;
+      if (ti >= text.length){ clearInterval(timer); timer = null;
+        el.innerHTML = text + ' <span class="cursor">|</span>'; return; }
+      el.innerHTML = text.slice(0,ti) + '<span class="cursor">|</span>';
+    }, 22);
+  }
+  retype("A simple test of fortune. Roll a six to proceed.");
+
+  /* ══ Render loop ══ */
+  (function loop(){
+    renderer.render(scene, camera);
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
+</body>
+</html>

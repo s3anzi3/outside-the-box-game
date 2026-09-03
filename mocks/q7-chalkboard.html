@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.7 The Chalkboard Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  /* Paper extended upward: a 46px header band keeps Q label + pause strictly
+     above the play area on every level */
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px rgba(60,45,20,.18);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink);}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  #board{position:absolute; inset:0; width:100%; height:100%; cursor:default;}
+
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:5; background:rgba(251,248,239,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px rgba(60,45,20,.16);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+</style>
+</head>
+<body>
+
+<h1>Q.7 · The Chalkboard · faithful mock in the current theme</h1>
+<p class="sub">Fully playable from Level7.ts: 33 chalk letters (exactly 13 F's) on a green board, a pink eraser on the desk you can pick up and drag, and four answer buttons. The trick: the correct answer is whichever button matches the number of F's STILL VISIBLE on the board. 13 isn't an option, so you must erase your way to 8, 11, or all the way to 0. "15" is never correct.</p>
+
+<div class="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box"></div>
+
+  <div class="paper">
+    <span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum">Q.7</div>
+      <div class="pause"><i></i><i></i></div>
+    </div>
+    <div class="play">
+      <canvas id="board"></canvas>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom">
+    <div class="bot-examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* Letter layout transcribed from Level7.ts — 33 letters, 13 F's */
+  const LETTERS=[
+    ['F',.08,.14,28],['E',.18,.10,24],['F',.28,.18,30],['T',.39,.12,26],['P',.50,.17,25],
+    ['I',.60,.11,27],['F',.71,.16,29],['L',.82,.13,24],['E',.92,.18,26],
+    ['F',.06,.33,31],['T',.16,.28,25],['F',.28,.36,27],['E',.39,.30,28],['F',.51,.35,30],
+    ['P',.62,.29,24],['I',.73,.34,26],['T',.84,.31,28],['F',.94,.37,22],
+    ['E',.10,.52,27],['L',.21,.48,25],['F',.34,.55,29],['P',.45,.50,26],['I',.56,.57,28],
+    ['F',.67,.49,24],['E',.78,.54,30],['T',.89,.51,25],
+    ['F',.12,.72,32],['L',.25,.68,26],['F',.38,.75,28],['E',.52,.70,27],['F',.65,.76,30],
+    ['P',.77,.69,24],['F',.89,.74,26],
+  ];
+  const BOARD_FRAC=0.72, ERASER_W=52, ERASER_H=22, ERASE_PAD=14;
+
+  const cvs=document.getElementById('board');
+  const paper=cvs.parentElement;
+  const ctx=cvs.getContext('2d');
+  function resize(){ cvs.width=paper.clientWidth; cvs.height=paper.clientHeight; draw(); }
+
+  let lives=3, solved=false;
+  let ex=-1, ey=-1, dragging=false;
+  const erased=new Set();
+  let mx=0,my=0, mdown=false;
+  let btnRects=[];
+
+  cvs.addEventListener('mousemove',e=>{
+    const r=cvs.getBoundingClientRect(); mx=e.clientX-r.left; my=e.clientY-r.top;
+    if(mdown) dragStep();
+    cvs.style.cursor = (!dragging && nearEraser()) ? 'grab' : 'default';
+    draw();
+  });
+  cvs.addEventListener('mousedown',e=>{ mdown=true; dragStep(); draw(); });
+  window.addEventListener('mouseup',e=>{
+    if(!dragging && mdown) clickButtons();
+    mdown=false; dragging=false; draw();
+  });
+
+  function nearEraser(){
+    const d=Math.hypot(mx-(ex+ERASER_W/2), my-(ey+ERASER_H/2));
+    return d<55;
+  }
+  function dragStep(){
+    if(nearEraser()||dragging){
+      dragging=true;
+      ex=mx-ERASER_W/2; ey=my-ERASER_H/2;
+      const w=cvs.width, bh=cvs.height*BOARD_FRAC;
+      LETTERS.forEach((l,i)=>{
+        if(erased.has(i)) return;
+        const lx=l[1]*w, ly=l[2]*bh;
+        if(lx>=ex-ERASE_PAD && lx<=ex+ERASER_W+ERASE_PAD &&
+           ly>=ey-ERASE_PAD && ly<=ey+ERASER_H+ERASE_PAD) erased.add(i);
+      });
+    }
+  }
+  function remainingFs(){ return LETTERS.filter((l,i)=>l[0]==='F'&&!erased.has(i)).length; }
+
+  function clickButtons(){
+    if(solved) return;
+    for(const b of btnRects){
+      if(mx>=b.x&&mx<=b.x+b.w&&my>=b.y&&my<=b.y+b.h){
+        if(parseInt(b.opt)===remainingFs()){
+          solved=true; slam('CORRECT',true);
+          setTimeout(()=>alert('Chime! → advances to Q.8 (The Stranger)'),400);
+        } else { slam('INCORRECT',false);
+          if(lives>0){ lives--;
+            document.getElementById('heartRow').children[lives].classList.add('lost'); } }
+        return;
+      }
+    }
+  }
+  function slam(text, ok){
+    const st=document.getElementById('stamp');
+    st.className='stamp'+(ok?' pass':''); void st.offsetWidth; st.classList.add('show');
+    st.firstChild.textContent=text;
+  }
+
+  function draw(){
+    const w=cvs.width, h=cvs.height;
+    const bh=h*BOARD_FRAC, deskY=bh, deskH=h-bh;
+    if(ex<0){ ex=w*0.14; ey=deskY+deskH*0.28; }
+    ctx.clearRect(0,0,w,h);
+
+    /* chalkboard */
+    ctx.fillStyle='#1b3320'; ctx.fillRect(0,0,w,bh);
+    ctx.strokeStyle='#5a3a14'; ctx.lineWidth=14; ctx.strokeRect(0,0,w,bh);
+    ctx.fillStyle='#5a3a14'; ctx.fillRect(0,bh-14,w,14);
+
+    /* letters */
+    LETTERS.forEach((l,i)=>{
+      if(erased.has(i)) return;
+      const alpha=0.72+(i%5)*0.04;
+      ctx.fillStyle=`rgba(225,218,200,${alpha})`;
+      ctx.font=`bold ${l[3]}px serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(l[0], l[1]*w, l[2]*bh);
+    });
+    /* smudges */
+    if(erased.size>0){
+      ctx.fillStyle='rgba(200,200,180,0.06)';
+      erased.forEach(i=>{
+        const l=LETTERS[i];
+        ctx.fillRect(l[1]*w-20, l[2]*bh-16, 40, 32);
+      });
+    }
+
+    /* desk */
+    ctx.fillStyle='#6b4226'; ctx.fillRect(0,deskY,w,deskH);
+    ctx.fillStyle='#8b5c30'; ctx.fillRect(0,deskY,w,5);
+
+    /* books */
+    const bookX=w*0.76, bookBaseY=deskY+deskH*0.55;
+    [['#8b2222',56,14],['#224488',52,14],['#1a5c1a',58,13]].forEach((bk,b)=>{
+      ctx.fillStyle=bk[0];
+      ctx.fillRect(bookX, bookBaseY-b*(bk[2]+1), bk[1], bk[2]);
+      ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.lineWidth=1;
+      ctx.strokeRect(bookX, bookBaseY-b*(bk[2]+1), bk[1], bk[2]);
+    });
+    /* pencil */
+    const penX=w*0.88, penY=deskY+deskH*0.25;
+    ctx.fillStyle='#e8c844'; ctx.fillRect(penX,penY,8,58);
+    ctx.fillStyle='#cc4444'; ctx.fillRect(penX,penY+50,8,8);
+    ctx.fillStyle='#f5d5a0';
+    ctx.beginPath(); ctx.moveTo(penX,penY+58); ctx.lineTo(penX+4,penY+68); ctx.lineTo(penX+8,penY+58); ctx.fill();
+
+    /* answer buttons */
+    const options=['8','11','15','0'];
+    const btnW=w*0.145, btnH2=deskH*0.40, gap=w*0.028;
+    const totalBW=btnW*4+gap*3, startX=(w-totalBW)/2, btnY=deskY+deskH*0.50;
+    btnRects=[];
+    options.forEach((opt,i)=>{
+      const bx=startX+i*(btnW+gap);
+      ctx.fillStyle='#e8e0cc'; ctx.fillRect(bx,btnY,btnW,btnH2);
+      ctx.strokeStyle='#5a3a14'; ctx.lineWidth=1.5; ctx.strokeRect(bx,btnY,btnW,btnH2);
+      ctx.fillStyle='#2a1a08'; ctx.font='bold 22px Georgia,serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(opt, bx+btnW/2, btnY+btnH2/2);
+      btnRects.push({x:bx,y:btnY,w:btnW,h:btnH2,opt});
+    });
+
+    /* eraser */
+    ctx.fillStyle='#f0b8b8'; ctx.fillRect(ex,ey,ERASER_W,ERASER_H);
+    ctx.strokeStyle='#cc8888'; ctx.lineWidth=1.5; ctx.strokeRect(ex,ey,ERASER_W,ERASER_H);
+    ctx.strokeStyle='rgba(200,120,120,0.5)'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(ex+10,ey); ctx.lineTo(ex+10,ey+ERASER_H);
+    ctx.moveTo(ex+20,ey); ctx.lineTo(ex+20,ey+ERASER_H);
+    ctx.stroke();
+  }
+  resize(); window.addEventListener('resize',resize);
+
+  const FULL="I think we are counting something here?";
+  let ti=0; const el=document.getElementById('remarks');
+  const t=setInterval(()=>{ ti++;
+    if(ti>=FULL.length){ clearInterval(t); el.innerHTML=FULL+' <span class="cursor">|</span>'; return; }
+    el.innerHTML=FULL.slice(0,ti)+'<span class="cursor">|</span>';
+  },22);
+</script>
+</body>
+</html>

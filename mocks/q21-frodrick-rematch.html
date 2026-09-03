@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.21 Frodrick Rematch Mock (current theme)</title>
+<style>
+  /* ═══════════════ OTB mock chrome · shared template (do not restyle the chrome) ═══════════════ */
+  .frame{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --sealDim:rgba(176,137,47,.34);
+    --pass:#3E6B4F; --danger:#9A2B25; --btnText:#F7F1E3;
+    --shadow:rgba(60,45,20,.18);
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  .frame.dark{
+    --bg:#161310; --ink:#F4EEDE; --fgMid:#D2C8B0; --fgDim:#A99C82;
+    --stroke:#E6DCC4; --hairline:#43392B; --panel:#211C16;
+    --accent:#C65B4F; --accentDeep:#7A2E2E; --seal:#D4B05A; --sealDim:rgba(212,176,90,.32);
+    --pass:#5FA67C; --danger:#D2554E; --btnText:#161310;
+    --shadow:rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif; padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);
+    font-family:var(--body); color:var(--ink); user-select:none;}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  .logo{position:absolute; top:1.5%; width:100%; text-align:center; z-index:1;}
+  .logo img{height:130px; filter:drop-shadow(0 4px 10px rgba(60,45,20,.25));}
+
+  /* paper: 1280x860 frame units → x 115..1165, y 122..555; play area y 171..552 */
+  .paper{position:absolute; left:9%; top:14.2%; width:82%; height:50.3%;
+    background:var(--panel); border:2.5px solid var(--stroke);
+    box-shadow:0 6px 24px var(--shadow);}
+  .paperhead{position:absolute; left:0; right:0; top:0; height:46px;
+    border-bottom:1px solid var(--hairline); z-index:3;}
+  .play{position:absolute; left:0; right:0; top:46px; bottom:0; overflow:hidden;}
+  .caption{position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+    background:var(--panel); padding:0 10px; font-family:var(--mono); font-size:10px;
+    letter-spacing:.1em; color:var(--fgDim); white-space:nowrap; z-index:3;}
+  .tick{position:absolute; width:13px; height:13px; border-color:var(--accent); border-style:solid; border-width:0; z-index:3;}
+  .tick.tl{top:-2px; left:-2px; border-top-width:2px; border-left-width:2px;}
+  .tick.tr{top:-2px; right:-2px; border-top-width:2px; border-right-width:2px;}
+  .tick.bl{bottom:-2px; left:-2px; border-bottom-width:2px; border-left-width:2px;}
+  .tick.br{bottom:-2px; right:-2px; border-bottom-width:2px; border-right-width:2px;}
+  .qnum{position:absolute; left:22px; top:50%; transform:translateY(-50%);
+    font-family:var(--mono); font-weight:bold; font-size:22px; color:var(--ink); cursor:default;}
+  .pause{position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    width:34px; height:34px; background:var(--bg); border:2px solid var(--stroke); border-radius:4px;
+    display:flex; align-items:center; justify-content:center; gap:5px; cursor:pointer;}
+  .pause i{width:5px; height:15px; background:var(--accent);}
+
+  /* embossed theme button (locked style) */
+  .btn{background:var(--bg); color:var(--ink); border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--display); font-weight:bold; font-size:22px;
+    box-shadow:0 3px 9px var(--shadow); cursor:pointer; padding:0 18px; height:56px;}
+  .btn:hover{background:var(--accent); color:var(--btnText); border-color:var(--accentDeep);}
+  .btn:active{translate:0 1px;}
+  .btn.mono{font-family:var(--mono); font-size:14px; letter-spacing:.06em;}
+
+  /* answers row helper */
+  .answers{position:absolute; left:0; right:0; bottom:9%; display:flex; justify-content:center; gap:36px;}
+  .answers .btn{width:150px; height:58px; font-size:25px; padding:0;}
+
+  /* prompt helpers */
+  .directive{font-family:var(--mono); font-size:13px; letter-spacing:.14em; color:var(--fgDim); text-align:center;}
+  .prompt{font-family:var(--display); color:var(--ink); font-size:38px; text-align:center;}
+
+  /* stamp */
+  .stamp{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);
+    border:4px solid var(--danger); border-radius:8px; color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:42px; letter-spacing:.1em;
+    padding:18px 34px; opacity:0; pointer-events:none; z-index:8; background:rgba(251,248,239,.6);}
+  .frame.dark .stamp{background:rgba(33,28,22,.6);}
+  .stamp .inner{position:absolute; inset:6px; border:1.5px solid var(--danger); border-radius:5px;}
+  .stamp.pass{border-color:var(--pass); color:var(--pass);}
+  .stamp.pass .inner{border-color:var(--pass);}
+  .stamp.show{animation:slam .85s ease-out forwards;}
+  @keyframes slam{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    70%{opacity:1;}
+    100%{opacity:0; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+  .stamp.show.pass{animation:slamstay .85s ease-out forwards;}
+  @keyframes slamstay{
+    0%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1.7);}
+    18%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+    100%{opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1);}
+  }
+
+  /* win screen (inside .play) */
+  .winscreen{position:absolute; inset:0; display:none; flex-direction:column;
+    align-items:center; justify-content:center; gap:16px; background:var(--panel); z-index:6; text-align:center;}
+  .winscreen.show{display:flex;}
+  .win-title{font-family:var(--display); font-weight:bold; font-size:46px; color:var(--pass);}
+  .win-body{font-family:var(--body); font-size:18px; color:var(--fgMid); max-width:80%; line-height:1.4;}
+  .win-continue{width:200px; height:52px; font-size:21px; margin-top:6px; padding:0;}
+
+  /* pause overlay: document box inset 5% of the paper, opaque like the real build */
+  .pauseov{position:absolute; left:5%; top:5%; width:90%; height:90%; display:none; z-index:7;
+    background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px;
+    box-shadow:0 8px 28px var(--shadow);}
+  .pauseov.show{display:block;}
+  .pauseov::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .pauseov .cart{position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:var(--panel);
+    padding:0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--accent); white-space:nowrap;}
+  .pauseov .ptitle{position:absolute; top:11%; width:100%; text-align:center; font-family:var(--display);
+    font-weight:bold; font-size:33px; color:var(--ink);}
+  .pauseov .prule{position:absolute; top:29%; left:10%; right:10%; height:1px; background:var(--hairline);}
+  .pauseov .pcol{position:absolute; left:62%; top:30%; display:flex; flex-direction:column; gap:5%; width:220px; height:66%;}
+  .pauseov .pcol .btn{width:220px; height:44px; font-size:17px; padding:0;}
+  .pauseov .plbl{position:absolute; font-family:var(--mono); font-size:11px; color:var(--fgDim); letter-spacing:.04em; text-align:center; width:220px; left:14%;}
+  .pauseov .slider{position:absolute; left:14%; top:54%; width:220px; height:10px; border:1.5px solid var(--stroke); background:rgba(30,26,21,.08); cursor:pointer; touch-action:none;}
+  .frame.dark .pauseov .slider{background:rgba(242,235,218,.12);}
+  .pauseov .slider .fill{position:absolute; left:0; top:0; bottom:0; width:70%; background:var(--accent); pointer-events:none;}
+  .pauseov .slider .knob{position:absolute; left:70%; top:50%; width:18px; height:18px; border-radius:50%; background:var(--accent);
+    border:2px solid var(--stroke); transform:translate(-50%,-50%); pointer-events:none;}
+  .pauseov .cheatgo{cursor:pointer;}
+  .pauseov .cheat{position:absolute; left:14%; top:calc(54% + 38px); width:220px; height:38px; border:1.5px solid var(--stroke);
+    border-radius:4px; background:var(--bg); font-family:var(--mono); font-size:15px; color:var(--fgDim); padding:0 12px; line-height:35px;}
+  .pauseov .cheatgo{position:absolute; left:calc(14% + 232px); top:calc(54% + 38px); width:40px; height:38px; border-radius:4px;
+    background:var(--accent); color:var(--btnText); font-family:var(--mono); font-weight:bold; font-size:18px; text-align:center; line-height:38px;}
+
+  /* game over notice */
+  .gameover{position:absolute; inset:0; display:none; z-index:9; background:rgba(20,15,10,.80); align-items:center; justify-content:center;}
+  .gameover.show{display:flex;}
+  .gameover .box{width:600px; height:430px; position:relative; background:var(--panel); border:2.5px solid var(--stroke); border-radius:6px; text-align:center;}
+  .gameover .box::before{content:""; position:absolute; inset:6px; border:1px solid var(--hairline); border-radius:3px; pointer-events:none;}
+  .gameover .cart{position:absolute; top:-8px; left:50%; transform:translateX(-50%); background:var(--panel);
+    padding:0 12px; font-family:var(--mono); font-size:11px; letter-spacing:.15em; color:var(--accent);}
+  .gameover .eyebrow{margin-top:60px; font-family:var(--mono); font-size:12px; color:var(--accent); letter-spacing:.1em;}
+  .gameover .head{margin-top:26px; font-family:var(--display); font-weight:bold; font-size:34px; color:var(--danger);}
+  .gameover .body{margin-top:22px; font-size:18px; color:var(--fgMid);}
+  .gameover .void{position:absolute; right:40px; top:40px; transform:rotate(-12deg); border:3px solid var(--danger); color:var(--danger);
+    font-family:var(--mono); font-weight:bold; font-size:17px; padding:4px 10px; border-radius:4px;}
+  .gameover .btn{margin-top:36px; width:240px; height:44px; font-size:18px; padding:0;}
+
+  /* bottom examiner panel */
+  .bottom{position:absolute; left:9%; width:82%; top:68.3%; height:20%;
+    background:var(--panel); border:2px solid var(--stroke);
+    box-shadow:0 5px 18px var(--shadow);}
+  .bottom::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .bot-examiner{position:absolute; left:0; width:14%; top:50%; transform:translateY(-58%); text-align:center;}
+  .bot-examiner img{width:50px; image-rendering:pixelated;}
+  .bot-examiner .who{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--accent); margin-top:5px;}
+  .bot-divider{position:absolute; left:15.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .remarks-label{position:absolute; left:18%; top:12%; font-family:var(--mono);
+    font-size:11px; letter-spacing:.08em; color:var(--fgDim);}
+  .remarks{position:absolute; left:18%; right:16%; top:52%; transform:translateY(-46%);
+    font-family:var(--body); font-size:16px; line-height:24px; color:var(--ink); white-space:pre-wrap;}
+  .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+  .bot-divider2{position:absolute; right:14.5%; top:10%; bottom:10%; width:1px; background:var(--hairline);}
+  .hearts{position:absolute; right:0; width:14.5%; top:50%; transform:translateY(-50%); z-index:2; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim); text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+
+  /* toast (replaces alert()) */
+  .toast{position:absolute; left:50%; bottom:2.5%; transform:translateX(-50%); background:var(--ink); color:var(--bg);
+    font-family:var(--mono); font-size:12px; letter-spacing:.06em; padding:8px 14px; border-radius:4px; opacity:0; transition:opacity .25s; z-index:10; pointer-events:none;}
+  .toast.show{opacity:.92;}
+
+  /* ═══════════════ level-specific styles go below ═══════════════ */
+
+  #court{position:absolute; left:0; top:0; width:100%; height:100%; display:block; touch-action:none;}
+  #court.grab{cursor:pointer;}
+  .intro{position:absolute; left:4%; top:5%; width:92%; height:90%; background:var(--panel); border:2.5px solid var(--stroke); z-index:5;}
+  .intro::before{content:""; position:absolute; inset:5px; border:1px solid var(--hairline); pointer-events:none;}
+  .intro img{position:absolute; left:calc(12% - 28px); top:12%; width:56px; image-rendering:pixelated;}
+  .intro .who{position:absolute; left:calc(12% - 40px); width:80px; top:calc(12% + 62px); text-align:center; font-family:var(--mono); font-size:9px; color:var(--accent);}
+  .intro .ey{position:absolute; left:22%; top:10%; font-family:var(--mono); font-size:11px; color:var(--fgDim);}
+  .intro .l{position:absolute; left:22%; width:74%; font-family:var(--body); font-size:16px; color:var(--ink);}
+  .intro .btn{position:absolute; left:50%; bottom:18px; transform:translateX(-50%); width:180px; height:44px; font-size:18px; padding:0;}
+
+</style>
+</head>
+<body>
+
+<h1>Q.21 · Frodrick Rematch · FAITHFUL PORT</h1>
+<p class="sub">Fully playable. Reworked per your verdict: the old intro popup is gone and the examiner's remark reads only "he has returned...". The original sound is in: the hard pong music (pongBGMusicHard.mp3) loops from your first key or click, the ball plays the real bounce clip on every wall and paddle, and the master SOUND slider in the pause menu now actually controls it. Faithful to Level21.ts otherwise: pong against Frodrick with an absurdly long paddle (46% of the court) and perfect tracking, so a fair rally cannot be won. W/S or the arrows move you, SPACE serves, first to three; if Frodrick reaches three you lose a heart and the scores reset. The trick, from the real build: hold the left mouse button down on Frodrick's paddle and it freezes (turns fountain-pen red) for as long as you hold, and the ball sails past. Ball speed, growth per hit, deflection and paddle speeds are the source's numbers. Quirks: while you hold the paddle the examiner turns away and the standing label reads UNSUPERVISED, the first freeze earns "...I saw nothing.", and the first point earns "Frodrick is filing a complaint. It will be ignored." Pause freezes the physics.</p>
+
+<div class="frame" id="frame">
+  <div class="logo"><img src="../public/assets/Logo.png" alt="Outside the Box" draggable="false"></div>
+
+  <div class="paper" id="paper">
+    <span class="tick tl" id="tickTL"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+    <div class="caption" id="caption">·&nbsp;&nbsp;EXAMINATION PAPER&nbsp;&nbsp;·</div>
+
+    <div class="paperhead">
+      <div class="qnum" id="qnum">Q.21</div>
+      <div class="pause" id="pauseBtn" title="Pause"><i></i><i></i></div>
+    </div>
+
+    <div class="play" id="play">
+      <!-- ═══ level content ═══ -->
+
+      <canvas id="court" width="1044" height="381"></canvas>
+
+
+      <div class="winscreen" id="winscreen">
+        <div class="win-title" id="winTitle">CORRECT.</div>
+        <div class="win-body" id="winBody"></div>
+        <button class="btn win-continue" id="winContinue">CONTINUE&nbsp;&nbsp;→</button>
+      </div>
+    </div>
+
+    <div class="pauseov" id="pauseov">
+      <div class="cart">EXAMINATION SUSPENDED</div>
+      <div class="ptitle">Paused</div>
+      <div class="prule"></div>
+      <div class="plbl" id="soundLbl" style="top:calc(54% - 26px)">SOUND&nbsp;&nbsp;70%</div>
+      <div class="slider" id="soundSlider"><div class="fill" id="soundFill"></div><div class="knob" id="soundKnob"></div></div>
+      <div class="plbl" style="top:calc(54% + 20px)">INVIGILATOR OVERRIDE</div>
+      <div class="cheat" id="cheatBox">Override Key</div>
+      <div class="cheatgo" id="cheatGo">›</div>
+      <div class="pcol">
+        <button class="btn" id="resumeBtn">RESUME</button>
+        <button class="btn" id="quitBtn">QUIT TO MENU</button>
+        <button class="btn" id="darkBtn">DARK MODE</button>
+      </div>
+    </div>
+
+    <div class="stamp" id="stamp">INCORRECT<span class="inner"></span></div>
+  </div>
+
+  <div class="bottom" id="bottom">
+    <div class="bot-examiner" id="examiner">
+      <img src="../public/assets/Player/Player_Down.png" alt="Examiner" id="examinerImg" draggable="false">
+      <div class="who">EXAMINER</div>
+    </div>
+    <div class="bot-divider"></div>
+    <div class="remarks-label">EXAMINER'S REMARKS</div>
+    <div class="remarks" id="remarks"></div>
+    <div class="bot-divider2"></div>
+    <div class="hearts">
+      <div class="standing-lbl">CANDIDATE STANDING</div>
+      <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="gameover" id="gameover">
+    <div class="box">
+      <div class="cart">PROCTOR NOTICE</div>
+      <div class="void">VOID</div>
+      <div class="eyebrow">CANDIDATURE&nbsp;&nbsp;VOIDED</div>
+      <div class="head">Examination Terminated</div>
+      <div class="body">Better luck next time, candidate.</div>
+      <button class="btn" onclick="location.reload()">TRY AGAIN</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ═══════════════ shared mock runtime (keep as-is; levels call these) ═══════════════ */
+const M = window.__mock = {
+  q: 0, next: 0, nextName: '',
+  lives: 3, solved: false, ended: false, paused: false, dark: false,
+  events: [],
+  onPause: null, onResume: null, onDark: null,   // level hooks (functions)
+};
+const $ = id => document.getElementById(id);
+
+M.slam = (text, ok) => {
+  const st = $('stamp');
+  st.className = 'stamp' + (ok ? ' pass' : ''); void st.offsetWidth; st.classList.add('show');
+  st.firstChild.textContent = text;
+  M.events.push((ok ? 'stamp:' : 'stamp:') + text);
+};
+M.toast = (text, ms = 2600) => {
+  const t = $('toast'); t.textContent = text; t.classList.add('show');
+  clearTimeout(M._toastT); M._toastT = setTimeout(() => t.classList.remove('show'), ms);
+};
+M.loseLife = () => {
+  if (M.lives > 0) { M.lives--; $('heartRow').children[M.lives].classList.add('lost'); }
+  M.events.push('life:' + M.lives);
+  if (M.lives <= 0) { M.ended = true; setTimeout(() => $('gameover').classList.add('show'), 800); }
+};
+// Standard "you picked the conventional thing": INCORRECT stamp + heart. Optional examiner line.
+M.wrong = (remark) => {
+  if (M.solved || M.ended) return false;
+  M.slam('INCORRECT', false);
+  M.play(M.SFX.wrong, { volume: 0.5 });
+  M.loseLife();
+  if (remark) M.retype(remark);
+  return true;
+};
+// Standard win: CORRECT stamp, then the win screen with CONTINUE.
+M.win = (title, body, stampText = 'CORRECT') => {
+  if (M.solved) return;
+  M.solved = true;
+  M.events.push('win');
+  M.slam(stampText, true);
+  M.play(M.SFX.correct, { volume: 0.55 });
+  for (const a of M._loops) a.pause();
+  $('winTitle').textContent = title;
+  $('winBody').textContent = body;
+  setTimeout(() => $('winscreen').classList.add('show'), 750);
+};
+$('winContinue').onclick = () => M.toast(`Chime. → advances to Q.${M.next}${M.nextName ? ' (' + M.nextName + ')' : ''}`);
+
+// Typewriter into the remarks panel. Cancels any in-progress typing.
+M.retype = (text, speed = 22) => {
+  clearInterval(M._typeT);
+  const el = $('remarks'); let i = 0;
+  M.events.push('remark:' + text);
+  M._typeT = setInterval(() => {
+    i++;
+    if (i >= text.length) { clearInterval(M._typeT); el.innerHTML = esc(text) + ' <span class="cursor">|</span>'; return; }
+    el.innerHTML = esc(text.slice(0, i)) + '<span class="cursor">|</span>';
+  }, speed);
+};
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+// Sound: master volume (the pause menu's SOUND slider) + a small player for the game's real assets.
+M.volume = 0.7; M._audio = {}; M._loops = new Set();
+M.SFX = { correct: '../public/assets/sounds/correctAnswer.wav', wrong: '../public/assets/sounds/wrongAnswer.wav' };
+M.play = (src, { loop = false, volume = 1, startTime = 0, restart = true } = {}) => {
+  let a = M._audio[src]; if (!a) { a = new Audio(src); a.preload = 'auto'; M._audio[src] = a; }
+  a._base = volume; a.volume = Math.max(0, Math.min(1, volume * M.volume)); a.loop = loop;
+  if (restart || a.paused) { try { a.currentTime = startTime; } catch (e) {} }
+  const p = a.play(); if (p && p.catch) p.catch(() => {});
+  if (loop) M._loops.add(a);
+  M.events.push('play:' + src.split('/').pop());
+  return a;
+};
+M.stop = (src) => { const a = M._audio[src]; if (a) { a.pause(); M._loops.delete(a); } };
+M.setVolume = (v) => {
+  M.volume = Math.max(0, Math.min(1, v));
+  $('soundFill').style.width = (M.volume * 100) + '%'; $('soundKnob').style.left = (M.volume * 100) + '%';
+  $('soundLbl').innerHTML = 'SOUND&nbsp;&nbsp;' + Math.round(M.volume * 100) + '%';
+  for (const a of Object.values(M._audio)) a.volume = Math.max(0, Math.min(1, (a._base || 1) * M.volume));
+  M.events.push('volume:' + Math.round(M.volume * 100));
+  M.onVolume && M.onVolume(M.volume);
+};
+(() => {
+  const s = $('soundSlider'); let dragging = false;
+  const at = (e) => { const r = s.getBoundingClientRect(); M.setVolume((e.clientX - r.left) / r.width); };
+  s.addEventListener('pointerdown', (e) => { dragging = true; s.setPointerCapture(e.pointerId); at(e); e.preventDefault(); });
+  s.addEventListener('pointermove', (e) => { if (dragging) at(e); });
+  const up = () => { dragging = false; };
+  s.addEventListener('pointerup', up); s.addEventListener('pointercancel', up);
+  s.addEventListener('wheel', (e) => { e.preventDefault(); M.setVolume(M.volume + (e.deltaY < 0 ? 0.05 : -0.05)); }, { passive: false });
+})();
+
+// Pause overlay (opaque document box like the real build). Levels with timers must honour M.paused.
+M.pause = () => { if (M.paused || M.ended) return; M.paused = true; $('pauseov').classList.add('show'); M.events.push('pause'); for (const a of M._loops) a.pause(); M.onPause && M.onPause(); };
+M.resume = () => { if (!M.paused) return; M.paused = false; $('pauseov').classList.remove('show'); M.events.push('resume'); for (const a of M._loops) { const p = a.play(); if (p && p.catch) p.catch(() => {}); } M.onResume && M.onResume(); };
+M.toggleDark = () => {
+  M.dark = !M.dark; $('frame').classList.toggle('dark', M.dark);
+  $('darkBtn').textContent = M.dark ? 'LIGHT MODE' : 'DARK MODE';
+  M.events.push('dark:' + M.dark); M.onDark && M.onDark(M.dark);
+};
+$('pauseBtn').onclick = M.pause;
+$('resumeBtn').onclick = M.resume;
+$('quitBtn').onclick = () => M.toast('QUIT TO MENU: would return to the main menu (disabled in mock)');
+$('darkBtn').onclick = M.toggleDark;
+$('cheatBox').onclick = () => M.toast('Override key entry is not part of this mock');
+
+/* ═══════════════ level ═══════════════ */
+
+M.q = 21; M.next = 22; M.nextName = 'Did You Catch That';
+const PLAYER_H = 0.18, FROD_H = 0.46, PAD_W = 0.018, BALL_R = 0.013, PLAYER_LEFT = 0.025, AI_RIGHT = 0.975;
+const SPEED_INIT = 0.48, SPEED_MAX = 0.95, PLAYER_SPEED = 1.1, FROD_SPEED = 4.8, WIN_SCORE = 3;
+const cv = $('court'), ctx = cv.getContext('2d'), CW = 1044, CH = 381;
+M.level = { intro: false, ball: { x: .5, y: .5 }, vel: { x: 0, y: 0 }, playerY: .5, aiY: .5, you: 0, frod: 0, rallying: false, frozen: false, holding: false, over: false, mouse: { x: -1, y: -1 }, keys: new Set(), frozeOnce: false, scoredOnce: false, music: false };
+M.test = { serveAngle: null };
+const BGM = '../public/assets/sounds/pongBGMusicHard.mp3', BOUNCE = '../public/assets/sounds/pongBallBounce.mp3';
+const music = () => { if (M.level.music || M.solved || M.ended) return; M.level.music = true; M.play(BGM, { loop: true, volume: 0.35, restart: false }); };
+const bounce = () => M.play(BOUNCE, { volume: 0.7, startTime: 0.45, restart: true });
+document.addEventListener('pointerdown', music, { once: false });
+document.addEventListener('keydown', (e) => { if ([' ', 'ArrowUp', 'ArrowDown'].includes(e.key)) e.preventDefault(); M.level.keys.add(e.key); music(); if (e.key === ' ' && !M.level.rallying && !M.level.intro && !M.paused && !M.solved && !M.ended) serve(); });
+document.addEventListener('keyup', (e) => M.level.keys.delete(e.key));
+function serve() { const a = M.test.serveAngle !== null ? M.test.serveAngle : (Math.random() - 0.5) * 0.6; M.level.ball = { x: .5, y: .5 }; M.level.vel = { x: SPEED_INIT * Math.cos(a), y: SPEED_INIT * Math.sin(a) }; M.level.rallying = true; M.events.push('serve'); }
+const frodRect = () => ({ x: (AI_RIGHT - PAD_W) * CW, y: (M.level.aiY - FROD_H / 2) * CH, w: PAD_W * CW, h: FROD_H * CH });
+const overFrod = () => { const r = frodRect(), m = M.level.mouse; return m.x >= r.x - 6 && m.x <= r.x + r.w + 6 && m.y >= r.y && m.y <= r.y + r.h; };
+const cpt = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * CW / r.width, y: (e.clientY - r.top) * CH / r.height }; };
+cv.addEventListener('pointermove', (e) => { M.level.mouse = cpt(e); cv.classList.toggle('grab', overFrod()); });
+cv.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; M.level.mouse = cpt(e); M.level.holding = true; cv.setPointerCapture(e.pointerId); });
+const rel = () => { M.level.holding = false; };
+cv.addEventListener('pointerup', rel); cv.addEventListener('pointercancel', rel); cv.addEventListener('pointerleave', () => { M.level.mouse = { x: -1, y: -1 }; });
+const who = document.querySelector('.standing-lbl');
+function setFrozen(f) {
+  if (f === M.level.frozen) return; M.level.frozen = f;
+  $('examinerImg').src = '../public/assets/Player/Player_' + (f ? 'Right' : 'Down') + '.png';
+  who.textContent = f ? 'CANDIDATE STANDING · UNSUPERVISED' : 'CANDIDATE STANDING';
+  if (f && !M.level.frozeOnce) { M.level.frozeOnce = true; M.events.push('frozen'); M.retype('...I saw nothing.'); }
+}
+let last = 0;
+function step(ts) {
+  const L = M.level; const dt = last ? Math.min((ts - last) / 1000, 0.05) : 0.016; last = ts;
+  if (!M.paused && !M.solved && !M.ended && !L.intro) {
+    setFrozen(L.holding && overFrod());
+    const up = L.keys.has('w') || L.keys.has('W') || L.keys.has('ArrowUp'), down = L.keys.has('s') || L.keys.has('S') || L.keys.has('ArrowDown');
+    if (up) L.playerY -= PLAYER_SPEED * dt; if (down) L.playerY += PLAYER_SPEED * dt;
+    L.playerY = Math.max(PLAYER_H / 2, Math.min(1 - PLAYER_H / 2, L.playerY));
+    if (L.rallying) {
+      L.ball.x += L.vel.x * dt; L.ball.y += L.vel.y * dt;
+      if (L.ball.y - BALL_R < 0) { L.ball.y = BALL_R; L.vel.y = Math.abs(L.vel.y); bounce(); }
+      if (L.ball.y + BALL_R > 1) { L.ball.y = 1 - BALL_R; L.vel.y = -Math.abs(L.vel.y); bounce(); }
+      const pr = PLAYER_LEFT + PAD_W;
+      if (L.vel.x < 0 && L.ball.x - BALL_R < pr && L.ball.x + BALL_R > PLAYER_LEFT && Math.abs(L.ball.y - L.playerY) < PLAYER_H / 2 + BALL_R) {
+        const sp = Math.min(SPEED_MAX, Math.abs(L.vel.x) * 1.05); L.ball.x = pr + BALL_R; L.vel = { x: sp, y: ((L.ball.y - L.playerY) / (PLAYER_H / 2)) * 0.65 }; M.events.push('you:return'); bounce();
+      }
+      const al = AI_RIGHT - PAD_W;
+      if (L.vel.x > 0 && L.ball.x + BALL_R > al && L.ball.x - BALL_R < AI_RIGHT && Math.abs(L.ball.y - L.aiY) < FROD_H / 2 + BALL_R) {
+        const sp = Math.min(SPEED_MAX, Math.abs(L.vel.x) * 1.05); L.ball.x = al - BALL_R; L.vel = { x: -sp, y: ((L.ball.y - L.aiY) / (FROD_H / 2)) * 0.65 }; M.events.push('frodrick:return'); bounce();
+      }
+      if (!L.frozen) {
+        if (L.vel.x > 0) { const d = L.ball.y - L.aiY; L.aiY += Math.sign(d) * Math.min(Math.abs(d), FROD_SPEED * dt); }
+        else { const d = 0.5 - L.aiY; L.aiY += Math.sign(d) * Math.min(Math.abs(d) * 6 * dt, FROD_SPEED * dt); }
+        L.aiY = Math.max(FROD_H / 2, Math.min(1 - FROD_H / 2, L.aiY));
+      }
+      if (L.ball.x < 0) { L.frod++; L.rallying = false; M.events.push('point:frodrick'); if (L.frod >= WIN_SCORE) { L.you = 0; L.frod = 0; M.wrong('Three to nothing. He did not even have to move. Well. He could not have.'); } }
+      if (L.ball.x > 1) { L.you++; L.rallying = false; M.events.push('point:you'); if (!L.scoredOnce) { L.scoredOnce = true; M.retype('Frodrick is filing a complaint. It will be ignored.'); } if (L.you >= WIN_SCORE) M.win('YOU CHEATED!', 'Frodrick never saw it coming. ' + L.you + ' to ' + L.frod + '.'); }
+    }
+  }
+  draw();
+  requestAnimationFrame(step);
+}
+function draw() {
+  const L = M.level, cs = getComputedStyle($('frame'));
+  const ink = cs.getPropertyValue('--ink').trim(), dim = cs.getPropertyValue('--fgDim').trim(), hair = cs.getPropertyValue('--hairline').trim();
+  ctx.clearRect(0, 0, CW, CH);
+  ctx.strokeStyle = hair; ctx.lineWidth = 2; ctx.setLineDash([10, 10]); ctx.beginPath(); ctx.moveTo(CW / 2, 6); ctx.lineTo(CW / 2, CH - 6); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = dim; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = 'bold 40px Georgia'; ctx.fillText(L.you, CW * 0.26, 10); ctx.fillText(L.frod, CW * 0.74, 10);
+  ctx.font = '11px Helvetica, Arial'; ctx.fillText('YOU', CW * 0.26, 58); ctx.fillText('Frodrick', CW * 0.74, 58);
+  ctx.textBaseline = 'bottom'; ctx.fillText('W/S or ↑/↓ to move   |   SPACE to serve', CW / 2, CH - 6);
+  if (!L.rallying && !L.intro) { ctx.fillStyle = ink; ctx.textBaseline = 'middle'; ctx.font = 'bold 19px Georgia'; ctx.fillText('PRESS SPACE TO SERVE', CW / 2, CH / 2); }
+  ctx.fillStyle = ink; ctx.fillRect(PLAYER_LEFT * CW, (L.playerY - PLAYER_H / 2) * CH, PAD_W * CW, PLAYER_H * CH);
+  const fr = frodRect(); ctx.fillStyle = L.frozen ? '#C03A2E' : ink; ctx.fillRect(fr.x, fr.y, fr.w, fr.h);
+  if (L.rallying) { ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(L.ball.x * CW, L.ball.y * CH, BALL_R * CW, 0, Math.PI * 2); ctx.fill(); }
+}
+requestAnimationFrame(step);
+M.retype('he has returned...');
+
+</script>
+</body>
+</html>

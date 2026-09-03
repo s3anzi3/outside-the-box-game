@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OtB · Q.8 The Stranger Mock (current theme)</title>
+<style>
+  :root{
+    --bg:#F2EBDA; --ink:#1E1A15; --fgMid:#473E32; --fgDim:#6E6150;
+    --stroke:#26201A; --hairline:#CBBF9F; --panel:#FBF8EF;
+    --accent:#7A2E2E; --accentDeep:#5A2222; --seal:#B0892F; --pass:#3E6B4F; --danger:#9A2B25;
+    --display:Georgia,"Times New Roman",Cambria,serif;
+    --body:"Helvetica Neue","Segoe UI",Helvetica,Arial,sans-serif;
+    --mono:"Courier New",Courier,monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:#141210; color:#e8e2d2; font-family:var(--body); padding:30px 40px 90px;}
+  h1{font-size:20px; font-weight:600;}
+  .sub{color:#9c937e; font-size:14px; margin:6px 0 22px; max-width:860px; line-height:1.5;}
+
+  .frame{width:1280px; max-width:100%; height:860px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:10px; box-shadow:0 24px 60px rgba(0,0,0,.55);}
+  .frame::after{content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse 90% 80% at 50% 45%, rgba(0,0,0,0) 55%, rgba(92,70,38,.10) 100%);}
+
+  /* NO logo. NO pause. NO paper. The exam has simply... stopped. */
+
+  .scene{position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;}
+
+  .row{display:flex; align-items:center; justify-content:center; gap:56px;}
+  .beggar{width:320px; flex-shrink:0;}
+  .beggar img{width:100%; filter:drop-shadow(0 8px 18px rgba(60,45,20,.35));}
+
+  /* Comic speech bubble: big rounded cloud with a tail pointing up at the speaker */
+  .dialog{position:relative; width:800px; max-width:80%;
+    background:var(--panel); border:3px solid var(--stroke); border-radius:38px;
+    padding:42px 58px 36px; text-align:center;
+    box-shadow:0 10px 30px rgba(60,45,20,.25); margin-top:18px;}
+  /* Tail now points LEFT at the beggar beside the bubble */
+  .tail{position:absolute; left:-46px; top:40%; transform:rotate(-90deg) scale(1.3);}
+  .nameplate{position:absolute; top:-16px; left:44px;
+    background:var(--ink); color:#F7F1E3; font-family:var(--mono); font-size:14px;
+    letter-spacing:.22em; padding:6px 26px; border-radius:999px;}
+  .dialog .plea{font-weight:bold; font-size:24px; color:var(--ink); margin-bottom:18px;}
+  .dialog .lines{font-size:20px; line-height:30px; color:var(--ink); font-weight:500;
+    white-space:pre-line; min-height:240px;}
+  .dialog .cursor{display:inline-block; animation:blink 1.06s steps(1) infinite;}
+  @keyframes blink{50%{opacity:0}}
+
+  .choices{display:flex; gap:48px; margin-top:44px; opacity:0; transition:opacity .4s;}
+  .choices.show{opacity:1;}
+  .choice{width:240px; height:68px; background:var(--panel); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:8px;
+    font-family:var(--body); font-weight:bold; font-size:19px;
+    box-shadow:0 3px 9px rgba(60,45,20,.2); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;}
+  .choice:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+  .choice .hp{width:44px; height:40px;}
+  .choice .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .choice:hover .hp path{fill:#F7F1E3; stroke:#F7F1E3;}
+
+  /* Scammed phase — same centered dialogue structure */
+  .scammed{display:none; flex-direction:column; align-items:center;}
+  .scammed.show{display:flex;}
+  .scammed .act{font-style:italic; font-size:19px; color:var(--fgDim); margin-bottom:26px;}
+  .otb-btn{margin-top:40px; width:200px; height:56px; background:var(--bg); color:var(--ink);
+    border:2px solid var(--stroke); border-radius:6px;
+    font-family:var(--body); font-weight:bold; font-size:20px; letter-spacing:.03em;
+    box-shadow:0 3px 9px rgba(60,45,20,.22); cursor:pointer;}
+  .otb-btn:hover{background:var(--accent); color:#F7F1E3; border-color:var(--accentDeep);}
+  .scammed .quote{font-family:var(--display); font-weight:bold; font-size:30px; color:var(--ink); margin-bottom:20px;}
+  .scammed .lines{min-height:190px;}
+
+  /* No remarks panel — this interruption is off the record. Just the hearts, floating. */
+  .hearts{position:absolute; right:4%; bottom:5%; text-align:center;}
+  .standing-lbl{font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:var(--fgDim);
+    text-align:center; margin-bottom:8px;}
+  .heart-row{display:flex; gap:8px; justify-content:center;}
+  .hp{width:32px; height:29px; filter:drop-shadow(0 2px 3px rgba(60,45,20,.25));}
+  .hp path{fill:var(--accent); stroke:var(--accentDeep); stroke-width:1.5;}
+  .hp.lost path{fill:none; stroke:var(--hairline); stroke-width:2;}
+
+  .examiner-spr{width:150px; flex-shrink:0; text-align:center;}
+  .examiner-spr img{width:116px; image-rendering:pixelated;
+    filter:drop-shadow(0 8px 18px rgba(60,45,20,.35));}
+</style>
+</head>
+<body>
+
+<h1>Q.8 · The Stranger · out-of-nowhere interruption</h1>
+<p class="sub">Fully playable, both phases. The exam chrome is gone completely: no logo, no pause, no paper, no Q number, and no examiner's remarks panel. Just a stranger, centered, with an RPG-style dialogue box that types itself out; only the hearts float in the corner. If you get scammed, the Examiner himself steps in for the follow-up bubble to call you gullible.</p>
+
+<div class="frame">
+  <div class="scene">
+    <div id="stranger" style="display:flex; flex-direction:column; align-items:center;">
+      <div class="row">
+        <div class="beggar"><img src="../assets/beggar.png" alt="The stranger"></div>
+        <div class="dialog">
+          <svg class="tail" width="58" height="28" viewBox="0 0 58 28">
+            <path d="M8 28 Q20 22 26 3 Q33 18 50 28 Z" fill="#FBF8EF" stroke="#26201A" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="6" y="24" width="46" height="4" fill="#FBF8EF"/>
+          </svg>
+          <div class="nameplate">??????</div>
+          <div class="plea">Please… I'm begging you.</div>
+          <div class="lines" id="speech"></div>
+        </div>
+      </div>
+      <div class="choices" id="choices">
+        <button class="choice" onclick="giveHeart()" title="Give Heart">
+          <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        </button>
+        <button class="choice" onclick="coldChoice()">Let a CHILD Die</button>
+      </div>
+    </div>
+
+    <div class="scammed" id="scammed">
+      <div class="act">*The man runs off with your heart*</div>
+      <div class="row">
+        <div class="examiner-spr"><img src="../assets/Player/Player_Down.png" alt="The Examiner"></div>
+        <div class="dialog">
+          <svg class="tail" width="58" height="28" viewBox="0 0 58 28">
+            <path d="M8 28 Q20 22 26 3 Q33 18 50 28 Z" fill="#FBF8EF" stroke="#26201A" stroke-width="3" stroke-linejoin="round"/>
+            <rect x="6" y="24" width="46" height="4" fill="#FBF8EF"/>
+          </svg>
+          <div class="nameplate">EXAMINER</div>
+          <div class="quote">"Gullible, are ya?"</div>
+          <div class="lines" id="scamspeech"></div>
+        </div>
+      </div>
+      <button class="otb-btn" onclick="alert('→ advances to Q.9 (Calculus)')">CONTINUE</button>
+    </div>
+  </div>
+
+  <div class="hearts">
+    <div class="standing-lbl">CANDIDATE STANDING</div>
+    <div class="heart-row" id="heartRow">
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+        <svg class="hp" viewBox="0 0 32 29"><path d="M16 27.5 C8.5 20.5 1.5 15.2 1.5 8.6 C1.5 4.3 4.8 1.5 8.4 1.5 C11.7 1.5 14.4 3.4 16 6 C17.6 3.4 20.3 1.5 23.6 1.5 C27.2 1.5 30.5 4.3 30.5 8.6 C30.5 15.2 23.5 20.5 16 27.5 Z"/></svg>
+      </div>
+  </div>
+</div>
+
+<script>
+  let lives=3;
+  const SPEECH=`My daughter needs a heart transplant.
+Without it, she won't survive the week.
+
+I'll give you 3 level skips in exchange
+for just one of your hearts.
+
+You have plenty to spare.
+She has nothing.`;
+
+  /* Dialogue types out; choices appear when he finishes */
+  let si=0;
+  const sp=document.getElementById('speech');
+  const styper=setInterval(()=>{ si++;
+    if(si>=SPEECH.length){ clearInterval(styper);
+      sp.textContent=SPEECH;
+      document.getElementById('choices').classList.add('show');
+      return; }
+    sp.innerHTML=SPEECH.slice(0,si)+'<span class="cursor">|</span>';
+  },20);
+
+  function giveHeart(){
+    if(lives>0){ lives--;
+      document.getElementById('heartRow').children[lives].classList.add('lost'); }
+    document.getElementById('stranger').style.display='none';
+    document.getElementById('scammed').classList.add('show');
+    const MSG=`Did you even see a child with him?
+He will probably sell it on the dark web or something.
+
+What's even worse is I think he had a Tatum Jersey on.
+Imagine he buys Celtics tickets with the money?
+
+What a waste!`;
+    let mi=0; const ms=document.getElementById('scamspeech');
+    const mt=setInterval(()=>{ mi++;
+      if(mi>=MSG.length){ clearInterval(mt); ms.textContent=MSG; return; }
+      ms.innerHTML=MSG.slice(0,mi)+'<span class="cursor">|</span>';
+    },14);
+  }
+  function coldChoice(){
+    alert('Chime! You kept your heart. → advances to Q.9 (Calculus)');
+  }
+
+</script>
+</body>
+</html>
