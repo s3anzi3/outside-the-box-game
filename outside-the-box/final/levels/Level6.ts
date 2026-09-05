@@ -2,6 +2,7 @@ import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { drawButton }  from '../renderer';
+import { drawWinScreen } from './lateralHelpers';
 import Vec2            from '../../../Wolfie2D/DataTypes/Vec2';
 import StateMachine    from '../../../Wolfie2D/DataTypes/State/StateMachine';
 import State           from '../../../Wolfie2D/DataTypes/State/State';
@@ -175,20 +176,8 @@ export const drawLevel6 = (gc: GameContext) => {
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === "win") {
     cancelAnimationFrame(animId6);
-    if (state.winChimeFor !== 6) { state.winChimeFor = 6; gc.sounds.ui("chime"); }
-    ctx.fillStyle    = t.pass;
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.font         = `bold 44px ${displayFont}`;
-    ctx.fillText("YOU WIN!", cx, oy + ch * 0.34);
-    ctx.font      = `24px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    ctx.fillText(`${playerScore}  —  ${aiScore}`, cx, oy + ch * 0.50);
-    drawButton(gc, "CONTINUE  →", cx - 100, oy + ch * 0.65, 200, 48, () => {
-      state.currentLevel  = 7;
-      state.levelSubPhase = "";
-      gc.render();
-    });
+    drawWinScreen(gc, `MATCH POINT.  ${playerScore} – ${aiScore}`,
+      "Frodrick plays by patterns. You did not.", 7);
     return;
   }
 

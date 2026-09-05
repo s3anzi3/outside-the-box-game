@@ -2,7 +2,7 @@ import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { drawButton }  from '../renderer';
-import { drawChoice }  from './lateralHelpers';
+import { drawChoice, drawWinScreen } from './lateralHelpers';
 
 export const drawLevel8 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
@@ -24,6 +24,13 @@ export const drawLevel8 = (gc: GameContext) => {
 
   ctx.fillStyle = t.bg;
   ctx.fillRect(panelX, panelY, panelW, panelH);
+
+  // ── PHASE: win ────────────────────────────────────────────────────────────
+  if (phase === "win") {
+    drawWinScreen(gc, "Cold. But correct.",
+      "Nobody who truly needs help asks for your heart. Sympathy is a lever. You did not let it be pulled.", 9);
+    return;
+  }
 
   // ── PHASE: stranger ───────────────────────────────────────────────────────
   if (phase === "stranger") {
@@ -116,9 +123,7 @@ export const drawLevel8 = (gc: GameContext) => {
     // "Let a CHILD Die" — the cold, correct choice
     const childBtnX = btnStartX + btnW + btnGap;
     drawChoice(gc, "Let a CHILD Die", childBtnX, btnY, btnW, btnH, () => {
-      gc.sounds.ui("chime");
-      state.currentLevel  = 9;
-      state.levelSubPhase = "";
+      state.levelSubPhase = "win";
       state.levelTimerEnd = 0;
       gc.render();
     }, { fontSize: 15 });

@@ -1,8 +1,8 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawButton, triggerStamp } from '../renderer';
-import { wrong } from './lateralHelpers';
+import { drawButton } from '../renderer';
+import { wrong, drawWinScreen } from './lateralHelpers';
 
 // ── TOS text ──────────────────────────────────────────────────────────────────
 const TOS_LINES: string[] = [
@@ -582,7 +582,7 @@ export const drawLevel2 = (gc: GameContext) => {
   const cx = topBoxX + topBoxWidth / 2;
 
   // Reset on fresh entry
-  if (state.levelSubPhase !== "active" && state.levelSubPhase !== "won") {
+  if (state.levelSubPhase !== "active" && state.levelSubPhase !== "win") {
     scrollOffset     = 0;
     hasReachedBottom = false;
     state.winChimeFor = -1;
@@ -590,25 +590,9 @@ export const drawLevel2 = (gc: GameContext) => {
   }
 
   // ── Win screen ─────────────────────────────────────────────────────────────
-  if (state.levelSubPhase === "won") {
-    if (state.winChimeFor !== 2) {
-      state.winChimeFor = 2;
-      gc.sounds.ui("chime");
-      triggerStamp(gc, "CORRECT", t.pass);
-    }
-    ctx.fillStyle    = t.fg;
-    ctx.textAlign    = "center";
-    ctx.textBaseline = "middle";
-    ctx.font         = `bold 26px ${displayFont}`;
-    ctx.fillText("Finally, someone who reads the fine print.", cx, topBoxY + topBoxHeight * 0.36);
-    ctx.font      = `20px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    ctx.fillText("HR is weeping with joy.", cx, topBoxY + topBoxHeight * 0.50);
-    drawButton(gc, "CONTINUE  →", cx - 100, topBoxY + topBoxHeight * 0.66, 200, 48, () => {
-      state.currentLevel  = 3;
-      state.levelSubPhase = "";
-      gc.render();
-    });
+  if (state.levelSubPhase === "win") {
+    drawWinScreen(gc, "Finally, someone who reads the fine print.",
+      "Most people sign whatever they are handed. You read what you were signing.", 3);
     return;
   }
 
@@ -745,7 +729,7 @@ export const drawLevel2 = (gc: GameContext) => {
       if (hasReachedBottom) {
         scrollOffset     = 0;
         hasReachedBottom = false;
-        state.levelSubPhase = "won";
+        state.levelSubPhase = "win";
         gc.render();
       } else {
         wrong(gc);

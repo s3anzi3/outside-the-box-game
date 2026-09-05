@@ -2,7 +2,7 @@ import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { roundRect }   from '../renderer';
-import { wrong }       from './lateralHelpers';
+import { wrong, drawWinScreen } from './lateralHelpers';
 
 const BTN_W  = 240;
 const BTN_H  = Math.round(BTN_W * (215 / 1060));
@@ -30,6 +30,13 @@ export const drawLevel5 = (gc: GameContext) => {
   const { ctx, state, displayFont } = gc;
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t = getTheme(state);
+
+  if (state.levelSubPhase === "win") {
+    cancelAnimationFrame(animId5);
+    drawWinScreen(gc, "AROUND IT.",
+      "A button that runs does not want to be pressed. You stopped chasing and looked elsewhere.", 6);
+    return;
+  }
 
   // Initialise button at centre on fresh entry
   if (state.levelSubPhase !== "active") {
@@ -130,10 +137,8 @@ export const drawLevel5 = (gc: GameContext) => {
     noCursor: true,
     action: () => {
       cancelAnimationFrame(animId5);
-      gc.sounds.ui("chime");
       resetBtn();
-      state.currentLevel  = 6;
-      state.levelSubPhase = "";
+      state.levelSubPhase = "win";
       state.levelTimerEnd = 0;
       gc.render();
     },

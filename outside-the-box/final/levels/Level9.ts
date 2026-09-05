@@ -1,13 +1,20 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawChoice, wrong } from './lateralHelpers';
+import { drawChoice, wrong, drawWinScreen } from './lateralHelpers';
 
 export const drawLevel9 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
   const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t  = getTheme(state);
   const cx = w / 2;
+
+  if (state.levelSubPhase === "win") {
+    gc.afterPanel = undefined;
+    drawWinScreen(gc, "SHOW ALL WORK.",
+      "Every option was wrong on purpose. When none of the answers fit, question the question.", 10);
+    return;
+  }
 
   // Integral: (x-1)^2 from 1 to 4
   // Answer is 9 via u-sub: [(x-1)^3 / 3] from 1 to 4 = 27/3 - 0 = 9
@@ -77,9 +84,7 @@ export const drawLevel9 = (gc: GameContext) => {
       x: r.x, y: r.y, w: r.w, h: r.h,
       noCursor: true,
       action: () => {
-        g.sounds.ui("chime");
-        state.currentLevel  = 10;
-        state.levelSubPhase = "";
+        state.levelSubPhase = "win";
         state.levelTimerEnd = 0;
         g.render();
       },

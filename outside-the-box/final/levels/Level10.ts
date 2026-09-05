@@ -2,6 +2,7 @@ import { GameContext }  from '../types';
 import { getTheme }     from '../theme';
 import { getLayout }    from '../layout';
 import { drawButton }   from '../renderer';
+import { drawWinScreen } from './lateralHelpers';
 import Vec2             from '../../../Wolfie2D/DataTypes/Vec2';
 import AABB             from '../../../Wolfie2D/DataTypes/Shapes/AABB';
 import StateMachine     from '../../../Wolfie2D/DataTypes/State/StateMachine';
@@ -223,20 +224,8 @@ export const drawLevel10 = (gc: GameContext) => {
   // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === 'win') {
     cancelAnimationFrame(animId10);
-    if (state.winChimeFor !== 10) { state.winChimeFor = 10; gc.sounds.ui('chime'); }
-    ctx.fillStyle    = t.pass;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 44px ${displayFont}`;
-    ctx.fillText('EXIT FOUND!', cx, topBoxY + topBoxHeight * 0.34);
-    ctx.font      = `20px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    ctx.fillText('You navigated the maze.', cx, topBoxY + topBoxHeight * 0.50);
-    drawButton(gc, 'CONTINUE  →', cx - 100, topBoxY + topBoxHeight * 0.65, 200, 48, () => {
-      state.currentLevel  = 11;
-      state.levelSubPhase = '';
-      gc.render();
-    });
+    drawWinScreen(gc, 'EXIT FOUND.',
+      'Every wall you hit sent you back to the start. You kept the map in your head anyway.', 11);
     return;
   }
 

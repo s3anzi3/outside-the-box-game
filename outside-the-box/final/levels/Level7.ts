@@ -2,7 +2,7 @@ import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { uiScale }     from '../renderer';
-import { wrong }       from './lateralHelpers';
+import { wrong, drawWinScreen } from './lateralHelpers';
 
 // ── Letter layout (33 letters, exactly 13 F's) ────────────────────────────────
 // cx/cy are normalised 0-1 within the chalkboard area
@@ -45,6 +45,12 @@ export const drawLevel7 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
   const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t = getTheme(state);
+
+  if (state.levelSubPhase === "win") {
+    drawWinScreen(gc, "COUNTED CORRECTLY.",
+      "The question changed the moment you touched it. You counted what was there, not what was printed.", 8);
+    return;
+  }
 
   // Reset on fresh entry
   if (state.levelSubPhase !== "active") {
@@ -212,9 +218,7 @@ export const drawLevel7 = (gc: GameContext) => {
           if (parseInt(opt) === remainingFs) {
             // Correct — answer matches actual visible F count
             eraserX = -1; erasedSet.clear(); isDragging = false;
-            gc.sounds.ui("chime");
-            state.currentLevel  = 8;
-            state.levelSubPhase = "";
+            state.levelSubPhase = "win";
             gc.render();
           } else {
             wrong(gc);

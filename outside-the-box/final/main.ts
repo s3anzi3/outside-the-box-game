@@ -752,10 +752,10 @@ window.onload = () => {
         }
         gc.state.playerName = gc.state.nameInput.trim() || "Box";
         gc.state.nameFocused = false;
-        gc.state.currentLevel = 2;
         if (gc.state.playMode === "play" && gc.state.examStartTime === 0) {
           gc.state.examStartTime = performance.now();
         }
+        gc.state.levelSubPhase = "win";
         gc.render();
         return;
       }

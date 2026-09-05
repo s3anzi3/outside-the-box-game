@@ -2,6 +2,7 @@ import { GameContext } from "../types";
 import { getTheme } from "../theme";
 import { getLayout } from "../layout";
 import { drawButton, roundRect, uiScale } from "../renderer";
+import { drawWinScreen } from "./lateralHelpers";
 
 export const drawNameEntry = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont, monoFont } = gc;
@@ -9,6 +10,12 @@ export const drawNameEntry = (gc: GameContext) => {
   const cx = topBoxX + topBoxWidth / 2;
   const t = getTheme(state);
   const s = uiScale(ctx);
+
+  if (state.levelSubPhase === "win") {
+    drawWinScreen(gc, "REGISTERED.",
+      "The first answer you gave this exam was your own name. Hold on to it. The exam will try to take it.", 2);
+    return;
+  }
 
   // eyebrow
   ctx.fillStyle = t.accent;
@@ -73,10 +80,10 @@ export const drawNameEntry = (gc: GameContext) => {
   drawButton(gc, "CONFIRM →", cx - confirmW / 2, topBoxY + topBoxHeight * 0.62, confirmW, confirmH, () => {
     state.playerName = state.nameInput.trim() || "Box";
     state.nameFocused = false;
-    state.currentLevel = 2;
     if (state.playMode === "play" && state.examStartTime === 0) {
       state.examStartTime = performance.now();
     }
+    state.levelSubPhase = "win";
     gc.render();
   }, 20);
 };

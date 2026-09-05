@@ -2,13 +2,19 @@ import { GameContext } from "../types";
 import { getTheme } from "../theme";
 import { getLayout } from "../layout";
 import { getGuideTextMetrics, roundRect, uiScale } from "../renderer";
-import { wrong } from "./lateralHelpers";
+import { wrong, drawWinScreen } from "./lateralHelpers";
 
 export const drawLevel3 = (gc: GameContext) => {
   const { ctx, state, displayFont, bodyFont } = gc;
   const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const cx = w / 2;
   const t = getTheme(state);
+
+  if (state.levelSubPhase === "win") {
+    drawWinScreen(gc, "FOUND IT.",
+      "They told you what to click, not where. You stopped looking where you were expected to.", 4);
+    return;
+  }
 
   // 2×2 grid of decoy options — all wrong
   const cols  = 2;
@@ -95,8 +101,7 @@ export const drawLevel3 = (gc: GameContext) => {
     w: hitR * 2,
     h: hitR * 2,
     action: () => {
-      gc.sounds.ui("chime");
-      state.currentLevel = 4;
+      state.levelSubPhase = "win";
       gc.render();
     },
   });

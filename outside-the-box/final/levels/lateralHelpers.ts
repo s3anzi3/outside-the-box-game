@@ -169,9 +169,21 @@ export const drawWinScreen = (
   ctx.font         = `bold ${Math.round(42 * s)}px ${displayFont}`;
   ctx.fillText(title, cx, topBoxY + topBoxHeight * 0.30, w * 0.7);
 
+  // Subtitle: word-wrapped so a long "lesson learned" line never squashes.
   ctx.font      = `${Math.round(18 * s)}px ${bodyFont}`;
   ctx.fillStyle = t.fgMid;
-  ctx.fillText(subtitle, cx, topBoxY + topBoxHeight * 0.48, w * 0.62);
+  const maxW  = w * 0.62;
+  const lines: string[] = [];
+  let cur = '';
+  for (const word of subtitle.split(' ')) {
+    const next = cur ? `${cur} ${word}` : word;
+    if (ctx.measureText(next).width > maxW && cur) { lines.push(cur); cur = word; }
+    else cur = next;
+  }
+  if (cur) lines.push(cur);
+  const lineH = Math.round(24 * s);
+  const subY  = topBoxY + topBoxHeight * 0.48 - (lines.length - 1) * lineH / 2;
+  lines.forEach((ln, i) => ctx.fillText(ln, cx, subY + i * lineH));
 
   drawButton(gc, 'CONTINUE  →', cx - 110, topBoxY + topBoxHeight * 0.64, 220, Math.max(44, topBoxHeight * 0.13), () => {
     state.currentLevel  = nextLevel;

@@ -2,7 +2,7 @@ import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
 import { roundRect, uiScale } from '../renderer';
-import { wrong }       from './lateralHelpers';
+import { wrong, drawWinScreen } from './lateralHelpers';
 
 const WINDOW_DURATION = 500;  // ms the click window stays open
 
@@ -32,6 +32,13 @@ export const drawLevel4 = (gc: GameContext) => {
   const cx = w / 2;
   const t  = getTheme(state);
   const s  = uiScale(ctx);
+
+  if (state.levelSubPhase === "win") {
+    cancelAnimationFrame(animFrameId4);
+    drawWinScreen(gc, "RIGHT ON TIME.",
+      "Noise is not urgency. You waited for the real window instead of the loud one.", 5);
+    return;
+  }
 
   // Initialise on fresh entry
   if (state.levelSubPhase !== "active") {
@@ -124,10 +131,8 @@ export const drawLevel4 = (gc: GameContext) => {
       x: btnX, y: btnY, w: btnW, h: btnH,
       action: () => {
         cancelAnimationFrame(animFrameId4);
-        gc.sounds.ui("chime");
         state.levelTimerEnd  = 0;
-        state.levelSubPhase  = "";
-        state.currentLevel   = 5;
+        state.levelSubPhase  = "win";
         gc.render();
       },
     });
