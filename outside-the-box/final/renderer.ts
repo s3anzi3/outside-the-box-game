@@ -864,13 +864,14 @@ export const drawCheatsButton = (gc: GameContext) => {
 // Proctor clock, top-right above the paper. Tier colour reflects elapsed time.
 export const drawExamTimer = (gc: GameContext) => {
   const { ctx, state, monoFont } = gc;
-  const { topBoxX, topBoxY, topBoxWidth } = getLayout(ctx);
+  const { paperX, paperY, paperW } = getLayout(ctx);
   const t = getTheme(state);
   const s = uiScale(ctx);
   const btnW = Math.round(108 * s);
   const btnH = Math.round(25 * s);
-  const btnX = topBoxX + topBoxWidth - btnW;
-  const btnY = topBoxY - btnH - 8;
+  // Flush with the paper's right edge, sitting just above the paper's top rule.
+  const btnX = paperX + paperW - btnW;
+  const btnY = paperY - btnH - Math.round(10 * s);
 
   const elapsedMs = performance.now() - state.examStartTime;
   const totalSeconds = Math.floor(elapsedMs / 1000);

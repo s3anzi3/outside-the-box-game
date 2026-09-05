@@ -98,8 +98,10 @@ export const drawLevelSelectBackButton = (gc: GameContext) => {
 
   const btnW = Math.round(topBoxWidth * 0.11);
   const btnH = Math.round(btnW * 0.34);
+  // Top-left corner of the paper, beside the centered heading. The bubble grid
+  // runs to ~94% of the paper height, so the bottom edge has no free room.
   const btnX = topBoxX + Math.round(topBoxWidth * 0.02);
-  const btnY = topBoxY + topBoxHeight - btnH - Math.round(topBoxHeight * 0.035);
+  const btnY = topBoxY + Math.round(topBoxHeight * 0.035);
 
   drawButton(gc, '← BACK', btnX, btnY, btnW, btnH, () => {
     gc.state.currentScreen = 'mainmenu';

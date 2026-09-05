@@ -92,8 +92,12 @@ export const drawLevel4 = (gc: GameContext) => {
   ctx.fillRect(barX + 1, barY + 1, (barW - 2) * fillProgress, barH - 2);
 
   // ── Button ───────────────────────────────────────────────────────────────
-  const btnW = 260;
-  const btnH = 54;
+  // Size the button to its widest label so the text never overflows.
+  const btnFont = `bold ${Math.round(22 * s)}px ${gc.bodyFont}`;
+  ctx.font = btnFont;
+  const labelW = Math.max(ctx.measureText("CLICK ME QUICKLY").width, ctx.measureText("CLICK NOW!").width);
+  const btnW = Math.max(260, Math.round(labelW + 56 * s));
+  const btnH = Math.round(54 * s);
   const btnX = cx - btnW / 2;
   const btnY = topBoxY + topBoxHeight * 0.68;
 
@@ -110,7 +114,7 @@ export const drawLevel4 = (gc: GameContext) => {
   roundRect(ctx, btnX, btnY, btnW, btnH, 6);
   ctx.stroke();
   ctx.fillStyle    = "#F7F1E3";
-  ctx.font         = `bold ${Math.round(22 * s)}px ${gc.bodyFont}`;
+  ctx.font         = btnFont;
   ctx.textAlign    = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(inWindow ? "CLICK NOW!" : "CLICK ME QUICKLY", cx, btnY + btnH / 2);
