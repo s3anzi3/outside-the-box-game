@@ -422,15 +422,15 @@
   }
 
   /* ══ Examiner typewriter, retypable ══ */
-  const el = document.getElementById('remarks');
+  const remarksEl = document.getElementById('remarks');
   let timer = null;
   function retype(text){
     if (timer) clearInterval(timer);
     let ti = 0;
     timer = setInterval(()=>{ ti++;
       if (ti >= text.length){ clearInterval(timer); timer = null;
-        el.innerHTML = text + ' <span class="cursor">|</span>'; return; }
-      el.innerHTML = text.slice(0,ti) + '<span class="cursor">|</span>';
+        remarksEl.innerHTML = text + ' <span class="cursor">|</span>'; return; }
+      remarksEl.innerHTML = text.slice(0,ti) + '<span class="cursor">|</span>';
     }, 22);
   }
   retype("A simple test of fortune. Roll a six to proceed.");

@@ -68,6 +68,81 @@ export const ensureActive = (gc: GameContext) => {
   }
 };
 
+// True exactly once per fresh entry into a level (levelSubPhase was cleared by the
+// level change). Use it to (re)initialise module state, then it flips to 'active'.
+export const freshEntry = (gc: GameContext): boolean => {
+  if (gc.state.levelSubPhase !== 'active' && gc.state.levelSubPhase !== 'win') {
+    gc.state.levelSubPhase = 'active';
+    gc.state.winChimeFor = -1;
+    return true;
+  }
+  return false;
+};
+
+// The examiner says something new: the typewriter re-runs on the new text.
+export const say = (gc: GameContext, ...lines: string[]) => {
+  gc.state.guideLines = lines;
+};
+
+// Is the level allowed to take input right now?
+export const inputOpen = (gc: GameContext) =>
+  !gc.state.paused && !gc.state.controlsOpen && !gc.state.gameOver && !gc.state.cheatsPopupOpen &&
+  gc.state.levelSubPhase === 'active';
+
+export const inRect = (x: number, y: number, r: { x: number; y: number; w: number; h: number } | undefined) =>
+  !!r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+
+// A pause-aware clock for levels: returns seconds elapsed since the level was entered,
+// not counting time spent paused. Call every frame.
+export const levelClock = (gc: GameContext, store: { last: number; elapsed: number }) => {
+  const now = performance.now();
+  const dt = store.last ? Math.min(0.05, (now - store.last) / 1000) : 0;
+  store.last = now;
+  if (!gc.state.paused && !gc.state.controlsOpen && !gc.state.gameOver && gc.state.levelSubPhase === 'active') store.elapsed += dt;
+  return { dt: (gc.state.paused || gc.state.controlsOpen || gc.state.gameOver) ? 0 : dt, elapsed: store.elapsed };
+};
+
+// A form-style text field drawn in the paper: box, placeholder, value, blinking caret.
+export const drawTypeIn = (
+  gc: GameContext, x: number, y: number, w: number, h: number,
+  value: string, focused: boolean, placeholder: string, onClick: () => void,
+  opts: { fontSize?: number; mono?: boolean; center?: boolean } = {},
+) => {
+  const { ctx, state, bodyFont, monoFont } = gc;
+  const t = getTheme(state);
+  const s = uiScale(ctx);
+  roundRect(ctx, x, y, w, h, 5);
+  ctx.fillStyle = t.bg;
+  ctx.fill();
+  ctx.strokeStyle = focused ? t.accent : t.hairline;
+  ctx.lineWidth = focused ? 3 : 1.5;
+  ctx.stroke();
+  const fontPx = Math.round((opts.fontSize ?? 22) * s);
+  ctx.font = `${opts.mono ? '' : 'bold '}${fontPx}px ${opts.mono ? monoFont : bodyFont}`;
+  ctx.textBaseline = 'middle';
+  const text = value.length ? value : (focused ? '' : placeholder);
+  ctx.fillStyle = value.length ? t.ink : t.fgDim;
+  const pad = 16;
+  if (opts.center) {
+    ctx.textAlign = 'center';
+    ctx.fillText(text, x + w / 2, y + h / 2, w - pad * 2);
+    if (focused && state.guideCursor) {
+      const tw = Math.min(ctx.measureText(value).width, w - pad * 2);
+      ctx.fillStyle = t.ink;
+      ctx.fillRect(x + w / 2 + tw / 2 + 2, y + h * 0.22, 2, h * 0.56);
+    }
+  } else {
+    ctx.textAlign = 'left';
+    ctx.fillText(text, x + pad, y + h / 2, w - pad * 2);
+    if (focused && state.guideCursor) {
+      const tw = Math.min(ctx.measureText(value).width, w - pad * 2);
+      ctx.fillStyle = t.ink;
+      ctx.fillRect(x + pad + tw + 2, y + h * 0.22, 2, h * 0.56);
+    }
+  }
+  gc.hitAreas.push({ x, y, w, h, action: onClick, noCursor: true });
+};
+
 // Shared win splash with a CONTINUE button that advances to nextLevel.
 export const drawWinScreen = (
   gc: GameContext,

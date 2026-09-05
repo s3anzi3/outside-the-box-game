@@ -33,6 +33,7 @@
       }
 
       #game-canvas,
+      #die-canvas,
       #text-canvas,
       #debug-canvas {
         position: absolute;
@@ -41,8 +42,14 @@
         display: block;
       }
 
+      #die-canvas,
+      #text-canvas,
       #debug-canvas {
         pointer-events: none;
+      }
+
+      #die-canvas {
+        display: none;
       }
     </style>
   </head>
@@ -50,6 +57,7 @@
     <div id="main">
       <div id="game-window">
         <canvas id="game-canvas"></canvas>
+        <canvas id="die-canvas"></canvas>
         <canvas id="text-canvas"></canvas>
         <canvas id="debug-canvas"></canvas>
       </div>

@@ -1,60 +1,78 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawChoice, wrong, ensureActive, drawWinScreen } from './lateralHelpers';
+import { uiScale }     from '../renderer';
+import { drawChoice, wrong, freshEntry, drawWinScreen, say, inputOpen } from './lateralHelpers';
 
-// ── Q30 — Halfway Checkpoint ──────────────────────────────────────────────────
-// The midpoint of the exam. A breather and a callback: back on Q16 the Exam Guide
-// quietly told you to pick BLUE. Were you listening? Rewards memory + pays off the
-// "guide is on your side" thread before Act IV destabilizes the exam.
+// ── Q30 — Checkpoint (callback to Q16: the examiner leaked BLUE) ──────────────
+// Calm level. Joke: the typewriter starts to say the answer, backspaces, covers.
 
-const CORRECT = 'BLUE';
-const OPTIONS: { label: string; fill: string; text: string }[] = [
-  { label: 'RED',    fill: '#c63b3b', text: '#ffffff' },
-  { label: 'BLUE',   fill: '#3b6fc6', text: '#ffffff' },
-  { label: 'GREEN',  fill: '#39a05a', text: '#ffffff' },
-  { label: 'YELLOW', fill: '#d9b62e', text: '#1a1a1a' },
-];
+const INK: Record<string, string> = { RED: '#C03A2E', BLUE: '#2E6BA8', GREEN: '#3F8F55', YELLOW: '#D8A81F' };
+const A = 'Checkpoint. Past the halfway mark of your certification. Quick: were you actually listening to me earlier? The answer is BLU';
+const CUT = 'The answer is BLU'.length;
+const B = 'Corporate says I am not allowed to say it twice.';
+
+let slip30 = { phase: 0, i: 0, next: 0 };
 
 export const drawLevel30 = (gc: GameContext) => {
-  const { ctx, state, displayFont, bodyFont } = gc;
-  const { w, topBoxY, topBoxHeight, topBoxWidth } = getLayout(ctx);
+  const { ctx, state, displayFont, monoFont } = gc;
+  const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t  = getTheme(state);
+  const s  = uiScale(ctx);
   const cx = w / 2;
 
   if (state.levelSubPhase === 'win') {
-    drawWinScreen(gc, 'YOU REMEMBERED.', 'Halfway there. Twenty-five questions left — and they get stranger.', 31);
+    drawWinScreen(gc, 'YOU REMEMBERED.', 'Halfway there. Twenty-five questions left, and they get stranger.', 31);
     return;
   }
-  ensureActive(gc);
+  if (freshEntry(gc)) { slip30 = { phase: 0, i: 0, next: 0 }; say(gc, A); }
 
-  // Checkpoint banner
-  ctx.fillStyle    = t.fgDim;
-  ctx.textAlign    = 'center';
-  ctx.textBaseline = 'top';
-  ctx.font         = `bold 13px ${displayFont}`;
-  ctx.fillText('— CHECKPOINT · QUESTION 30 OF 50 —', cx, topBoxY + topBoxHeight * 0.08);
+  // the slip: once the typewriter has revealed the answer, backspace it and cover
+  if (slip30.phase === 0 && state.guideLines && state.guideLines[0] === A && state.guideReveal >= A.length) {
+    slip30 = { phase: 1, i: 0, next: performance.now() + 350 };
+  }
+  if (slip30.phase === 1 && performance.now() >= slip30.next) {
+    slip30.i++;
+    const shown = A.slice(0, A.length - slip30.i);
+    state.guideLines = [shown];
+    state.guideTarget = shown; state.guideReveal = shown.length;   // keep the typewriter from re-running
+    slip30.next = performance.now() + 45;
+    if (slip30.i >= CUT) { slip30.phase = 2; const base = A.slice(0, A.length - CUT); state.guideLines = [base + B]; state.guideTarget = base + B; state.guideReveal = base.length; }
+  }
 
-  ctx.fillStyle = t.fg;
-  ctx.font      = `bold 24px ${displayFont}`;
-  ctx.fillText('Halfway. Let us see if you have been paying attention.', cx, topBoxY + topBoxHeight * 0.18, topBoxWidth * 0.92);
+  // HALFWAY seal
+  const sr = Math.min(topBoxWidth, topBoxHeight) * 0.11;
+  const sx = topBoxX + topBoxWidth - sr - 34 * s, sy = topBoxY + sr + 22 * s;
+  ctx.save();
+  ctx.translate(sx, sy); ctx.rotate(-12 * Math.PI / 180);
+  ctx.strokeStyle = t.seal; ctx.lineWidth = 2.5; ctx.setLineDash([4, 2.4]);
+  ctx.beginPath(); ctx.arc(0, 0, sr, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = state.darkMode ? 'rgba(212,176,90,0.12)' : 'rgba(176,137,47,0.10)';
+  ctx.beginPath(); ctx.arc(0, 0, sr * 0.8, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 1; ctx.stroke();
+  ctx.fillStyle = t.seal; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `bold ${Math.round(sr * 0.24)}px ${monoFont}`; ctx.fillText('HALFWAY', 0, -sr * 0.08);
+  ctx.font = `italic ${Math.round(sr * 0.2)}px ${displayFont}`; ctx.fillText('25 of 50', 0, sr * 0.22);
+  ctx.restore();
 
-  ctx.fillStyle = t.fgMid;
-  ctx.font      = `18px ${bodyFont}`;
-  ctx.fillText('Back on Question 16, I quietly told you which answer to pick.', cx, topBoxY + topBoxHeight * 0.31, topBoxWidth * 0.92);
-  ctx.fillText('Which color was it?', cx, topBoxY + topBoxHeight * 0.39, topBoxWidth * 0.92);
+  ctx.fillStyle = t.fgDim;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = `${Math.round(13 * s)}px ${monoFont}`;
+  ctx.fillText('C H E C K P O I N T   ·   I T E M   3 0   O F   5 0', cx, topBoxY + topBoxHeight * 0.10);
+  ctx.fillStyle = t.ink;
+  ctx.font = `${Math.round(30 * s)}px ${displayFont}`;
+  ctx.fillText('Back at Question 16, I told you which one to pick.', cx, topBoxY + topBoxHeight * 0.28, topBoxWidth * 0.78);
+  ctx.fillText('Which was it?', cx, topBoxY + topBoxHeight * 0.40, topBoxWidth * 0.78);
 
-  const n = OPTIONS.length;
-  const btnW = topBoxWidth * 0.18;
-  const btnH = topBoxHeight * 0.20;
-  const gap  = topBoxWidth * 0.03;
-  const totW = n * btnW + (n - 1) * gap;
-  const startX = cx - totW / 2;
-  const btnY = topBoxY + topBoxHeight * 0.55;
-  OPTIONS.forEach(({ label, fill, text }, i) => {
-    drawChoice(gc, label, startX + i * (btnW + gap), btnY, btnW, btnH, () => {
-      if (label === CORRECT) { state.levelSubPhase = 'win'; gc.render(); }
-      else wrong(gc);
-    }, { fontSize: 20, fill, textColor: text });
+  const labels = ['RED', 'BLUE', 'GREEN', 'YELLOW'];
+  const bw = 160 * s, bh = 60 * s, gap = 36 * s;
+  const totW = labels.length * bw + (labels.length - 1) * gap;
+  const bx0 = cx - totW / 2, by = topBoxY + topBoxHeight * 0.91 - bh;
+  labels.forEach((lab, i) => {
+    drawChoice(gc, lab, bx0 + i * (bw + gap), by, bw, bh, () => {
+      if (!inputOpen(gc)) return;
+      if (lab === 'BLUE') { state.levelSubPhase = 'win'; gc.render(); }
+      else { wrong(gc); say(gc, 'I told you. Between us. The system was glitching.'); }
+    }, { fontSize: 21, fill: INK[lab], textColor: '#F7F1E3' });
   });
 };

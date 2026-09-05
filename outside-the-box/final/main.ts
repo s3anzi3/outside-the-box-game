@@ -11,7 +11,7 @@ import { drawLevel } from "./screens/Level";
 import { drawPauseOverlay } from "./overlays/PauseOverlay";
 import { drawControlsOverlay } from "./overlays/ControlsOverlay";
 import { drawGameOverOverlay } from "./overlays/GameOverOverlay";
-import { getLayout, getMovementLayout } from "./layout";
+import { getLayout, getMovementLayout, setLayoutMode, setPaperExtend } from "./layout";
 import { SoundManager } from "./audio";
 
 import { EventEmitter } from "./Helpers/Events/EventEmitter";
@@ -167,6 +167,8 @@ window.onload = () => {
     wheelDeltaY: 0,
     assetsReady: false,
     assetProgress: 0,
+    dieCanvas: document.getElementById("die-canvas") as HTMLCanvasElement | null,
+    chrome: {},
     sounds: new SoundManager(),
     player,
     blocks: [],
@@ -187,6 +189,7 @@ window.onload = () => {
       return INTRO_LINES;
     }
     if (gc.state.currentScreen === "level") {
+      if (gc.state.guideLines) return gc.state.guideLines;
       return LEVEL_DATA[gc.state.currentLevel - 1]?.lines ?? [];
     }
 
@@ -389,7 +392,30 @@ window.onload = () => {
     gc.render();
   };
 
+  // Per-level chrome overrides live on state; clear them whenever the level or screen changes.
+  const resetLevelChrome = () => {
+    const st = gc.state;
+    st.guideLines = undefined;
+    st.paperCaption = undefined;
+    st.hudHiddenHearts = undefined;
+    st.hudExtraHeart = undefined;
+    st.hudHeartsLabel = undefined;
+    st.pauseDisabled = undefined;
+    st.pauseCheatPlaceholder = undefined;
+    st.pauseCheatDone = undefined;
+    st.pauseCartouche = undefined;
+    gc.pauseIntercept = undefined;
+    gc.pauseCheatHandler = undefined;
+    gc.afterPanel = undefined;
+    gc.afterOverlays = undefined;
+    setPaperExtend(0);
+  };
+
   gc.submitPauseCheat = () => {
+    if (gc.pauseCheatHandler && gc.pauseCheatHandler()) {
+      gc.render();
+      return;
+    }
     if (gc.state.pauseCheatInput !== "SBUOTB") {
       gc.render();
       return;
@@ -426,6 +452,18 @@ window.onload = () => {
 
     // Activate cheats only while the player's name is the cheat code
     gc.state.cheatsEnabled = gc.state.playerName === "380TA";
+
+    // Level/screen change: drop every per-level chrome override and hook.
+    if (gc.state.currentLevel !== previousLevel || gc.state.currentScreen !== previousScreen) {
+      resetLevelChrome();
+      // the WebGL overlay belongs to Q13 only
+      if (gc.dieCanvas && !(gc.state.currentScreen === "level" && gc.state.currentLevel === 13)) gc.dieCanvas.style.display = "none";
+    }
+    // Hooks are re-registered by the level on every draw; chrome rects are rebuilt every frame.
+    gc.afterPanel = undefined;
+    gc.afterOverlays = undefined;
+    gc.chrome = {};
+    setLayoutMode(gc.state.currentScreen === "level" && gc.state.currentLevel !== 8 ? "level" : "plain");
 
     const newTarget = resolveGuideLines().join("\n");
     if (newTarget !== gc.state.guideTarget) {
@@ -547,6 +585,9 @@ window.onload = () => {
       drawLevelSelectBackButton(gc);
     }
 
+    // Level hook: draw over the examiner panel / HUD (before any overlay)
+    if (gc.afterPanel && gc.state.currentScreen === "level") gc.afterPanel(gc);
+
     ctx.restore();
 
     drawFxStamp(gc);
@@ -571,6 +612,8 @@ window.onload = () => {
 
     if (!onCertificate && gc.state.paused) {
       drawPauseOverlay(gc);
+      // Level hook: draw above the suspension notice (Q22 keeps its flashed digits readable)
+      if (gc.afterOverlays && gc.state.currentScreen === "level") gc.afterOverlays(gc);
     }
 
     if (!onCertificate && gc.state.controlsOpen) {
@@ -596,6 +639,7 @@ window.onload = () => {
     const h = window.innerHeight;
     gameCanvas.width = debugCanvas.width = w;
     gameCanvas.height = debugCanvas.height = h;
+    if (gc.dieCanvas) { gc.dieCanvas.width = w; gc.dieCanvas.height = h; gc.dieCanvas.style.width = w + "px"; gc.dieCanvas.style.height = h + "px"; }
     needsMovementReset = true;
   };
 
@@ -646,6 +690,29 @@ window.onload = () => {
   gameCanvas.addEventListener("mouseup", () => {
     gc.mouseDown = false;
   });
+  // Releasing outside the canvas must still end a drag.
+  window.addEventListener("mouseup", () => {
+    gc.mouseDown = false;
+  });
+
+  // Right mouse button: routed to hit areas that declare onRightClick (Q38); the
+  // browser's context menu is suppressed over the exam.
+  gameCanvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    gc.sounds.resumeFx();
+    const { x, y } = toCanvas(e);
+    for (const area of gc.hitAreas) {
+      if (area.onRightClick && x >= area.x && x <= area.x + area.w && y >= area.y && y <= area.y + area.h) {
+        area.onRightClick();
+        gc.render();
+        break;
+      }
+    }
+  });
+
+  // Dev/test hook: lets the Playwright harness read state and jump between items.
+  gc.resolveGuide = resolveGuideLines;
+  (window as unknown as { __gc: GameContext }).__gc = gc;
 
   gameCanvas.addEventListener("wheel", (e) => {
     e.preventDefault();

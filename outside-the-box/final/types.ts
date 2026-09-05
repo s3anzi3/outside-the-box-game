@@ -35,6 +35,17 @@ export interface GameState {
   fxStampColor?:     string;
   fxStampAt?:        number;   // performance.now() when the stamp fired; undefined = none
   winChimeFor?:      number;   // currentLevel the win chime has already played for
+
+  // ── Per-level chrome overrides (all reset automatically on level change) ────
+  guideLines?:       string[]; // replaces LEVEL_DATA remarks when set (typewriter re-runs on change)
+  paperCaption?:     string;   // replaces the "EXAMINATION PAPER" cartouche
+  hudHiddenHearts?:  number[]; // heart indexes drawn as empty slots (Q42: one is on the paper)
+  hudExtraHeart?:    boolean;  // draw a fourth, subtly wrong heart (Q34)
+  hudHeartsLabel?:   string;   // replaces "CANDIDATE STANDING"
+  pauseDisabled?:    boolean;  // the pause control does not pause (Q35 uses it as an instrument)
+  pauseCheatPlaceholder?: string; // placeholder text in the INVIGILATOR OVERRIDE box (Q39)
+  pauseCheatDone?:   boolean;  // the › button has been pressed on this level (Q39)
+  pauseCartouche?:   string;   // replaces "EXAMINATION SUSPENDED" (Q22)
 }
 
 export interface HitArea {
@@ -44,6 +55,25 @@ export interface HitArea {
   h: number;
   action: () => void;
   noCursor?: boolean;   // if true, hovering won't change the cursor to pointer
+  onRightClick?: () => void;   // optional right-mouse action (Q38)
+}
+
+export interface Rect { x: number; y: number; w: number; h: number; }
+
+// Rectangles of the shared chrome, refreshed every frame by the renderer so levels
+// can point at, glow, or hit-test the furniture (logo, item label, pause, examiner, hearts).
+export interface ChromeRects {
+  logo?: Rect;
+  bulb?: Rect;         // the lightbulb inside the logo image
+  qLabel?: Rect;
+  pause?: Rect;
+  paper?: Rect;
+  play?: Rect;
+  examiner?: Rect;
+  remarks?: Rect;      // the remarks text block (speechX, startY, speechW, height)
+  heartsRow?: Rect;
+  hearts?: Rect[];
+  caption?: Rect;
 }
 
 export interface BlockEntity {
@@ -175,4 +205,16 @@ export interface GameContext {
   timeLeftSeconds: number;
   assetsReady:     boolean;   // false until image assets have finished fetching
   assetProgress:   number;    // 0..1 fraction of image assets loaded
+
+  // A transparent WebGL canvas layered above the 2D game canvas (pointer-events: none).
+  // Hidden unless a level shows it (Q13's three.js die). Sized with the game canvas.
+  dieCanvas:       HTMLCanvasElement | null;
+
+  // ── Level hooks (cleared at the start of every render; a level re-registers per draw) ──
+  chrome:          ChromeRects;
+  afterPanel?:     (gc: GameContext) => void;   // draw on top of the examiner panel + HUD, before overlays
+  afterOverlays?:  (gc: GameContext) => void;   // draw on top of the pause overlay (Q22's frozen digits)
+  pauseIntercept?: () => void;                  // called instead of pausing when state.pauseDisabled
+  pauseCheatHandler?: () => boolean;            // returns true if it consumed the › press (Q39)
+  resolveGuide?:   () => string[];              // the examiner lines currently being typed (dev/test hook)
 }

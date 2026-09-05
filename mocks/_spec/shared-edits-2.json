@@ -1,0 +1,132 @@
+{
+ "11": {
+  "lines": [],
+  "hints": [
+   "The bar loads on a stuttering curve and then freezes at 99% forever. Waiting will never finish it.",
+   "About three seconds after it sticks, a RETRY button fades in. It is the trap: it slams INCORRECT, costs a heart and restarts the load at 0%.",
+   "Look at the handle sitting at the edge of the green fill. It turns antique gold once the bar is stuck.",
+   "Press and hold on that handle and drag the last 1% past the right end of the track. Reaching 100% yourself is the answer."
+  ]
+ },
+ "14": {
+  "lines": [
+   "Candidates may not be observed while answering. I will be watching. Every moment."
+  ],
+  "hints": [
+   "The ANSWER button is the trap: it always fails and always costs a heart, no matter how long you wait.",
+   "The proctor's eye on the paper follows your cursor, and PROCTOR STATUS: WATCHING never changes on its own.",
+   "The third rebuke leaks it: 'You cannot escape observation in this room. ...In this window, anyway.'",
+   "So actually leave the room: switch tabs, click another window, or minimise the game for about four seconds.",
+   "Come back and the paper has been stamped in your absence (the trap only arms after your first click or mouse move)."
+  ]
+ },
+ "15": {
+  "lines": [
+   "Connect each pair of seals. One unbroken line apiece. Lines must not touch one another."
+  ],
+  "hints": [
+   "Four pairs of coloured seals. One unbroken line per pair, and no line may touch another line or another colour's seal.",
+   "Red's seals sit flush against the left and right paper edges, blue's flush against the top and bottom. Whichever of the two you draw first is an edge-to-edge wall, and the other pair is then trapped inside the sheet. There is no gap to squeeze through.",
+   "The paper is not the boundary. Grab the pristine top-left corner of the sheet and pull: it peels, then tears off, and takes the Q.15 label with it.",
+   "Once the corner is gone, lines may leave the paper. Route the trapped pair off the sheet and around the outside, across the desk, back to its partner."
+  ]
+ },
+ "16": {
+  "lines": [
+   "Pick the right one. ...Look, between us, it's the BLUE one.",
+   "I'm not supposed to help. But the system's glitching, so who's counting."
+  ],
+  "hints": [
+   "The question gives no information, but the Exam Guide's speech does.",
+   "It quietly tells you to pick BLUE.",
+   "Click the blue button."
+  ]
+ },
+ "18": {
+  "lines": [
+   "Simple arithmetic. One plus one.",
+   "...the machine that grades this counts in binary, by the way. Not that it matters."
+  ],
+  "hints": [
+   "The paper has no fine print any more. The only clue is the examiner: the machine grading this counts in binary.",
+   "In binary, 1 + 1 = 10. Typing 2 costs a life.",
+   "Type 10 into the blank and press Enter (or SUBMIT)."
+  ]
+ },
+ "19": {
+  "lines": [
+   "Continue the pattern. It is not what it looks like.",
+   "Say them out loud, candidate."
+  ],
+  "hints": [
+   "O T T F F S S are the first letters of One, Two, Three, Four, Five, Six, Seven.",
+   "The next number is Eight, so the answer is its first letter.",
+   "Type a capital E in the blank and press Enter or SUBMIT.",
+   "A lowercase e, an 8 or the word eight each cost a heart."
+  ]
+ },
+ "21": {
+  "lines": [
+   "he has returned..."
+  ],
+  "hints": [
+   "Frodrick's paddle is 46% of the court and he tracks perfectly. A fair rally cannot be won.",
+   "Hold your LEFT MOUSE BUTTON down on his tall right paddle. It turns fountain-pen red and stops moving.",
+   "Keep holding it, press SPACE, and put three serves past it. First to three."
+  ]
+ },
+ "24": {
+  "lines": [],
+  "hints": [
+   "The answer is 30  (15 + 15 = 30).  Click it and stop.",
+   "Every other button on the page is a decoy: HINT, CALCULATE, EASY MODE ON, SHOW STEPS, SKIP, CONFIRM, CHECK ANSWER, USE CALCULATOR, SUBMIT ALL and SOLVE each cost a life.",
+   "A decoy you have already clicked keeps a graphite TRIED tick, so you can see which pieces of the interface you have believed."
+  ]
+ },
+ "26": {
+  "lines": [
+   "A simple endurance test.",
+   "Click the cookie. One hundred times. Earn it."
+  ],
+  "hints": [
+   "There is no trick here. Click the cookie one hundred times and the item passes.",
+   "Every tenth click takes a bite out of the cookie and drops crumbs on the paper.",
+   "Nothing on this level costs a heart. Only the cookie counts, so pace your wrist."
+  ]
+ },
+ "27": {
+  "lines": [
+   "A riddle to test your wits.",
+   "The answer is the means by which you give it."
+  ],
+  "hints": [
+   "Every answer button on the paper is a decoy, KEYBOARD included, and each one costs a life.",
+   "The riddle's answer is KEYBOARD, but you have to give it the way the riddle asks.",
+   "Type the letters K-E-Y-B-O-A-R-D on your physical keyboard. The level passes on the D.",
+   "Backspace erases a letter and the buffer only keeps your last eight, so a bad start is not fatal."
+  ]
+ },
+ "45": {
+  "lines": [
+   "Just press submit and we can move on.",
+   "...it seems the button has other ideas. Tire it out, then back it into a corner."
+  ],
+  "hints": [
+   "The SUBMIT button flees your cursor (150 px radius) and screams every time you reach for it. Chasing it head-on is the trap.",
+   "It has legs: while the STAMINA meter in the top right of the paper still has green in it, pinning it against an edge only makes it bolt to a fresh spot along the wall.",
+   "Push it around until you have chased it about 2,600 px and the meter reads BUTTON WINDED.",
+   "Now herd it into a corner. It gives up (\"OK OK FINE\") and can finally be clicked."
+  ]
+ },
+ "50": {
+  "lines": [
+   "One final question, candidate. You have earned it.",
+   "Think back to the very beginning."
+  ],
+  "hints": [
+   "The question is: What is your name?",
+   "It wants the name you registered at the very start of the exam, not your real one.",
+   "Type it exactly and press SUBMIT. 'Box' is the default if you never changed it."
+  ]
+ }
+}

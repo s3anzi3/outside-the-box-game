@@ -41,9 +41,9 @@ const withTracking = (ctx: CanvasRenderingContext2D, px: number, fn: () => void)
 // Small inward L-ticks at each corner — the "crop mark" detail of an official form.
 const drawCornerTicks = (
   ctx: CanvasRenderingContext2D,
-  x: number, y: number, w: number, h: number, len: number, color: string,
+  x: number, y: number, w: number, h: number, len: number, color: string, inset = 11,
 ) => {
-  const d = 11;
+  const d = inset;
   ctx.strokeStyle = color;
   ctx.lineWidth = 2;
   const corners: Array<[number, number, number, number]> = [
@@ -467,20 +467,39 @@ export const drawBackground = (gc: GameContext) => {
   }
 };
 
+// The sticker logo (public/assets/Logo.png), centred above the paper the way the
+// locked mocks place it: top 1.5% of the canvas, ~15% of the height tall, a soft
+// drop shadow. Falls back to the typed wordmark until the image is available.
 export const drawLogo = (gc: GameContext) => {
   const { ctx } = gc;
-  const { w, logoY } = getLayout(ctx);
-  drawWordmark(gc, w / 2, logoY - 16, Math.min(1.5, uiScale(ctx)));
+  const { w, h, logoY, paperX, paperW } = getLayout(ctx);
+  if (!gc.logoLoaded || !gc.logo.naturalWidth) {
+    drawWordmark(gc, w / 2, logoY - 16, Math.min(1.5, uiScale(ctx)));
+    return;
+  }
+  const size = Math.round(h * 0.151);
+  const x = Math.round(w / 2 - size / 2);
+  const y = Math.round(h * 0.015);
+  ctx.save();
+  ctx.shadowColor = "rgba(60,45,20,0.25)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 4;
+  ctx.drawImage(gc.logo, x, y, size, size);
+  ctx.restore();
+  gc.chrome.logo = { x, y, w: size, h: size };
+  // the lightbulb sits at ~58% across, ~18% down the square image
+  gc.chrome.bulb = { x: x + size * 0.48, y: y + size * 0.05, w: size * 0.22, h: size * 0.27 };
+  void paperX; void paperW;
 };
 
 // The play-area "examination paper": raised sheet, double rule, corner ticks,
-// and a screen-specific caption set into the top rule.
+// a header band on level screens, and a caption set into the top rule.
 export const drawGameplayFrame = (gc: GameContext) => {
   const { ctx, state, monoFont } = gc;
-  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
+  const { paperX, paperY, paperW, paperH, headerH, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t = getTheme(state);
   const s = uiScale(ctx);
-  const x = topBoxX, y = topBoxY, w = topBoxWidth, h = topBoxHeight;
+  const x = paperX, y = paperY, w = paperW, h = paperH;
 
   ctx.save();
   ctx.shadowColor = state.darkMode ? "rgba(0,0,0,0.5)" : "rgba(60,45,20,0.18)";
@@ -493,15 +512,25 @@ export const drawGameplayFrame = (gc: GameContext) => {
   ctx.strokeStyle = t.stroke;
   ctx.lineWidth = 2.5;
   ctx.strokeRect(x, y, w, h);
-  ctx.strokeStyle = t.hairline;
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x + 6, y + 6, w - 12, h - 12);
-  drawCornerTicks(ctx, x, y, w, h, 13, t.accent);
+  if (headerH > 0) {
+    ctx.strokeStyle = t.hairline;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 1, y + headerH);
+    ctx.lineTo(x + w - 1, y + headerH);
+    ctx.stroke();
+  } else {
+    ctx.strokeStyle = t.hairline;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 6, y + 6, w - 12, h - 12);
+  }
+  // crop-mark ticks on the paper's own corners (the mocks' locked look)
+  drawCornerTicks(ctx, x, y, w, h, 13, t.accent, 0);
 
-  const caption =
-    state.currentScreen === "mainmenu"    ? "·  OFFICIAL EXAMINATION  ·" :
-    state.currentScreen === "levelselect" ? "·  TABLE OF CONTENTS  ·" :
-                                            "·  EXAMINATION PAPER  ·";
+  const caption = state.paperCaption ??
+    (state.currentScreen === "mainmenu"    ? "·  OFFICIAL EXAMINATION  ·" :
+     state.currentScreen === "levelselect" ? "·  TABLE OF CONTENTS  ·" :
+                                             "·  EXAMINATION PAPER  ·");
   ctx.font = `${Math.round(10 * s)}px ${monoFont}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -510,6 +539,35 @@ export const drawGameplayFrame = (gc: GameContext) => {
   ctx.fillRect(x + w / 2 - cw / 2, y - 2, cw, 5);
   ctx.fillStyle = t.fgDim;
   withTracking(ctx, 1, () => ctx.fillText(caption, x + w / 2, y));
+
+  gc.chrome.paper = { x, y, w, h };
+  gc.chrome.play = { x: topBoxX, y: topBoxY, w: topBoxWidth, h: topBoxHeight };
+  gc.chrome.caption = { x: x + w / 2 - cw / 2, y: y - 8, w: cw, h: 16 };
+};
+
+// The vector heart used by the CANDIDATE STANDING HUD (and by levels that borrow it).
+export const drawHeart = (
+  ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number,
+  fill: string | null, stroke: string, lineWidth = 1.5,
+) => {
+  const k = size / 32;
+  ctx.save();
+  ctx.translate(cx - 16 * k, cy - 14.5 * k);
+  ctx.scale(k, k);
+  ctx.beginPath();
+  ctx.moveTo(16, 27.5);
+  ctx.bezierCurveTo(8.5, 20.5, 1.5, 15.2, 1.5, 8.6);
+  ctx.bezierCurveTo(1.5, 4.3, 4.8, 1.5, 8.4, 1.5);
+  ctx.bezierCurveTo(11.7, 1.5, 14.4, 3.4, 16, 6);
+  ctx.bezierCurveTo(17.6, 3.4, 20.3, 1.5, 23.6, 1.5);
+  ctx.bezierCurveTo(27.2, 1.5, 30.5, 4.3, 30.5, 8.6);
+  ctx.bezierCurveTo(30.5, 15.2, 23.5, 20.5, 16, 27.5);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = lineWidth / k;
+  ctx.stroke();
+  ctx.restore();
 };
 
 // An embossed, official-looking button. Signature preserved for all callers.
@@ -631,10 +689,60 @@ export const drawBottomPanel = (gc: GameContext) => {
   ctx.stroke();
 
   const speechX = divX + contentWidth * 0.025;
-  const speechW = contentX + contentWidth - speechX - contentWidth * 0.02;
+  // the hearts segment takes the right 14.5% on level screens
+  const onLevel = state.currentScreen === "level";
+  const rightEdge = onLevel ? contentX + contentWidth * 0.855 : contentX + contentWidth;
+  const speechW = rightEdge - speechX - contentWidth * 0.02;
+
+  gc.chrome.examiner = { x: charX - spriteSize / 2, y: charY, w: spriteSize, h: spriteSize + 18 };
+
+  if (onLevel) {
+    const div2X = contentX + contentWidth * 0.855;
+    ctx.strokeStyle = t.hairline;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(div2X, bottomBoxY + bottomBoxHeight * 0.10);
+    ctx.lineTo(div2X, bottomBoxY + bottomBoxHeight * 0.90);
+    ctx.stroke();
+
+    const segCX = contentX + contentWidth * 0.9275;
+    ctx.fillStyle = t.fgDim;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = `${Math.round(10 * s)}px ${monoFont}`;
+    withTracking(ctx, 1, () => ctx.fillText(state.hudHeartsLabel ?? "CANDIDATE STANDING", segCX, panelCY - 20 * s));
+
+    const heartSize = Math.round(32 * s);
+    const count = state.hudExtraHeart ? 4 : 3;
+    const gapPx = Math.round((count === 4 ? 6 : 8) * s);
+    const rowW = count * heartSize + (count - 1) * gapPx;
+    const rowX = segCX - rowW / 2;
+    const rowY = panelCY + 6 * s;
+    gc.chrome.hearts = [];
+    for (let i = 0; i < count; i++) {
+      const hx = rowX + i * (heartSize + gapPx) + heartSize / 2;
+      const hidden = state.hudHiddenHearts?.includes(i);
+      const isExtra = i === 3;
+      const alive = i < state.lives;
+      if (!hidden) {
+        ctx.save();
+        if (alive && !isExtra) {
+          ctx.shadowColor = "rgba(60,45,20,0.25)";
+          ctx.shadowBlur = 3;
+          ctx.shadowOffsetY = 2;
+        }
+        if (isExtra) drawHeart(ctx, hx, rowY, heartSize * 1.05, "#6E3050", "#5A2222", 1.5);
+        else if (alive) drawHeart(ctx, hx, rowY, heartSize, t.accent, t.accentDeep, 1.5);
+        else drawHeart(ctx, hx, rowY, heartSize, null, t.hairline, 2);
+        ctx.restore();
+      }
+      gc.chrome.hearts.push({ x: hx - heartSize / 2, y: rowY - heartSize / 2, w: heartSize, h: heartSize });
+    }
+    gc.chrome.heartsRow = { x: rowX, y: rowY - heartSize / 2, w: rowW, h: heartSize };
+  }
 
   const levelData = state.currentScreen === "level"
-    ? LEVEL_DATA[state.currentLevel - 1]
+    ? (state.guideLines ? { title: "", lines: state.guideLines } : LEVEL_DATA[state.currentLevel - 1])
     : { title: state.storyTitle, lines: state.storyLines };
 
   ctx.fillStyle = t.fgDim;
@@ -671,29 +779,33 @@ export const drawBottomPanel = (gc: GameContext) => {
   for (let i = 0; i < displayLines.length; i++) {
     ctx.fillText(displayLines[i], speechX, startY + i * lineGap, speechW);
   }
+  gc.chrome.remarks = { x: speechX, y: startY - lineGap / 2, w: speechW, h: Math.max(1, fullLines.length) * lineGap };
 };
 
-// In-level form header: item number (top-left), pause control + attempts (right).
+// In-level form header band: item number (left) and pause control (right).
+// Lives now live in the examiner panel (CANDIDATE STANDING), not on the paper.
 export const drawLevelHUD = (gc: GameContext) => {
   const { ctx, state, monoFont } = gc;
-  const { topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
-  const padX = topBoxWidth * 0.05;
-  const padY = topBoxHeight * 0.08;
+  const { paperX, paperY, paperW, headerH } = getLayout(ctx);
   const t = getTheme(state);
   const s = uiScale(ctx);
+  const bandCY = paperY + headerH / 2;
 
   // item number — preserve Level 3's intentional dot-less label
   ctx.fillStyle = t.ink;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.font = `bold ${Math.round(22 * s)}px ${monoFont}`;
-  ctx.fillText(state.currentLevel === 3 ? `Q${state.currentLevel}` : `Q.${state.currentLevel}`,
-    topBoxX + padX, topBoxY + padY);
+  const label = state.currentLevel === 3 ? `Q${state.currentLevel}` : `Q.${state.currentLevel}`;
+  const labelX = paperX + Math.round(22 * s);
+  ctx.fillText(label, labelX, bandCY);
+  const labelW = ctx.measureText(label).width;
+  gc.chrome.qLabel = { x: labelX - 6, y: bandCY - 14 * s, w: labelW + 12, h: 28 * s };
 
   // pause control
-  const pauseSize = padY * 1.5;
-  const pauseX = topBoxX + topBoxWidth - padX - pauseSize;
-  const pauseY = topBoxY + padY - pauseSize / 2;
+  const pauseSize = Math.round(34 * s);
+  const pauseX = paperX + paperW - Math.round(12 * s) - pauseSize;
+  const pauseY = bandCY - pauseSize / 2;
   roundRect(ctx, pauseX, pauseY, pauseSize, pauseSize, 4);
   ctx.fillStyle = t.bg;
   ctx.fill();
@@ -701,48 +813,19 @@ export const drawLevelHUD = (gc: GameContext) => {
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.fillStyle = t.accent;
-  const barW = pauseSize * 0.12;
-  const barH = pauseSize * 0.42;
-  const barGap = pauseSize * 0.14;
+  const barW = pauseSize * 0.15;
+  const barH = pauseSize * 0.44;
+  const barGap = pauseSize * 0.15;
   ctx.fillRect(pauseX + pauseSize / 2 - barGap / 2 - barW, pauseY + pauseSize / 2 - barH / 2, barW, barH);
   ctx.fillRect(pauseX + pauseSize / 2 + barGap / 2, pauseY + pauseSize / 2 - barH / 2, barW, barH);
+  gc.chrome.pause = { x: pauseX, y: pauseY, w: pauseSize, h: pauseSize };
   gc.hitAreas.push({
     x: pauseX, y: pauseY, w: pauseSize, h: pauseSize,
-    action: () => { state.paused = true; gc.render(); },
+    action: () => {
+      if (state.pauseDisabled) { gc.pauseIntercept?.(); gc.render(); return; }
+      state.paused = true; gc.render();
+    },
   });
-
-  // attempts — three form checkboxes, filled = remaining
-  const pip = Math.round(15 * s);
-  const pipGap = Math.round(7 * s);
-  const totalW = 3 * pip + 2 * pipGap;
-  const pipsX = topBoxX + topBoxWidth - padX - totalW;
-  const pipsY = topBoxY + topBoxHeight - padY * 1.1 - pip;
-
-  ctx.fillStyle = t.fgDim;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "middle";
-  ctx.font = `${Math.round(9 * s)}px ${monoFont}`;
-  withTracking(ctx, 0.5, () => ctx.fillText("ATTEMPTS", pipsX + totalW, pipsY - 9));
-
-  for (let i = 0; i < 3; i++) {
-    const px = pipsX + i * (pip + pipGap);
-    const remaining = i < state.lives;
-    roundRect(ctx, px, pipsY, pip, pip, 2);
-    ctx.strokeStyle = remaining ? t.accent : t.hairline;
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-    if (remaining) {
-      ctx.fillStyle = t.accent;
-      ctx.fill();
-    } else {
-      ctx.strokeStyle = t.hairline;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(px + 3, pipsY + 3);
-      ctx.lineTo(px + pip - 3, pipsY + pip - 3);
-      ctx.stroke();
-    }
-  }
 };
 
 // "ANSWER KEY" toggle (cheats) — styled as a stamped gold tab above the paper.

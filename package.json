@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/yeongjaejin-school/outside-the-box#readme",
   "devDependencies": {
-    "gulp": "^5.0.1"
+    "gulp": "^5.0.1",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@babel/core": "^7.29.0",
@@ -31,6 +32,7 @@
     "del": "^8.0.1",
     "fancy-log": "^2.0.0",
     "gulp-sourcemaps": "^2.6.5",
+    "three": "^0.169.0",
     "vinyl-buffer": "^1.0.1",
     "vinyl-source-stream": "^2.0.0"
   }

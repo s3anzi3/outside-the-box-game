@@ -1,7 +1,22 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawButton, drawSeal, drawMedallion, roundRect, uiScale } from '../renderer';
+import { drawButton, drawSeal, drawMedallion, drawHeart, roundRect, uiScale } from '../renderer';
+import { say, wrong, inputOpen, levelClock } from './lateralHelpers';
+
+// ── Q50 — Your Name ───────────────────────────────────────────────────────────
+// The final item asks the one question the candidate answered before the exam
+// began: the name typed into Q1. Anything else is not the name on file, costs a
+// heart and clears the field. The right name opens the CORRECT screen and then
+// the certificate: tier-coloured double border, spinning medallion, elapsed
+// time, and a serial line that records the standing you finished on.
+
+const WRONG_LINE = 'That is not the name you gave me. I have it written down.';
+const WIN_LINE   = 'Certified. Corporate would like to remind you this is not a real certificate.';
+
+// Module state (reset on fresh entry, in drawNameRecall).
+let fails50 = 0;
+const clock50 = { last: 0, elapsed: 0 };
 
 // ── Certificate content per tier ──────────────────────────────────────────────
 const TIERS = {
@@ -115,6 +130,45 @@ function drawSignature(ctx: CanvasRenderingContext2D, cx: number, cy: number, co
   ctx.restore();
 }
 
+// The serial line, right-aligned: STANDING AT COMPLETION <hearts>  ·  No. OTB-50-####
+// The hearts are the HUD's own vector heart, so the diploma records what the
+// candidate finished on: full for the hearts still held, faded for the spent ones.
+function drawStandingLine(gc: GameContext, rightX: number, y: number) {
+  const { ctx, state, monoFont } = gc;
+  const t = getTheme(state);
+  const s = uiScale(ctx);
+
+  const label = 'STANDING AT COMPLETION';
+  const tail  = `   ·   ${serialFor(state.playerName)}`;
+  const heartSize = Math.round(11 * s);
+  const heartStep = heartSize + Math.round(3 * s);
+  const heartsW   = heartStep * 3;
+  const gap = 7 * s;
+
+  ctx.font = `${Math.round(10 * s)}px ${monoFont}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const labelW = ctx.measureText(label).width;
+  const tailW  = ctx.measureText(tail).width;
+
+  let mx = rightX - (labelW + gap + heartsW + tailW);
+  ctx.fillStyle = t.fgDim;
+  ctx.fillText(label, mx, y);
+  mx += labelW + gap;
+
+  for (let i = 0; i < 3; i++) {
+    const hcx = mx + heartStep * i + heartSize / 2;
+    ctx.save();
+    if (i >= state.lives) ctx.globalAlpha = 0.35;   // the mock fades the spent hearts
+    drawHeart(ctx, hcx, y, heartSize, t.accent, t.accentDeep, 1);
+    ctx.restore();
+  }
+  mx += heartsW;
+
+  ctx.fillStyle = t.fgDim;
+  ctx.fillText(tail, mx, y);
+}
+
 // ── The diploma (full-screen presentation) ────────────────────────────────────
 function drawCertificate(gc: GameContext) {
   const { ctx, state, displayFont, bodyFont, monoFont } = gc;
@@ -163,14 +217,13 @@ function drawCertificate(gc: GameContext) {
   drawSeal(gc, cx, Y(0.55), certH * 0.3, { color: tc.color });
   ctx.restore();
 
-  // serial + date along the top
+  // date (left) and standing + serial (right) along the top
   ctx.fillStyle = t.fgDim;
   ctx.font = `${Math.round(10 * s)}px ${monoFont}`;
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
   ctx.fillText(formatDate(), certX + 28, Y(0.075));
-  ctx.textAlign = 'right';
-  ctx.fillText(serialFor(state.playerName), certX + certW - 28, Y(0.075));
+  drawStandingLine(gc, certX + certW - 28, Y(0.075));
 
   // institute eyebrow
   ctx.fillStyle = tc.color;
@@ -262,6 +315,44 @@ function drawCertificate(gc: GameContext) {
   }, 18);
 }
 
+// The examiner's closing remark, drawn on the CORRECT screen. The engine hides
+// the examiner panel for the whole level-50 endgame, so if the panel is not on
+// screen (gc.chrome.remarks is missing) the level draws the remark itself, with
+// the same typewriter reveal the panel uses.
+function drawWinRemark(gc: GameContext) {
+  if (gc.chrome.remarks) return;   // the real panel is up and already says it
+  const { ctx, state, bodyFont, monoFont } = gc;
+  const w = ctx.canvas.width;
+  const h = ctx.canvas.height;
+  const t = getTheme(state);
+  const s = uiScale(ctx);
+  const cx = w / 2;
+
+  const lines = state.guideLines && state.guideLines.length ? state.guideLines : [WIN_LINE];
+  const totalChars = lines.reduce((sum, line) => sum + line.length, 0);
+  const isTyping = state.guideReveal < totalChars;
+
+  let charsLeft = Math.max(0, state.guideReveal);
+  const shown: string[] = [];
+  for (const line of lines) {
+    if (charsLeft <= 0) break;
+    shown.push(line.slice(0, Math.min(charsLeft, line.length)));
+    charsLeft -= line.length;
+  }
+  if (shown.length && (isTyping || state.guideCursor)) shown[shown.length - 1] += ' |';
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = t.fgDim;
+  ctx.font = `${Math.round(11 * s)}px ${monoFont}`;
+  ctx.fillText("EXAMINER'S REMARKS", cx, h * 0.775);
+
+  ctx.fillStyle = t.fg;
+  ctx.font = `${Math.round(16 * s)}px ${bodyFont}`;
+  const gapY = 26 * s;
+  shown.forEach((line, i) => ctx.fillText(line, cx, h * 0.825 + i * gapY, w * 0.7));
+}
+
 // ── Win reveal (full-screen) ──────────────────────────────────────────────────
 function drawWin(gc: GameContext) {
   const { ctx, state, displayFont, bodyFont } = gc;
@@ -274,6 +365,7 @@ function drawWin(gc: GameContext) {
   if (state.winChimeFor !== 50) {
     state.winChimeFor = 50;
     gc.sounds.ui('seal');
+    say(gc, WIN_LINE);
   }
 
   ctx.fillStyle = t.pass;
@@ -296,6 +388,8 @@ function drawWin(gc: GameContext) {
     state.levelSubPhase = 'certificate';
     gc.render();
   }, 20);
+
+  gc.afterPanel = drawWinRemark;
 }
 
 // ── Final question (in the exam-paper frame) ──────────────────────────────────
@@ -311,6 +405,9 @@ function drawNameRecall(gc: GameContext) {
     state.nameFocused = false;
     state.winChimeFor = -1;
     state.levelSubPhase = 'active';
+    fails50 = 0;
+    clock50.last = 0;
+    clock50.elapsed = 0;
   }
 
   ctx.textAlign = 'center';
@@ -350,7 +447,8 @@ function drawNameRecall(gc: GameContext) {
   if (state.nameFocused) {
     const measured = ctx.measureText(state.nameInput).width;
     const cursorX = inputX + 16 + Math.min(measured, inputW - 32);
-    const blink = Math.floor(Date.now() / 530) % 2 === 0;
+    // pause-aware blink: the caret holds still while the exam is suspended
+    const blink = Math.floor(clock50.elapsed / 0.53) % 2 === 0;
     if (blink) {
       ctx.strokeStyle = t.ink;
       ctx.lineWidth = 2;
@@ -369,23 +467,44 @@ function drawNameRecall(gc: GameContext) {
   const submitW = Math.min(topBoxWidth * 0.3, 220);
   const submitH = Math.max(44, topBoxHeight * 0.12);
   drawButton(gc, 'SUBMIT →', cx - submitW / 2, topBoxY + topBoxHeight * 0.66, submitW, submitH, () => {
+    if (!inputOpen(gc)) return;
     const typed = state.nameInput.trim().toLowerCase();
     const correct = state.playerName.toLowerCase();
     state.nameFocused = false;
     if (typed === correct) {
       state.examFinalMs = state.examStartTime > 0 ? performance.now() - state.examStartTime : 0;
       state.levelSubPhase = 'win';
+      gc.render();
     } else {
-      gc.sounds.ui('deny');
-      gc.loseLife();
       state.nameInput = '';
+      fails50++;
+      say(gc, WRONG_LINE);
+      wrong(gc);
     }
-    gc.render();
   }, 20);
 }
 
 export const drawLevel50 = (gc: GameContext) => {
-  if (gc.state.levelSubPhase === 'certificate') { drawCertificate(gc); return; }
-  if (gc.state.levelSubPhase === 'win') { drawWin(gc); return; }
-  drawNameRecall(gc);
+  const { state } = gc;
+
+  // Pause-aware level clock: it only advances on the question screen and stops
+  // dead while the exam is suspended.
+  levelClock(gc, clock50);
+
+  if (state.levelSubPhase === 'certificate') drawCertificate(gc);
+  else if (state.levelSubPhase === 'win') drawWin(gc);
+  else drawNameRecall(gc);
+
+  // Test hook: internals only. The level is still played with real input.
+  const dev = window as unknown as { __gc?: { lv?: Record<string, unknown> } };
+  if (dev.__gc) dev.__gc.lv = {
+    t: clock50.elapsed,
+    typed: state.nameInput,
+    focused: state.nameFocused,
+    fails: fails50,
+    registered: state.playerName,
+    tier: getTier(state.examFinalMs),
+    standing: state.lives,
+    phase: state.levelSubPhase,
+  };
 };

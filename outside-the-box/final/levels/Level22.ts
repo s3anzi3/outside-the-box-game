@@ -1,151 +1,232 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawButton }  from '../renderer';
+import { drawButton, roundRect, uiScale } from '../renderer';
+import { freshEntry, drawWinScreen, say, wrong, inputOpen, levelClock } from './lateralHelpers';
 
-const CODE_LEN       = 10;
-const FLASH_SECS     = 0.75;
+// ── Q22 — Did You Catch That ─────────────────────────────────────────────────
+// The paper says only "Stay alert." for a random three to eight seconds, then a
+// ten digit number flashes for three quarters of a second, then ten empty slots
+// ask for it back. Nobody memorises ten digits in 750ms. The trick is the pause
+// button: pausing freezes the flash timer and the digits stay readable in the
+// lower band of the suspension notice, so the candidate can copy them at leisure.
+// Pausing mid flash retitles the notice EXAMINATION SUSPENDED (CONVENIENT), and
+// on resume the examiner admits he saw.
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function genCode(): string {
+const CODE_LEN = 10;
+const FLASH_MS = 750;
+
+const LADDER = [
+  "Fast, wasn't it. If only there were a way to stop time.",
+  'The pause button is right there, candidate. I am not supposed to say that.',
+];
+
+const OPENING = 'did you catch that??';
+const CAUGHT  = 'did you catch that?? You paused. I saw.';
+
+// ── Module state — also the test hook object (window.__gc.lv) ────────────────
+// The same object is handed to the harness every frame, so a test can write
+// lv22.forceWaitMs / lv22.waitMs (the ?wait= idea from the mock) and have it stick.
+const lv22 = {
+  phase: 'waiting' as 'waiting' | 'flash' | 'input',
+  code: '',
+  input: '',
+  elapsed: 0,        // ms spent in the current phase (frozen while paused)
+  waitMs: 5000,      // this attempt's random wait
+  forceWaitMs: 0,    // debug override: fixed wait for every attempt
+  flashMs: FLASH_MS,
+  misses: 0,
+  pausedInFlash: false,
+};
+
+const clock22 = { last: 0, elapsed: 0 };
+let prevPaused22 = false;
+let lightsOn22 = false;
+let listenersAdded22 = false;
+let urlWaitRead22 = false;
+
+const genCode = () => {
   let s = '';
   for (let i = 0; i < CODE_LEN; i++) s += Math.floor(Math.random() * 10);
   return s;
-}
+};
 
-// ── Module-level state ────────────────────────────────────────────────────────
-let animId22       = 0;
-let lastTime22     = 0;
-let flashCode22    = '';
-let phase22        = '';   // 'waiting' | 'flash' | 'input'
-let phaseElapsed22 = 0;
-let waitSecs22     = 5;    // randomised on each attempt
-let input22        = '';
-let listenersAdded22 = false;
+const randWait = () => (lv22.forceWaitMs > 0 ? lv22.forceWaitMs : 3000 + Math.random() * 5000);
+
+const newAttempt22 = () => {
+  lv22.code = genCode();
+  lv22.waitMs = randWait();
+  lv22.input = '';
+  lv22.elapsed = 0;
+  lv22.pausedInFlash = false;
+  lv22.phase = 'waiting';
+};
 
 function submitAnswer22(gc: GameContext): void {
-  if (input22 === flashCode22) {
+  if (lv22.phase !== 'input' || lv22.input.length !== CODE_LEN) return;
+  if (!inputOpen(gc)) return;
+
+  if (lv22.input === lv22.code) {
     gc.state.levelSubPhase = 'win';
     gc.render();
-  } else {
-    gc.loseLife();
-    input22        = '';
-    phase22        = 'waiting';
-    phaseElapsed22 = 0;
-    waitSecs22     = 3 + Math.random() * 5;
-    flashCode22    = genCode();
-    gc.render();
+    return;
   }
+
+  lv22.misses++;
+  wrong(gc);
+  say(gc, LADDER[Math.min(lv22.misses, LADDER.length) - 1]);
+  newAttempt22();
+  gc.render();
 }
 
 function ensureListeners22(gc: GameContext): void {
   if (listenersAdded22) return;
   listenersAdded22 = true;
   window.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (gc.state.currentLevel !== 22 || gc.state.currentScreen !== 'level') return;
-    if (phase22 !== 'input') return;
-    if (gc.state.paused || gc.state.controlsOpen || gc.state.gameOver) return;
+    const st = gc.state;
+    if (st.currentLevel !== 22 || st.currentScreen !== 'level') return;
+    if (lv22.phase !== 'input') return;
+    if (!inputOpen(gc)) return;
+
     if (e.key === 'Backspace') {
-      input22 = input22.slice(0, -1);
+      lv22.input = lv22.input.slice(0, -1);
+      e.preventDefault();
       gc.render();
     } else if (e.key === 'Enter') {
-      if (input22.length === CODE_LEN) submitAnswer22(gc);
-    } else if (/^\d$/.test(e.key) && input22.length < CODE_LEN) {
-      input22 += e.key;
+      e.preventDefault();
+      submitAnswer22(gc);
+    } else if (/^[0-9]$/.test(e.key) && lv22.input.length < CODE_LEN) {
+      lv22.input += e.key;
+      e.preventDefault();
       gc.render();
     }
   });
 }
 
-// ── Draw function ─────────────────────────────────────────────────────────────
+// The ten flashed digits, spread evenly across `innerW` centred on `cx`.
+const drawDigits22 = (
+  gc: GameContext, code: string, cx: number, y: number, innerW: number, fontPx: number, color: string,
+) => {
+  const { ctx, displayFont } = gc;
+  ctx.fillStyle    = color;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font         = `bold ${fontPx}px ${displayFont}`;
+  const x0 = cx - innerW / 2;
+  for (let i = 0; i < CODE_LEN; i++) {
+    ctx.fillText(code[i] ?? '', x0 + (innerW * (i + 1)) / (CODE_LEN + 1), y);
+  }
+};
+
 export const drawLevel22 = (gc: GameContext) => {
   ensureListeners22(gc);
 
-  const { ctx, state, displayFont, bodyFont } = gc;
+  const { ctx, state, displayFont, bodyFont, monoFont } = gc;
   const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t  = getTheme(state);
+  const s  = uiScale(ctx);
   const cx = w / 2;
   const cy = topBoxY + topBoxHeight * 0.5;
 
-  // ── Win screen ─────────────────────────────────────────────────────────────
   if (state.levelSubPhase === 'win') {
-    cancelAnimationFrame(animId22);
-    if (state.winChimeFor !== 22) { state.winChimeFor = 22; gc.sounds.ui('chime'); }
-    ctx.fillStyle    = t.pass;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font         = `bold 44px ${displayFont}`;
-    ctx.fillText('CORRECT!', cx, topBoxY + topBoxHeight * 0.34);
-    ctx.font      = `20px ${bodyFont}`;
-    ctx.fillStyle = t.fgMid;
-    ctx.fillText('Sharp eyes.', cx, topBoxY + topBoxHeight * 0.50);
-    drawButton(gc, 'CONTINUE  →', cx - 100, topBoxY + topBoxHeight * 0.65, 200, 48, () => {
-      state.currentLevel  = 23;
-      state.levelSubPhase = '';
-      gc.render();
-    });
+    if (lightsOn22) { lightsOn22 = false; gc.sounds.stop('allOfTheLights'); }
+    drawWinScreen(gc, 'CORRECT!', 'Sharp eyes. Or a quick thumb on the pause button. I do not judge.', 23);
     return;
   }
 
-  // ── Initialise on fresh entry ──────────────────────────────────────────────
-  if (state.levelSubPhase !== 'active') {
-    flashCode22    = genCode();
-    phase22        = 'waiting';
-    phaseElapsed22 = 0;
-    waitSecs22     = 3 + Math.random() * 5;
-    input22        = '';
-    lastTime22     = 0;
-    state.winChimeFor = -1;
-    state.levelSubPhase = 'active';
+  if (freshEntry(gc)) {
+    if (!urlWaitRead22) {
+      urlWaitRead22 = true;
+      const q = Number(new URLSearchParams(window.location.search).get('wait'));
+      if (q > 0) lv22.forceWaitMs = q;
+    }
+    lv22.misses = 0;
+    newAttempt22();
+    clock22.last = 0;
+    clock22.elapsed = 0;
+    prevPaused22 = false;
+    lightsOn22 = false;
+    say(gc, OPENING);
   }
 
-  // ── Waiting phase — no hint about timing ──────────────────────────────────
-  if (phase22 === 'waiting') {
+  // Test hook: the same object every frame so writes from the harness survive.
+  const dev = window as unknown as { __gc?: { lv?: unknown } };
+  if (dev.__gc) dev.__gc.lv = lv22;
+
+  // ── Pause / resume edges ───────────────────────────────────────────────────
+  const frozen = state.paused || state.controlsOpen || state.gameOver;
+  if (state.paused && !prevPaused22 && lv22.phase === 'flash') lv22.pausedInFlash = true;
+  if (!state.paused && prevPaused22 && lv22.pausedInFlash) {
+    lv22.pausedInFlash = false;
+    say(gc, CAUGHT);
+  }
+  prevPaused22 = state.paused;
+
+  // The suspension notice admits what it is doing for you.
+  state.pauseCartouche = lv22.phase === 'flash' ? 'Examination Suspended (convenient)' : undefined;
+
+  // ── Phase clock (levelClock hands back dt = 0 while paused) ────────────────
+  const { dt } = levelClock(gc, clock22);
+  if (lv22.phase === 'waiting' || lv22.phase === 'flash') {
+    lv22.elapsed += dt * 1000;
+    if (lv22.phase === 'waiting' && lv22.elapsed >= lv22.waitMs) {
+      lv22.phase = 'flash';
+      lv22.elapsed = 0;
+    } else if (lv22.phase === 'flash' && lv22.elapsed >= lv22.flashMs) {
+      lv22.phase = 'input';
+      lv22.elapsed = 0;
+      lv22.input = '';
+      lv22.pausedInFlash = false;
+    }
+  }
+
+  // A single second of "All of the Lights" rides the flash, and stops with it.
+  const wantLights = lv22.phase === 'flash' && !frozen;
+  if (wantLights && !lightsOn22) {
+    lightsOn22 = true;
+    gc.sounds.play('allOfTheLights', { loop: true, volume: 0.85, restart: true });
+  } else if (!wantLights && lightsOn22) {
+    lightsOn22 = false;
+    gc.sounds.stop('allOfTheLights');
+  }
+
+  // ── Waiting: the paper says nothing useful ─────────────────────────────────
+  if (lv22.phase === 'waiting') {
     ctx.fillStyle    = t.fgDim;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `18px ${bodyFont}`;
+    ctx.font         = `${Math.round(18 * s)}px ${bodyFont}`;
     ctx.fillText('Stay alert.', cx, cy);
   }
 
-  // ── Flash phase — giant digits (visible beneath pause overlay) ─────────────
-  if (phase22 === 'flash') {
-    // Pulsing background highlight so it's obvious something is flashing
-    const pulse = 0.08 + 0.06 * Math.sin(Date.now() / 60);
-    ctx.fillStyle = state.darkMode
-      ? `rgba(255,255,255,${pulse})`
-      : `rgba(0,0,0,${pulse})`;
+  // ── Flash: giant digits, pulsing tint, MEMORISE NOW ───────────────────────
+  // While paused the row moves into the suspension notice (see afterOverlays).
+  if (lv22.phase === 'flash' && !state.paused) {
+    const k = 0.75 + 0.25 * Math.sin((lv22.elapsed / 500) * Math.PI * 2);
+    ctx.fillStyle = state.darkMode ? `rgba(255,255,255,${0.08 * k})` : `rgba(0,0,0,${0.08 * k})`;
     ctx.fillRect(topBoxX, topBoxY, topBoxWidth, topBoxHeight);
 
-    ctx.fillStyle    = t.fg;
+    drawDigits22(gc, lv22.code, cx, cy - 22 * s, topBoxWidth - 80 * s, Math.round(80 * s), t.ink);
+
+    ctx.fillStyle    = t.seal;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `bold 80px ${displayFont}`;
-
-    const slotW = topBoxWidth / (CODE_LEN + 1);
-    for (let i = 0; i < CODE_LEN; i++) {
-      const dx = topBoxX + slotW * (i + 1);
-      ctx.fillText(flashCode22[i], dx, cy);
-    }
-
-    // Small "NOW!" label
-    ctx.font      = `bold 14px ${bodyFont}`;
-    ctx.fillStyle = t.seal;
-    ctx.fillText('MEMORISE NOW', cx, cy + 70);
+    ctx.font         = `bold ${Math.round(14 * s)}px ${bodyFont}`;
+    ctx.fillText('MEMORISE NOW', cx, cy + 42 * s);
   }
 
-  // ── Input phase ────────────────────────────────────────────────────────────
-  if (phase22 === 'input') {
+  // ── Input: ten slots, SUBMIT once they are full ───────────────────────────
+  if (lv22.phase === 'input') {
     ctx.fillStyle    = t.fgMid;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `18px ${bodyFont}`;
-    ctx.fillText('Enter the sequence you saw:', cx, cy - 65);
+    ctx.font         = `${Math.round(18 * s)}px ${bodyFont}`;
+    ctx.fillText('Enter the sequence you saw:', cx, cy - 107 * s);
 
     const boxW  = topBoxWidth * 0.72;
-    const boxH  = 64;
+    const boxH  = 64 * s;
     const boxX  = cx - boxW / 2;
-    const boxY  = cy - boxH / 2 - 8;
+    const boxY  = cy - boxH * 0.58;
     const slotW = boxW / CODE_LEN;
 
     ctx.strokeStyle = t.stroke;
@@ -154,10 +235,8 @@ export const drawLevel22 = (gc: GameContext) => {
 
     for (let i = 0; i < CODE_LEN; i++) {
       const sx = boxX + slotW * i;
-
-      // Slot dividers
       if (i > 0) {
-        ctx.strokeStyle = t.divider;
+        ctx.strokeStyle = t.hairline;
         ctx.lineWidth   = 1;
         ctx.beginPath();
         ctx.moveTo(sx, boxY + 6);
@@ -166,78 +245,79 @@ export const drawLevel22 = (gc: GameContext) => {
       }
 
       const charCx = sx + slotW / 2;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font         = `bold ${Math.round(34 * s)}px ${displayFont}`;
 
-      if (i < input22.length) {
-        ctx.fillStyle    = t.fg;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font         = `bold 34px ${displayFont}`;
-        ctx.fillText(input22[i], charCx, boxY + boxH / 2);
-      } else if (i === input22.length) {
-        // Blinking cursor on next empty slot
-        const blink = Math.floor(Date.now() / 530) % 2 === 0;
+      if (i < lv22.input.length) {
+        ctx.fillStyle = t.ink;
+        ctx.fillText(lv22.input[i], charCx, boxY + boxH / 2);
+      } else if (i === lv22.input.length) {
+        // Caret on the next empty slot. Frozen (solid) while the exam is suspended.
+        const blink = frozen || Math.floor(clock22.elapsed / 0.53) % 2 === 0;
         if (blink) {
-          ctx.strokeStyle = t.fg;
+          ctx.strokeStyle = t.ink;
           ctx.lineWidth   = 2;
           ctx.beginPath();
-          ctx.moveTo(charCx, boxY + 14);
-          ctx.lineTo(charCx, boxY + boxH - 14);
+          ctx.moveTo(charCx, boxY + boxH / 2 - 18 * s);
+          ctx.lineTo(charCx, boxY + boxH / 2 + 18 * s);
           ctx.stroke();
         }
       } else {
-        // Empty slot indicator
-        ctx.fillStyle    = t.divider;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font         = `bold 34px ${displayFont}`;
-        ctx.fillText('_', charCx, boxY + boxH / 2 + 8);
+        ctx.fillStyle = t.hairline;
+        ctx.fillText('_', charCx, boxY + boxH / 2 + 8 * s);
       }
     }
 
-    // Submit button (appears when all digits filled)
-    if (input22.length === CODE_LEN) {
-      drawButton(gc, 'SUBMIT →', cx - 85, boxY + boxH + 18, 170, 46, () => {
+    if (lv22.input.length === CODE_LEN) {
+      drawButton(gc, 'SUBMIT →', cx - 85 * s, cy + 34 * s, 170 * s, 46 * s, () => {
         submitAnswer22(gc);
-      });
+      }, 18);
     }
 
     ctx.fillStyle    = t.fgDim;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font         = `10px ${bodyFont}`;
-    const hintY = boxY + boxH + (input22.length === CODE_LEN ? 80 : 22);
-    ctx.fillText('type digits 0–9   ·   Backspace to erase   ·   Enter to submit', cx, hintY);
+    ctx.font         = `${Math.round(10 * s)}px ${bodyFont}`;
+    ctx.fillText('type digits 0-9   ·   Backspace to erase   ·   Enter to submit',
+      cx, topBoxY + topBoxHeight * 0.92);
   }
 
-  // ── RAF loop (drives phase timing; dt=0 while paused so flash freezes) ────
-  cancelAnimationFrame(animId22);
-  if (state.currentLevel === 22 && !state.gameOver && state.levelSubPhase === 'active') {
-    animId22 = requestAnimationFrame((ts: number) => {
-      if (gc.state.currentLevel !== 22 || gc.state.currentScreen !== 'level') return;
-      if (gc.state.levelSubPhase !== 'active') return;
+  // ── The convenience: the flash survives the suspension notice ─────────────
+  gc.afterOverlays = (g) => {
+    if (!g.state.paused || lv22.phase !== 'flash') return;
 
-      const rawDt = lastTime22 ? Math.min((ts - lastTime22) / 1000, 0.05) : 0.016;
-      lastTime22  = ts;
-      // Freeze time while paused — flash stays visible through overlay
-      const dt = (gc.state.paused || gc.state.controlsOpen) ? 0 : rawDt;
+    // Mirrors PauseOverlay's box so the strip lands in its lower band.
+    const pad = topBoxWidth * 0.05;
+    const ox = topBoxX + pad, oy = topBoxY + pad;
+    const ow = topBoxWidth - pad * 2, oh = topBoxHeight - pad * 2;
 
-      if (phase22 === 'waiting' || phase22 === 'flash') {
-        phaseElapsed22 += dt;
+    const stripX = ox + ow * 0.06;
+    const stripW = ow * 0.88;
+    const stripY = oy + oh * 0.845;
+    const stripH = oh * 0.13;
+    const midY   = stripY + stripH / 2;
 
-        if (phase22 === 'waiting' && phaseElapsed22 >= waitSecs22) {
-          phase22        = 'flash';
-          phaseElapsed22 = 0;
-          // Play the first second of "All of the Lights" on every flash
-          gc.sounds.play("allOfTheLights", { loop: true, volume: 0.85, restart: true });
-          setTimeout(() => gc.sounds.stop("allOfTheLights"), 1000);
-        } else if (phase22 === 'flash' && phaseElapsed22 >= FLASH_SECS) {
-          phase22        = 'input';
-          phaseElapsed22 = 0;
-          input22        = '';
-        }
-      }
+    const c = g.ctx;
+    c.save();
+    roundRect(c, stripX, stripY, stripW, stripH, 4);
+    c.fillStyle = t.bg;
+    c.fill();
+    c.strokeStyle = t.accent;
+    c.lineWidth = 1.5;
+    c.stroke();
 
-      gc.render();
-    });
-  }
+    const tag = 'S U S P E N D E D   M I D - F L A S H';
+    c.fillStyle    = t.accent;
+    c.textAlign    = 'left';
+    c.textBaseline = 'middle';
+    c.font         = `${Math.round(9 * s)}px ${monoFont}`;
+    c.fillText(tag, stripX + 14 * s, midY);
+    const tagW = c.measureText(tag).width;
+    c.restore();
+
+    const innerX0 = stripX + 14 * s + tagW + 16 * s;
+    const innerX1 = stripX + stripW - 14 * s;
+    drawDigits22(g, lv22.code, (innerX0 + innerX1) / 2, midY, innerX1 - innerX0, Math.round(30 * s), t.ink);
+  };
 };

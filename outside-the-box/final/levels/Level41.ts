@@ -1,52 +1,224 @@
 import { GameContext } from '../types';
 import { getTheme }    from '../theme';
 import { getLayout }   from '../layout';
-import { drawChoice, wrong, ensureActive, drawWinScreen } from './lateralHelpers';
+import { uiScale, getGuideTextMetrics } from '../renderer';
+import { freshEntry, drawWinScreen, say, inputOpen, levelClock } from './lateralHelpers';
 
-// ── Q41 — Anagram ─────────────────────────────────────────────────────────────
-// Unscramble the letters. Only one option is a real word.
+// ── Q41 — Reply ───────────────────────────────────────────────────────────────
+// The paper says only "Reply to the examiner." There are no buttons and no field.
+// The examiner says "State your answer. I am listening." and the caret that has
+// blinked at the end of his every remark for forty questions is, today, a live
+// text cursor. Click his remarks (or just start typing) and the letters appear
+// inside his remarks as dictation; press Enter and he writes it down as his own.
+// Any answer works; the content was never the point. Nothing here costs a heart.
+// Replaces the D L R O W anagram.
 
-const SCRAMBLED = 'D   L   R   O   W';
-const OPTIONS: { label: string; correct: boolean }[] = [
-  { label: 'WORLD', correct: true  },
-  { label: 'WORDL', correct: false },
-  { label: 'DROWL', correct: false },
-  { label: 'LWORD', correct: false },
-];
+const LINE     = 'State your answer. I am listening.';
+const RECEIVED = 'Received. I have written it down as my own.';
+const EMPTY    = 'Say something. Anything. It is not graded.';
+const MAX_LEN  = 60;
+
+// paper clicks → ladder rung (the paper is the conventional place to look)
+const LADDER: Record<number, string> = {
+  3: 'There is nothing on the paper to press. Look at where the cursor is.',
+  5: 'My remarks have a blinking line at the end. It is a cursor. It has always been a cursor.',
+  7: 'Click my remarks. Type anything. Press Enter.',
+};
+
+let text41    = '';
+let clicks41  = 0;
+let hint41    = '';
+let focused41 = false;   // the caret blinks faster once the remarks have the cursor
+let ready41   = false;   // his opening line has finished typing; the caret is yours
+let sent41    = false;
+let sentAt41  = 0;       // clock seconds when Enter landed (pause-aware)
+let listeners41 = false;
+let dictX41   = 0;
+let caretX41  = 0;
+let caretY41  = 0;
+const clock41 = { last: 0, elapsed: 0 };
+
+// His permanent line stays put; a ladder rung rides underneath it. The line is
+// never re-typed (the draw clamps guideReveal past it) so the dictation the
+// candidate is in the middle of never flickers away.
+const remark = (gc: GameContext, line: string) => {
+  hint41 = line;
+  if (line) say(gc, LINE, line);
+  else      say(gc, LINE);
+};
+
+const ensureListeners41 = (gc: GameContext) => {
+  if (listeners41) return;
+  listeners41 = true;
+  window.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (gc.state.currentLevel !== 41 || gc.state.currentScreen !== 'level') return;
+    if (!inputOpen(gc) || !ready41 || sent41) return;
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      focused41 = true;
+      if (!text41.trim()) { remark(gc, EMPTY); gc.render(); return; }
+      sent41 = true;
+      sentAt41 = clock41.elapsed;
+      remark(gc, RECEIVED);
+      gc.sounds.ui('thud');
+      gc.render();
+      return;
+    }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      text41 = text41.slice(0, -1);
+      focused41 = true;
+      gc.render();
+      return;
+    }
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && text41.length < MAX_LEN) {
+      e.preventDefault();
+      focused41 = true;
+      text41 += e.key;
+      gc.render();
+    }
+  });
+};
+
+// Painted over the examiner panel: erase the cursor the panel typed, put the
+// candidate's dictation after his line, and give the caret back at the end of it.
+const paintRemarks = (g: GameContext) => {
+  const { ctx, state, bodyFont } = g;
+  const t = getTheme(state);
+  const r = g.chrome.remarks;
+  if (!r) return;
+  const m = getGuideTextMetrics(ctx);
+  const lineGap = m.lineGap;
+  const cy0 = r.y + lineGap / 2;
+
+  // clicking his remarks hands the caret over (and is free)
+  g.hitAreas.push({
+    x: r.x - 10, y: r.y - 8, w: r.w + 20, h: r.h + 16, noCursor: true,
+    action: () => { if (inputOpen(g)) focused41 = true; },
+  });
+
+  if (!ready41) return;
+
+  ctx.save();
+  ctx.font = `${m.fontPx}px ${bodyFont}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  // drawBottomPanel draws each line with fillText(..., speechW), so an over-long
+  // line is condensed to exactly that width; apply the same factor when measuring.
+  const measure = (drawn: string, upTo: string) => {
+    const full = ctx.measureText(drawn).width;
+    const squash = full > r.w ? r.w / full : 1;
+    return { text: ctx.measureText(upTo).width * squash, full: full * squash };
+  };
+
+  // 1. erase the panel's own " |" from the end of his line, and the whole tail
+  const line0 = measure(LINE + ' |', LINE);
+  ctx.fillStyle = t.panel;
+  ctx.fillRect(r.x + line0.text - 1, cy0 - lineGap * 0.46, r.w - line0.text + 2, lineGap * 0.92);
+
+  // 2. and from the end of the ladder rung, when one is showing
+  if (hint41) {
+    const shown = Math.max(0, Math.min(hint41.length, state.guideReveal - LINE.length));
+    const part  = hint41.slice(0, shown);
+    const line1 = measure(part + ' |', part);
+    ctx.fillStyle = t.panel;
+    ctx.fillRect(r.x + line1.text - 1, cy0 + lineGap - lineGap * 0.46,
+                 line1.full - line1.text + 4, lineGap * 0.92);
+  }
+
+  // 3. the dictation, in his own remarks, in the candidate's ink
+  const spaceW = ctx.measureText(' ').width;
+  const dx = r.x + line0.text + spaceW;
+  const availW = Math.max(20, r.x + r.w - dx - 12);
+  let shownText = text41;
+  let tw = ctx.measureText(shownText).width;
+  while (tw > availW && shownText.length > 0) {
+    shownText = shownText.slice(1);
+    tw = ctx.measureText(shownText).width;
+  }
+  ctx.fillStyle = t.accent;
+  ctx.fillText(shownText, dx, cy0);
+
+  // 4. the caret: his blink until the cursor is yours, then a faster one
+  const live  = state.levelSubPhase === 'active';
+  const blink = (focused41 && live) ? (clock41.elapsed % 0.6) < 0.3 : state.guideCursor;
+  if (blink) {
+    ctx.fillStyle = t.fg;
+    ctx.fillText('|', dx + tw + 1, cy0);
+  }
+  ctx.restore();
+
+  dictX41  = dx;
+  caretX41 = dx + tw + 1;
+  caretY41 = cy0;
+};
 
 export const drawLevel41 = (gc: GameContext) => {
-  const { ctx, state, displayFont, bodyFont } = gc;
-  const { w, topBoxY, topBoxHeight, topBoxWidth } = getLayout(ctx);
+  const { ctx, state, displayFont } = gc;
+  const { w, topBoxX, topBoxY, topBoxWidth, topBoxHeight } = getLayout(ctx);
   const t  = getTheme(state);
+  const s  = uiScale(ctx);
   const cx = w / 2;
 
+  ensureListeners41(gc);
+
   if (state.levelSubPhase === 'win') {
-    drawWinScreen(gc, 'WORLD.', 'The only arrangement that spells anything real.', 42);
+    gc.afterPanel = paintRemarks;
+    drawWinScreen(gc, 'DICTATED.',
+      "Your answer is now part of the examiner's remarks. He will claim it was his.", 42);
     return;
   }
-  ensureActive(gc);
 
-  ctx.fillStyle    = t.fg;
+  if (freshEntry(gc)) {
+    text41 = ''; clicks41 = 0; hint41 = ''; focused41 = false; ready41 = false;
+    sent41 = false; sentAt41 = 0; dictX41 = 0; caretX41 = 0; caretY41 = 0;
+    clock41.last = 0; clock41.elapsed = 0;
+    state.guideReveal = 0;
+    remark(gc, '');
+  }
+  levelClock(gc, clock41);
+
+  // His line types out once, and once only: after that the typewriter is held
+  // past it so a ladder rung never re-types over the candidate's dictation.
+  if (!ready41 && state.guideReveal >= LINE.length) ready41 = true;
+  if (ready41 && state.guideReveal < LINE.length) state.guideReveal = LINE.length;
+
+  // ── the paper: one instruction, nothing to press ───────────────────────────
+  ctx.fillStyle    = t.ink;
   ctx.textAlign    = 'center';
   ctx.textBaseline = 'top';
-  ctx.font         = `bold 22px ${displayFont}`;
-  ctx.fillText('Unscramble the letters.', cx, topBoxY + topBoxHeight * 0.12, topBoxWidth * 0.9);
+  ctx.font         = `${Math.round(40 * s)}px ${displayFont}`;
+  ctx.fillText('Reply to the examiner.', cx, topBoxY + topBoxHeight * 0.40, topBoxWidth * 0.9);
 
-  ctx.fillStyle = t.fgMid;
-  ctx.font      = `bold 52px ${displayFont}`;
-  ctx.fillText(SCRAMBLED, cx, topBoxY + topBoxHeight * 0.32, topBoxWidth * 0.92);
-
-  const n = OPTIONS.length;
-  const btnW = topBoxWidth * 0.18;
-  const btnH = 54;
-  const gap  = topBoxWidth * 0.03;
-  const totW = n * btnW + (n - 1) * gap;
-  const startX = cx - totW / 2;
-  const btnY = topBoxY + topBoxHeight * 0.62;
-  OPTIONS.forEach(({ label, correct }, i) => {
-    drawChoice(gc, label, startX + i * (btnW + gap), btnY, btnW, btnH, () => {
-      if (correct) { state.levelSubPhase = 'win'; gc.render(); }
-      else wrong(gc);
-    }, { fontSize: 22 });
+  // the whole sheet is clickable and every click is free; it is simply the wrong sheet
+  gc.hitAreas.push({
+    x: topBoxX, y: topBoxY, w: topBoxWidth, h: topBoxHeight, noCursor: true,
+    action: () => {
+      if (!inputOpen(gc) || sent41) return;
+      clicks41++;
+      const rung = LADDER[clicks41];
+      if (rung) remark(gc, rung);
+    },
   });
+
+  // Enter has landed: he finishes writing it down, then the item passes.
+  if (sent41 && clock41.elapsed - sentAt41 >= 1.1) state.levelSubPhase = 'win';
+
+  gc.afterPanel = paintRemarks;
+
+  const dev = window as unknown as { __gc?: { lv?: Record<string, unknown> } };
+  if (dev.__gc) dev.__gc.lv = {
+    text: text41,
+    hint: hint41,
+    clicks: clicks41,
+    focused: focused41,
+    ready: ready41,
+    sent: sent41,
+    elapsed: clock41.elapsed,
+    dictX: dictX41,
+    caretX: caretX41,
+    caretY: caretY41,
+  };
 };

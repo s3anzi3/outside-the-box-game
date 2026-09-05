@@ -15,7 +15,7 @@ export const drawPauseOverlay = (gc: GameContext) => {
   const t = getTheme(state);
   const s = uiScale(ctx);
 
-  drawDocumentBox(gc, ox, oy, ow, oh, { title: "Examination Suspended" });
+  drawDocumentBox(gc, ox, oy, ow, oh, { title: state.pauseCartouche ?? "Examination Suspended" });
 
   ctx.fillStyle = t.ink;
   ctx.textAlign = "center";
@@ -141,18 +141,20 @@ export const drawPauseOverlay = (gc: GameContext) => {
   ctx.lineWidth = state.pauseCheatFocused ? 3 : 1.5;
   ctx.stroke();
 
-  ctx.fillStyle = state.pauseCheatInput.length > 0 ? t.ink : t.fgDim;
+  const placeholder = state.pauseCheatPlaceholder ?? "Override Key";
+  const issued = !!state.pauseCheatDone;
+  ctx.fillStyle = state.pauseCheatInput.length > 0 ? t.ink : (issued ? t.pass : (state.pauseCheatPlaceholder ? t.fgMid : t.fgDim));
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.font = `${Math.round(15 * s)}px ${monoFont}`;
+  ctx.font = `${issued ? "bold " : ""}${Math.round((state.pauseCheatPlaceholder ? 13 : 15) * s)}px ${monoFont}`;
   const cheatText = state.pauseCheatInput.length > 0
     ? state.pauseCheatInput + (state.pauseCheatFocused ? "|" : "")
-    : (state.pauseCheatFocused ? "|" : "Override Key");
+    : (state.pauseCheatFocused ? "|" : placeholder);
   ctx.fillText(cheatText, cheatBoxX + 12, cheatBoxY + cheatBoxH / 2, cheatBoxW - 24);
 
   // submit chevron
   roundRect(ctx, cheatButtonX, cheatButtonY, cheatButtonW, cheatButtonH, 4);
-  ctx.fillStyle = t.accent;
+  ctx.fillStyle = issued ? t.pass : t.accent;
   ctx.fill();
   ctx.fillStyle = "#F7F1E3";
   ctx.textAlign = "center";

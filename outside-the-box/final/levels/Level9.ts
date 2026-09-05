@@ -68,23 +68,21 @@ export const drawLevel9 = (gc: GameContext) => {
     drawChoice(gc, options[i], bx, btnY, btnW, btnH, () => wrong(gc), { fontSize: 28 });
   }
 
-  // Secret hit area: clicking the "Q.9" label drawn by drawLevelHUD advances the level
-  const padX    = topBoxWidth  * 0.05;
-  const padY    = topBoxHeight * 0.08;
-  const labelCX = topBoxX + padX;
-  const labelCY = topBoxY + padY;
-  gc.hitAreas.push({
-    x: labelCX,
-    y: labelCY - 14,
-    w: 62,
-    h: 28,
-    noCursor: true,
-    action: () => {
-      gc.sounds.ui("chime");
-      state.currentLevel  = 10;
-      state.levelSubPhase = "";
-      state.levelTimerEnd = 0;
-      gc.render();
-    },
-  });
+  // Secret hit area: clicking the "Q.9" label in the paper's header band advances the level.
+  // The label is drawn by drawLevelHUD after this function, so the rect is read in afterPanel.
+  gc.afterPanel = (g) => {
+    const r = g.chrome.qLabel;
+    if (!r) return;
+    g.hitAreas.push({
+      x: r.x, y: r.y, w: r.w, h: r.h,
+      noCursor: true,
+      action: () => {
+        g.sounds.ui("chime");
+        state.currentLevel  = 10;
+        state.levelSubPhase = "";
+        state.levelTimerEnd = 0;
+        g.render();
+      },
+    });
+  };
 };

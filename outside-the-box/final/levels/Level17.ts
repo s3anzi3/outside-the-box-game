@@ -22,7 +22,7 @@ export const drawLevel17 = (gc: GameContext) => {
 
   if (state.levelSubPhase === 'win') {
     cancelAnimationFrame(raf17);
-    drawWinScreen(gc, 'STILLNESS.', 'Not every alarm needs answering. You did nothing — perfectly.', 18);
+    drawWinScreen(gc, 'STILLNESS.', 'Question 4 screamed at you too, and you flinched. Not this time. Stay calm, learn from your mistakes, and this exam runs out of ways to fool you.', 18);
     return;
   }
 
